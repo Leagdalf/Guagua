@@ -1,0 +1,280 @@
+/* Seitenraster: eine Spalte unter 700 px, iPad-Raster darüber. */
+.shell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.shell__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Einfache Seite: Missionen, Sprachführer, Mehr */
+.simple {
+  flex: 1;
+  width: 100%;
+  max-width: calc(var(--col-simple) + 2 * var(--edge));
+  margin: 0 auto;
+  padding: var(--s6) var(--edge) var(--s8);
+  --bar-pad: 0px;
+}
+
+/* Lerneinheit */
+.lesson {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: calc(var(--col-lesson) + 2 * var(--edge));
+  margin: 0 auto;
+  padding: 0 var(--edge);
+  --bar-pad: 0px;
+}
+
+.lesson__body {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Startseite */
+.home {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  --bar-pad: var(--edge);
+}
+
+.home__header {
+  position: relative;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  height: var(--head-h);
+  margin: 0 var(--edge);
+  padding-top: var(--head-pt);
+  border-bottom: var(--base-line) solid var(--tinta);
+  font-size: var(--fs-small);
+  color: var(--ceniza);
+}
+
+.home__header .mountain {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+}
+
+.home__today {
+  padding: var(--s5) var(--edge) 0;
+}
+
+.today__title {
+  margin-top: var(--s2);
+}
+
+.today__title--de {
+  font-size: var(--fs-es-today);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+}
+
+.today__text {
+  margin-top: var(--s3);
+  font-size: var(--fs-note);
+  color: var(--ceniza);
+}
+
+.home__mission {
+  margin: var(--s4) var(--edge) 0;
+  border-top: var(--hair) solid var(--raya);
+  border-bottom: var(--hair) solid var(--raya);
+}
+
+.home__line {
+  flex: 1;
+  padding: 0 var(--edge);
+}
+
+/* Mission: auf dem Telefon eine Zeile, auf dem iPad mit Beschreibung und Sätzen */
+.mission {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: "label title action";
+  align-items: center;
+  column-gap: var(--s2);
+  min-height: 52px;
+  font-size: var(--fs-note);
+}
+
+.mission__label {
+  grid-area: label;
+}
+
+.mission__label {
+  grid-area: label;
+  font-size: inherit;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.mission__label::after {
+  content: ":";
+}
+
+.mission__title {
+  grid-area: title;
+  font-weight: 600;
+}
+
+.mission__action {
+  grid-area: action;
+}
+
+.mission__text,
+.mission__phrases {
+  display: none;
+}
+
+@media (min-width: 700px) {
+  .simple,
+  .lesson,
+  .home {
+    --bar-pad: 0px;
+  }
+
+  .lesson .action-bar {
+    padding-bottom: calc(var(--s10) + env(safe-area-inset-bottom, 0px));
+  }
+
+  .home {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto auto auto 1fr;
+    grid-template-areas:
+      "head head"
+      "today line"
+      "action line"
+      "mission line";
+    column-gap: var(--s12);
+    align-content: start;
+    width: 100%;
+    max-width: calc(var(--col-home) + 2 * var(--edge));
+    margin: 0 auto;
+    padding: 0 var(--edge);
+  }
+
+  .home__header {
+    grid-area: head;
+    margin: 0;
+  }
+
+  .home__today {
+    grid-area: today;
+    padding: var(--s10) 0 0;
+  }
+
+  .today__title {
+    margin-top: 10px;
+  }
+
+  .today__text {
+    margin-top: var(--s4);
+  }
+
+  .home__action {
+    grid-area: action;
+  }
+
+  .home__action .action-bar {
+    position: static;
+    margin-top: 0;
+    padding: 28px 0 0;
+    border: 0;
+  }
+
+  .home__mission {
+    grid-area: mission;
+    margin: var(--s12) 0 0;
+    border-bottom: 0;
+    align-self: start;
+  }
+
+  .home__line {
+    grid-area: line;
+    padding: var(--s10) 0 0;
+  }
+
+  .home .line-block__head {
+    padding: 0 0 18px;
+  }
+
+  .mission {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "label action"
+      "title title"
+      "text text"
+      "phrases phrases";
+    min-height: 0;
+    column-gap: 0;
+    align-items: center;
+    font-size: var(--fs-body);
+  }
+
+  .mission__label {
+    font-size: var(--fs-label);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+  }
+
+  .mission__label::after {
+    content: none;
+  }
+
+  .mission__title {
+    font-size: 22px;
+  }
+
+  .mission__text {
+    display: block;
+    grid-area: text;
+    margin-top: var(--s2);
+    font-size: 17px;
+    color: var(--ceniza);
+  }
+
+  .mission__phrases {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    grid-area: phrases;
+    margin: var(--s4) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+}
+
+/* Auf dem Telefon sitzt der Hauptknopf der Startseite fest über der unteren Leiste. */
+@media (max-width: 699.98px) {
+  .home__action {
+    display: contents;
+  }
+
+  .home__action > * {
+    order: 9;
+  }
+
+  .home__line {
+    padding-bottom: var(--s4);
+  }
+}

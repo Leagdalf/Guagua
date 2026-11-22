@@ -1,0 +1,95 @@
+/* Farben, Schriften, Abstände und Maße aus docs/04-design.md.
+   Telefon-Werte stehen in :root, die iPad-Werte ab 700 px Breite im Block darunter. */
+:root {
+  /* Farben */
+  --pagina: #FAFBFC;
+  --tinta: #18233D;
+  --atlantico: #2546C7;
+  --platano: #FFE56B;
+  --mojo: #B3261E;
+  --drago: #1C6B48;
+  --ceniza: #5A6474;
+  --raya: #D8DDE5;
+  --teide: #C9824F;
+  --nieve: #FFFFFF;
+
+  /* Schriften */
+  --font-es: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-de: "Figtree", "Segoe UI", "Helvetica Neue", sans-serif;
+
+  /* Abstände in Schritten von 4 px */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 20px;
+  --s6: 24px;
+  --s7: 28px;
+  --s8: 32px;
+  --s10: 40px;
+  --s12: 48px;
+  --edge: 28px;
+
+  /* Schriftgrößen */
+  --fs-body: 17px;
+  --fs-btn: 17px;
+  --fs-small: 14px;
+  --fs-note: 16px;
+  --fs-label: 13px;
+  --fs-es-card: 48px;
+  --fs-es-today: 50px;
+  --fs-es-stop: 23px;
+  --fs-es-text: 20px;
+  --lh-de: 1.4;
+  --lh-es-big: 1.05;
+  --icon: 20px;
+
+  /* Formen und Maße */
+  --tap: 44px;
+  --btn-h: 54px;
+  --answer-h: 56px;
+  --stop-size: 20px;
+  --stop-gap: 14px;
+  --prog-dot: 16px;
+  --row-h: 52px;
+  --dot-cy: 26px;
+  --head-h: 134px;
+  --head-pt: 24px;
+  --mountain-w: 180px;
+  --tab-h: 52px;
+  --tabbar-h: 72px;
+  --line-w: 3px;
+  --hair: 1px;
+  --base-line: 1.5px;
+  --col-lesson: 620px;
+  --col-simple: 680px;
+  --col-home: 1000px;
+}
+
+@media (min-width: 700px) {
+  :root {
+    --edge: 48px;
+    --fs-body: 19px;
+    --fs-btn: 19px;
+    --fs-small: 16px;
+    --fs-note: 16px;
+    --fs-label: 14px;
+    --fs-es-card: 72px;
+    --fs-es-today: 68px;
+    --fs-es-stop: 26px;
+    --fs-es-text: 24px;
+    --icon: 24px;
+    --btn-h: 60px;
+    --answer-h: 68px;
+    --stop-size: 22px;
+    --stop-gap: 16px;
+    --prog-dot: 20px;
+    --row-h: 64px;
+    --dot-cy: 16px;
+    --head-h: 268px;
+    --head-pt: 36px;
+    --mountain-w: 340px;
+    --tab-h: 58px;
+    --tabbar-h: 78px;
+  }
+}

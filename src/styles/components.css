@@ -1,0 +1,585 @@
+/* Symbole: Strichzeichnungen mit 1,8 px Strich, unabhängig von der Darstellungsgröße. */
+.icon {
+  flex: none;
+  width: var(--icon);
+  height: var(--icon);
+  stroke-width: 1.8px;
+}
+
+.icon * {
+  vector-effect: non-scaling-stroke;
+}
+
+/* Hauptknopf */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: var(--btn-h);
+  padding: 0 var(--s5);
+  border: 0;
+  border-radius: 8px;
+  background: var(--atlantico);
+  color: var(--nieve);
+  font-family: var(--font-de);
+  font-size: var(--fs-btn);
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* Textknopf und Tonknopf */
+.text-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  min-width: var(--tap);
+  min-height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--atlantico);
+  font-family: var(--font-de);
+  font-size: var(--fs-btn);
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.text-btn:disabled {
+  color: var(--ceniza);
+  cursor: default;
+  -webkit-text-fill-color: currentcolor;
+}
+
+/* Untere Aktionsleiste mit dem Hauptknopf */
+.action-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  padding: var(--s3) var(--bar-pad, 0px) calc(var(--s5) + env(safe-area-inset-bottom, 0px));
+  background: var(--pagina);
+}
+
+.action-bar--above-tabs {
+  bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: var(--s4);
+  border-top: var(--hair) solid var(--raya);
+}
+
+@media (min-width: 700px) {
+  .action-bar {
+    padding-bottom: calc(var(--s8) + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Beschriftung in Großbuchstaben */
+.label {
+  font-size: var(--fs-label);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ceniza);
+}
+
+.label--accent {
+  color: var(--atlantico);
+}
+
+/* Antwortzeilen */
+.answers {
+  display: flex;
+  flex-direction: column;
+  border-bottom: var(--hair) solid var(--raya);
+}
+
+.answer {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: var(--answer-h);
+  padding: 0;
+  border: 0;
+  border-top: var(--hair) solid var(--raya);
+  background: transparent;
+  color: var(--tinta);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.answer:disabled {
+  cursor: default;
+  opacity: 1;
+  -webkit-text-fill-color: currentcolor;
+}
+
+.answer__mark {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--stop-size);
+  height: var(--stop-size);
+}
+
+.answer__mark .icon {
+  width: 100%;
+  height: 100%;
+}
+
+.answer__circle {
+  width: 100%;
+  height: 100%;
+  border: 1.5px solid var(--ceniza);
+  border-radius: 50%;
+}
+
+.answer__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.answer__tag {
+  flex: none;
+  font-size: var(--fs-small);
+  font-weight: 600;
+}
+
+.answer--correct .answer__mark,
+.answer--correct .answer__tag {
+  color: var(--drago);
+}
+
+.answer--correct .answer__text {
+  font-weight: 600;
+}
+
+.answer--wrong .answer__mark,
+.answer--wrong .answer__tag {
+  color: var(--mojo);
+}
+
+.answer--wrong .answer__text {
+  text-decoration: line-through;
+  text-decoration-color: var(--mojo);
+}
+
+/* Haltepunkt */
+.stop-dot {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--stop-size);
+  height: var(--stop-size);
+  border: 2px solid var(--tinta);
+  border-radius: 50%;
+  background: var(--pagina);
+  color: var(--nieve);
+  transition: background-color 600ms ease;
+}
+
+.stop-dot--terminus {
+  border-radius: 4px;
+}
+
+.stop-dot--small {
+  width: var(--prog-dot);
+  height: var(--prog-dot);
+}
+
+.stop-dot--open,
+.stop-dot--running {
+  background: var(--platano);
+}
+
+.stop-dot--running::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--tinta);
+}
+
+.stop-dot--done {
+  background: var(--atlantico);
+}
+
+.stop-dot .icon {
+  width: 55%;
+  height: 55%;
+}
+
+/* Linie der Haltestellen */
+.line-block__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s3);
+  padding: 18px 0 6px;
+}
+
+.line-block__summary {
+  font-size: var(--fs-small);
+  color: var(--ceniza);
+}
+
+.line {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.line::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  left: calc(var(--stop-size) / 2 - var(--line-w) / 2);
+  width: var(--line-w);
+  top: var(--dot-cy);
+  bottom: calc(var(--row-h) - var(--dot-cy));
+  background: var(--atlantico);
+}
+
+.stop {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: var(--stop-gap);
+  min-height: var(--row-h);
+}
+
+.stop .stop-dot {
+  margin-top: calc(var(--dot-cy) - var(--stop-size) / 2);
+}
+
+.stop__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+button.stop__body {
+  cursor: pointer;
+}
+
+.stop__name {
+  min-width: 0;
+}
+
+.stop--open .stop__name,
+.stop--running .stop__name {
+  font-weight: 500;
+}
+
+.stop--locked .stop__name {
+  color: var(--ceniza);
+}
+
+.stop__meta {
+  font-size: var(--fs-small);
+  line-height: 1.3;
+  color: var(--ceniza);
+  text-align: right;
+}
+
+.stop--open .stop__meta,
+.stop--running .stop__meta {
+  color: var(--tinta);
+}
+
+.stop__status {
+  font-weight: 600;
+}
+
+.stop--done .stop__status {
+  font-weight: 400;
+}
+
+@media (max-width: 699.98px) {
+  /* Telefon: erledigt, offen und laufend zeigen rechts nur den Zustand. Das Thema bleibt für Vorlesegeräte. */
+  .stop--done .stop__topic,
+  .stop--open .stop__topic,
+  .stop--running .stop__topic,
+  .stop--done .stop__sep,
+  .stop--open .stop__sep,
+  .stop--running .stop__sep {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+@media (min-width: 700px) {
+  /* iPad: Thema unter dem Namen. */
+  .stop__body {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 0;
+  }
+
+  .stop__meta {
+    text-align: left;
+  }
+}
+
+/* Berg */
+.mountain {
+  display: block;
+  flex: none;
+  width: var(--mountain-w);
+  height: auto;
+}
+
+.mountain__body {
+  fill: var(--teide);
+  stroke: var(--tinta);
+  stroke-width: 2.5px;
+  stroke-linejoin: round;
+}
+
+.mountain__cap {
+  fill: var(--nieve);
+  stroke: var(--tinta);
+  stroke-width: 2px;
+  stroke-linejoin: round;
+}
+
+.mountain__pole {
+  fill: none;
+  stroke: var(--tinta);
+  stroke-width: 2px;
+  stroke-linecap: round;
+}
+
+.mountain__flag {
+  fill: var(--platano);
+  stroke: var(--tinta);
+  stroke-width: 1.5px;
+  stroke-linejoin: round;
+}
+
+.mountain__line {
+  fill: none;
+  stroke: var(--atlantico);
+  stroke-width: 2.5px;
+  stroke-linecap: round;
+}
+
+.mountain__stop {
+  stroke: var(--tinta);
+  transition: fill 600ms ease;
+}
+
+.mountain__stop--locked {
+  fill: var(--pagina);
+  stroke-width: 1.3px;
+}
+
+.mountain__stop--done {
+  fill: var(--atlantico);
+  stroke-width: 1.5px;
+}
+
+.mountain__stop--open,
+.mountain__stop--running {
+  fill: var(--platano);
+  stroke-width: 1.8px;
+}
+
+.mountain__core {
+  fill: var(--tinta);
+}
+
+@media (min-width: 700px) {
+  .mountain__body {
+    stroke-width: 2.2px;
+  }
+
+  .mountain__cap {
+    stroke-width: 1.8px;
+  }
+
+  .mountain__pole {
+    stroke-width: 1.6px;
+  }
+
+  .mountain__flag {
+    stroke-width: 1.3px;
+  }
+
+  .mountain__line {
+    stroke-width: 2px;
+  }
+
+  .mountain__stop--locked {
+    stroke-width: 1.1px;
+  }
+
+  .mountain__stop--done {
+    stroke-width: 1.2px;
+  }
+
+  .mountain__stop--open,
+  .mountain__stop--running {
+    stroke-width: 1.4px;
+  }
+}
+
+/* Fortschritt der Einheit */
+.unit-header {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding-top: var(--s3);
+  font-size: var(--fs-small);
+  color: var(--ceniza);
+}
+
+.unit-header__close {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap);
+  height: var(--tap);
+  margin-left: -12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--tinta);
+  cursor: pointer;
+}
+
+.unit-header__counter {
+  flex: none;
+}
+
+.unit-progress {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: var(--prog-dot);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.unit-progress::before {
+  content: "";
+  position: absolute;
+  left: calc(var(--prog-dot) / 2);
+  right: calc(var(--prog-dot) / 2);
+  top: calc(var(--prog-dot) / 2 - var(--line-w) / 2);
+  height: var(--line-w);
+  background: var(--atlantico);
+}
+
+.unit-progress > li {
+  position: relative;
+  display: flex;
+}
+
+@media (min-width: 700px) {
+  .unit-header {
+    gap: var(--s4);
+    padding-top: var(--s7);
+  }
+}
+
+/* Untere Leiste */
+.tabbar {
+  display: flex;
+  gap: var(--s1);
+  padding: 0 var(--s5) calc(var(--s5) + env(safe-area-inset-bottom, 0px));
+  border-top: var(--hair) solid var(--raya);
+  background: var(--pagina);
+}
+
+.tab {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tab-h);
+  margin: -1px 0 0;
+  padding: 0 var(--s1);
+  border: 0;
+  border-top: 2px solid transparent;
+  background: transparent;
+  color: var(--ceniza);
+  font-family: var(--font-de);
+  font-size: var(--fs-small);
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.tab[aria-current="page"] {
+  border-top-color: var(--atlantico);
+  color: var(--tinta);
+  font-weight: 600;
+}
+
+@media (min-width: 700px) {
+  .tabbar {
+    justify-content: center;
+    gap: var(--s3);
+    padding-left: var(--edge);
+    padding-right: var(--edge);
+  }
+
+  .tab {
+    flex: 0 1 auto;
+    min-width: 150px;
+  }
+}
+
+.shell .tabbar {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+}
+
+/* Hinweisleiste */
+.notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s1) var(--s4);
+  padding: var(--s2) var(--edge);
+  background: var(--platano);
+  color: var(--tinta);
+  font-size: var(--fs-note);
+}
+
+.notice .text-btn {
+  color: var(--atlantico);
+}
