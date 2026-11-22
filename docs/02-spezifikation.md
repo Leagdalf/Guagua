@@ -89,6 +89,13 @@ Falsche Antworten zur Auswahl stammen aus derselben Einheit und möglichst derse
 
 Prüfung beim Schreiben: Groß- und Kleinschreibung, Leerzeichen am Rand und die Zeichen `¿ ? ¡ ! . ,` zählen nicht. Stimmt der Rest, ist die Antwort richtig. Fehlt nur ein Akzent auf einem Vokal, gilt sie als richtig und die App zeigt die Schreibweise mit Akzent. Ein n statt ñ ist falsch.
 
+Schreiben ist nur fair, wenn die deutsche Vorgabe genau eine Lösung erwarten lässt. Deshalb gilt (Entscheidung der Hauptsitzung vom 23.11.2026 nach der Prüfung der Folgepakete):
+
+- Karten mit mehreren gleich richtigen Übersetzungen kommen nie als Schreibaufgabe, sondern als „Erinnern“. Die Liste ihrer Ids steht in `src/core/config.ts`.
+- Eine Wiederholrunde enthält höchstens sechs Schreibaufgaben. Weitere Karten ab Fach 3 kommen als „Erinnern“. Ohne diese Grenze würde die Runde ab Tag 5 länger als sechs Minuten dauern.
+- Unter dem Feld steht der Textknopf „Weiß ich nicht“. Er zeigt die Lösung und zählt als falsch.
+- Nach einer als falsch erkannten Eingabe kann die Lernende mit dem Textknopf „Meine Antwort stimmt auch“ widersprechen, dann zählt die Antwort als richtig. Gewertet wird erst mit dem Weitergehen.
+
 Nach jeder Antwort: richtige Lösung zeigen, bei Fehlern zusätzlich die gewählte Antwort, dazu der Hinweis der Karte, falls vorhanden. Weiter geht es erst durch Tippen.
 
 ### 2.5 Missionen
@@ -111,6 +118,8 @@ Nach jeder Antwort: richtige Lösung zeigen, bei Fehlern zusätzlich die gewähl
 - Spickzettel: Grammatiktabellen der begonnenen Haltestellen, Zahlen 0 bis 100 mit Ton, Wochentage, Aussprachehinweise.
 - Einstellungen: Name, Stimme mit Testknopf, Sprechtempo (normal, langsam), Ruhemodus.
 - Fortschritt sichern: Export als JSON-Datei über das Teilen-Menü, als Ersatz Kopieren in die Zwischenablage. Import aus Datei oder eingefügtem Text mit Rückfrage. Vor jedem Import legt die App eine Sicherung des aktuellen Stands an.
+- Die Rückfrage vor dem Import stellt den aktuellen und den importierten Stand nebeneinander (Karten, abgeschlossene Haltestellen, Datum, Punkte außer im Ruhemodus) und warnt, wenn der importierte Stand weniger Karten hat oder älter ist. Die letzte automatische Sicherung lässt sich auf derselben Seite mit Rückfrage zurückholen. Die App behält die drei neuesten Sicherungen.
+- Ist der Lernstand nicht lesbar, bietet die Fehleransicht neben dem Neustart auch den Import einer Sicherung an.
 - Über: Version, Stand der Inhalte, Punkte und Serie (nicht im Ruhemodus), Lernzeit je Tag, Schriftlizenzen und der Satz „Code und Lerninhalte sind mit KI-Unterstützung entstanden. Fehler gefunden? Bitte melden, dann wird die Karte korrigiert.“
 
 ### 2.8 Endstation
