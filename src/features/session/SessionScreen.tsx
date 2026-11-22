@@ -25,7 +25,7 @@ import {
   UnitHeader,
 } from "../../ui";
 import type { PairItem, PairState, StopState } from "../../ui";
-import { counterOf, mountainBefore, mountainStops, stepNumberOf, summaryFacts, summaryText } from "./machine";
+import { counterOf, mountainBefore, mountainStops, stepNumberOf, summaryFacts, summaryText, wrongCardsOf } from "./machine";
 import type { CardsScreen, DialogueScreen, PlanScreen, SessionEvent, SessionState, TaskScreen } from "./machine";
 import { FinalLineBody } from "./FinalLine";
 import { WriteField } from "./WriteField";
@@ -57,6 +57,7 @@ const QUESTION_LABEL = {
   cloze: "Welches Wort fehlt?",
   build: "Setze den Satz zusammen",
   write: "Schreib es auf Spanisch",
+  say: "Sag es laut",
 } as const;
 
 /** Ab dieser Länge steht das Spanische kleiner, damit der Satz in wenige Zeilen passt. */
@@ -64,6 +65,12 @@ const LONG_PROMPT = 24;
 
 function fillName(text: string, name: string): string {
   return text.replaceAll("{name}", name);
+}
+
+/** Der Fokus geht auf das Element, sobald es erscheint (Screenreader lesen die aufgedeckte Lösung vor). Kein Ton. */
+function focusWhenNew(element: HTMLElement | null): void {
+  element?.focus({ preventScroll: true });
+  element?.scrollIntoView?.({ block: "nearest" });
 }
 
 interface View {
@@ -295,7 +302,9 @@ function taskView(props: SessionScreenProps, screen: TaskScreen, text: string, s
 
   let footer: ReactNode = null;
   if (answered) footer = <PrimaryButton onClick={next}>Weiter</PrimaryButton>;
-  else if (task.kind === "build") {
+  else if (task.kind === "say") {
+    footer = screen.uncovered ? null : <PrimaryButton onClick={() => props.onEvent({ type: "uncover" })}>Aufdecken</PrimaryButton>;
+  } else if (task.kind === "build") {
     footer = (
       <PrimaryButton disabled={screen.placed.length !== task.tokens.length} onClick={() => props.onEvent({ type: "check" })}>
         Prüfen
@@ -314,6 +323,7 @@ function taskView(props: SessionScreenProps, screen: TaskScreen, text: string, s
         <Label as="h1">{label}</Label>
         {task.kind === "choice" && <ChoiceBody props={props} screen={screen} task={task} />}
         {task.kind === "build" && <BuildBody props={props} screen={screen} task={task} />}
+        {task.kind === "say" && <SayBody props={props} screen={screen} task={task} />}
         {task.kind === "write" && (
           <>
             <p className="sx-prompt-de">{task.prompt}</p>
@@ -323,11 +333,19 @@ function taskView(props: SessionScreenProps, screen: TaskScreen, text: string, s
                 <PrimaryButton disabled={text.trim() === ""} onClick={submit}>
                   Prüfen
                 </PrimaryButton>
+                <TextButton className="sx-write-link" onClick={() => props.onEvent({ type: "giveUp" })}>
+                  Weiß ich nicht
+                </TextButton>
               </div>
             )}
           </>
         )}
-        {answer && <AnswerFeedback props={props} task={task} answer={answer} />}
+        {answer && task.kind !== "say" && <AnswerFeedback props={props} task={task} answer={answer} />}
+        {task.kind === "write" && screen.pending && answer && !answer.correct && answer.chosen !== null && (
+          <div className="sx-write-link-row">
+            <TextButton onClick={() => props.onEvent({ type: "accept" })}>Meine Antwort stimmt auch</TextButton>
+          </div>
+        )}
       </div>
     ),
     footer,
@@ -399,6 +417,29 @@ function ChoiceBody({ props, screen, task }: { props: SessionScreenProps; screen
           );
         })}
       </AnswerList>
+    </>
+  );
+}
+
+/** „Sag es laut“: deutsche Frage, „Aufdecken“ (im Fuß), dann die Lösung mit Marker, Ton und die zwei Antwortzeilen. */
+function SayBody({ props, screen, task }: { props: SessionScreenProps; screen: TaskScreen; task: Extract<RoundTask, { kind: "say" }> }) {
+  return (
+    <>
+      <p className="sx-prompt-de">{task.prompt}</p>
+      {!screen.uncovered && <p className="sx-note">Sag den Satz laut auf Spanisch. Tippe dann auf „Aufdecken“ und vergleiche.</p>}
+      {screen.uncovered && (
+        <div className="sx-say-solution" tabIndex={-1} ref={focusWhenNew}>
+          <Es as="p" size="inherit" className="sx-prompt sx-prompt--long" id="sx-say-solution">
+            <Marker>{task.solution}</Marker>
+          </Es>
+          {task.note && <p className="sx-note">{task.note}</p>}
+          <Audio props={props} text={task.speak} describedBy="sx-say-solution" />
+          <AnswerList className="sx-answers sx-role-answers" label="Wie lief es?">
+            <AnswerRow onClick={() => props.onEvent({ type: "sat" })}>Saß</AnswerRow>
+            <AnswerRow onClick={() => props.onEvent({ type: "again" })}>Noch mal</AnswerRow>
+          </AnswerList>
+        </div>
+      )}
     </>
   );
 }
@@ -498,8 +539,10 @@ function dialogue(props: SessionScreenProps, screen: DialogueScreen, fill: (text
               );
             }
             const showAnswer = role && line.learner;
+            // Nach „Aufdecken“ geht der Fokus auf die aufgedeckte Zeile, damit auch ein Screenreader die Lösung vorliest.
+            const focusLine = role && newest && line.learner;
             return (
-              <li key={i} className={className} ref={newest ? scrollIntoViewWhenNew : undefined}>
+              <li key={i} className={className} tabIndex={focusLine ? -1 : undefined} ref={focusLine ? focusWhenNew : newest ? scrollIntoViewWhenNew : undefined}>
                 <Es as="p" className="sx-dialogue__speaker">
                   {line.speaker}
                 </Es>
@@ -605,6 +648,7 @@ function summary(props: SessionScreenProps): View {
     doneStops: after.filter((stop) => stop === "done").length,
   });
   const animate = facts.kind === "unit" && !progress.profile.calm && !prefersReducedMotion();
+  const wrong = wrongCardsOf(state);
 
   return {
     body: (
@@ -624,6 +668,26 @@ function summary(props: SessionScreenProps): View {
           </p>
         ))}
         {text.lines.length > 0 && <SummaryList className="sx-summary" items={text.lines} />}
+        {wrong.length > 0 && (
+          <>
+            <Label as="h2" className="sx-section">
+              Kommen morgen wieder
+            </Label>
+            <ul className="sx-wrong" aria-label="Karten, die morgen wiederkommen">
+              {wrong.map((item, i) => (
+                <li key={item.id} className="sx-wrong__row">
+                  <span className="sx-wrong__text">
+                    <Es as="span" id={`sx-wrong-${i}`}>
+                      {item.es}
+                    </Es>
+                    <span className="sx-wrong__de">{item.de}</span>
+                  </span>
+                  <AudioButton onClick={() => props.onSpeak(speakTextOf(item))} disabled={!props.hasVoice} describedBy={`sx-wrong-${i}`} />
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </div>
     ),
     footer: <PrimaryButton onClick={props.onExit}>Zur Linie</PrimaryButton>,

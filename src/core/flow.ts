@@ -1,8 +1,8 @@
 // Inhalte der Schritte einer Haltestelle und freie Runden. Jede Funktion liefert, was die Oberfläche anzeigt.
 // Die Antworten laufen über `answerInRound` (round.ts), Schritte schließt `completeStep` (units.ts) ab.
 
-import { extraRoundIds, reviewRoundIds } from "./cards";
-import { EXTRA_ROUND_CARDS, FINAL_REVIEW, REVIEW_ROUND } from "./config";
+import { extraRoundIds, reviewLimit, reviewRoundIds } from "./cards";
+import { EXTRA_ROUND_CARDS, FINAL_REVIEW } from "./config";
 import { allItems, getItem } from "./content";
 import { shuffle } from "./random";
 import type { Rng } from "./random";
@@ -13,21 +13,30 @@ import type { Clock } from "./time";
 import type { ChoiceTask, PairsTask, RoundTask, TaskEnv } from "./tasks";
 import type { Day, Item, Progress } from "./types";
 
+/**
+ * Aufgaben zu Karten in der Reihenfolge von `ids`: Typ nach Fach. Die ersten `MAX_WRITE_TASKS_PER_ROUND` Schreibaufgaben
+ * bleiben Schreibaufgaben, alle weiteren Karten ab Fach 3 kommen als „Sag es laut“ (oder „Erinnern“, siehe `taskTypeForReview`).
+ */
 function tasksForCards(progress: Progress, ids: readonly string[], rng: Rng, env: TaskEnv): RoundTask[] {
-  return ids.map((id) => makeReviewTask(id, progress.cards[id]?.box ?? 1, rng, env));
+  let writes = 0;
+  return ids.map((id) => {
+    const task = makeReviewTask(id, progress.cards[id]?.box ?? 1, rng, env, writes);
+    if (task.kind === "write") writes++;
+    return task;
+  });
 }
 
-/** Schritt 1: fällige Karten, niedrigstes Fach zuerst, höchstens 40. Aufgabentyp nach Fach. */
-export function buildReviewRound(progress: Progress, day: Day, rng: Rng, env: TaskEnv, limit: number = REVIEW_ROUND.maxCards): RoundState {
+/** Schritt 1: fällige Karten, niedrigstes Fach zuerst, höchstens 40 (nach der Endstation 20, `reviewLimit`). Aufgabentyp nach Fach. */
+export function buildReviewRound(progress: Progress, day: Day, rng: Rng, env: TaskEnv, limit: number = reviewLimit(progress)): RoundState {
   return createRound(tasksForCards(progress, reviewRoundIds(progress, day, limit), rng, env));
 }
-
 /**
  * Freie Runde „10 Karten extra“. Leer, wenn noch keine Haltestelle abgeschlossen ist.
+ * Karten in niedrigen Fächern zuerst, innerhalb eines Fachs zufällig, bei jedem Start neu (2.9, Punkt 7).
  * Reine Übung: Die Runde trägt `practice`, `answerInRound` ändert dann kein Fach und gibt keine Punkte.
  */
 export function buildExtraRound(progress: Progress, day: Day, rng: Rng, env: TaskEnv, count: number = EXTRA_ROUND_CARDS): RoundState {
-  return createRound(tasksForCards(progress, extraRoundIds(progress, day, count), rng, env), { practice: true });
+  return createRound(tasksForCards(progress, extraRoundIds(progress, day, count, rng), rng, env), { practice: true });
 }
 
 /**

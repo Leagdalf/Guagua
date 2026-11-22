@@ -1,8 +1,8 @@
 // Haltestellen, Schritte der Lerneinheit, Missionen und die Abfragen für die Startseite
 // (docs/02-spezifikation.md, 2.2, 2.3, 2.5, 2.8 und 5.3). Alles unveränderlich: Funktionen geben neue Progress-Objekte zurück.
 
-import { dueCardIds, newCard } from "./cards";
-import { POINTS, REVIEW_ROUND } from "./config";
+import { dueCardIds, newCard, reviewLimit } from "./cards";
+import { POINTS } from "./config";
 import { getUnit, units } from "./content";
 import { addPoints, markStreakDay } from "./stats";
 import { dayOfIso, daysBetween, today } from "./time";
@@ -219,7 +219,7 @@ export function finishReviewRound(progress: Progress, day: Day): Progress {
 export interface SessionPlan {
   /** Die Wiederholrunde kommt zuerst. */
   review: boolean;
-  /** Karten der Wiederholrunde, höchstens 40. 0 ohne Runde. */
+  /** Karten der Wiederholrunde, höchstens 40 (nach der Endstation 20, `reviewLimit`). 0 ohne Runde. */
   reviewCount: number;
   unitId: string | null;
   step: Step | null;
@@ -227,7 +227,7 @@ export interface SessionPlan {
 
 export function sessionPlan(progress: Progress, unitId: string | null, day: Day): SessionPlan {
   const review = reviewPending(progress, day);
-  const reviewCount = review ? Math.min(dueCount(progress, day), REVIEW_ROUND.maxCards) : 0;
+  const reviewCount = review ? Math.min(dueCount(progress, day), reviewLimit(progress)) : 0;
   const state = unitId === null ? "locked" : stopState(progress, unitId);
   if (unitId === null || (state !== "open" && state !== "running")) return { review, reviewCount, unitId: null, step: null };
   return { review, reviewCount, unitId, step: effectiveStep(progress.units[unitId]?.step ?? 2) };
@@ -259,7 +259,7 @@ export interface TodayPlan {
   dueCount: number;
   /** Die Wiederholrunde steht heute noch aus. */
   reviewPending: boolean;
-  /** Karten der heutigen Wiederholrunde, höchstens 40. 0, wenn sie nicht aussteht. */
+  /** Karten der heutigen Wiederholrunde, höchstens 40 (nach der Endstation 20). 0, wenn sie nicht aussteht. */
   reviewCount: number;
   unitId: string | null;
   unitState: "open" | "running" | null;
@@ -295,7 +295,7 @@ export function todayPlan(progress: Progress, day: Day): TodayPlan {
     kind,
     dueCount: due,
     reviewPending: pending,
-    reviewCount: pending ? Math.min(due, REVIEW_ROUND.maxCards) : 0,
+    reviewCount: pending ? Math.min(due, reviewLimit(progress)) : 0,
     unitId: offered ? offered.unitId : null,
     unitState: offered ? (offered.state as "open" | "running") : null,
     unitStep: offered && offered.step !== null ? effectiveStep(offered.step) : null,

@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { allItems, units } from "../../core/content";
 import { parseProgress } from "../../core/progress";
-import { STORAGE_KEY } from "../../core/config";
+import { MAX_WRITE_TASKS_PER_ROUND, STORAGE_KEY } from "../../core/config";
 import { taskTypeForReview } from "../../core/tasks";
 import type { Box, Progress, Step } from "../../core/types";
 import { completeStep, finalStationState, startUnit } from "../../core/units";
@@ -96,10 +96,14 @@ describe("Endstation: 30 Aufgaben", () => {
     expect(new Set(ids).size).toBe(30);
     const queue = run.task.round!.queue;
     expect(queue.map((task) => task.itemId)).toEqual(ids);
+    // Der Typ folgt dem Fach; die ersten sechs Schreibaufgaben bleiben, weitere Karten ab Fach 3 kommen als „Sag es laut“.
+    let writes = 0;
     for (const task of queue) {
       const item = allItems.find((entry) => entry.id === task.itemId)!;
-      expect(task.type).toBe(taskTypeForReview(item, progress.cards[item.id]!.box, { hasSpanishVoice: true }));
+      expect(task.type).toBe(taskTypeForReview(item, progress.cards[item.id]!.box, { hasSpanishVoice: true }, writes));
+      if (task.type === "write") writes++;
     }
+    expect(writes).toBeLessThanOrEqual(MAX_WRITE_TASKS_PER_ROUND);
     expect(queue.some((task) => task.type === "write")).toBe(true);
     expect(queue.some((task) => task.type === "listen")).toBe(true);
   });

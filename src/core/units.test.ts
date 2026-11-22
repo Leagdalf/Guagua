@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { dueCardIds } from "./cards";
-import { POINTS } from "./config";
+import { POINTS, REVIEW_ROUND, REVIEW_ROUND_AFTER_FINAL } from "./config";
 import { allItems, units } from "./content";
 import {
   buildClozeRound,
@@ -313,7 +313,7 @@ describe("Wiederholen einmal am Tag", () => {
     expect(todayPlan(p, "2026-11-23")).toMatchObject({ kind: "work", reviewPending: false, reviewCount: 0, unitState: "running", unitStep: 3 });
   });
 
-  it("todayPlan: nur Wiederholen, alle Haltestellen geschafft, höchstens 40 Karten; nach der Runde nichts mehr", () => {
+  it("todayPlan: nur Wiederholen, alle Haltestellen geschafft, nach der Endstation höchstens 20 Karten (vorher 40); nach der Runde nichts mehr", () => {
     const clock = makeClock();
     const base = freshProgress(clock);
     const doneUnits = Object.fromEntries(units.map((u) => [u.id, { step: 6 as const, startedAt: "x", completedAt: "2026-11-20T10:00:00.000Z" }]));
@@ -323,12 +323,15 @@ describe("Wiederholen einmal am Tag", () => {
     expect(todayPlan(finished, "2026-11-23")).toMatchObject({
       kind: "work",
       reviewPending: true,
-      reviewCount: 40,
+      reviewCount: REVIEW_ROUND_AFTER_FINAL,
       dueCount: 55,
       unitId: null,
       unitState: null,
       nextUnitId: null,
     });
+    // Ohne Ergebnis der Endstation bleibt es bei 40.
+    const { finalReview: _result, ...beforeFinal } = finished;
+    expect(todayPlan(beforeFinal, "2026-11-23").reviewCount).toBe(REVIEW_ROUND.maxCards);
     const after = todayPlan(finishReviewRound(finished, "2026-11-23"), "2026-11-23");
     expect(after).toMatchObject({ kind: "allDone", reviewPending: false, reviewCount: 0, dueCount: 55 });
   });

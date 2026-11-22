@@ -191,6 +191,17 @@ export function play(run: Run, bot: Bot = {}): boolean {
             run.send({ type: "place", index });
           }
           run.send({ type: "check" });
+        } else if (task.kind === "say") {
+          // „Sag es laut“: aufdecken, dann „Saß“ (oder „Noch mal“ für einen verlangten Fehler).
+          const first = screen.round !== null && !isRepeat(screen.round);
+          if (!screen.uncovered) run.send({ type: "uncover" });
+          else if (wrongLeft > 0 && screen.role === "review" && first) {
+            wrongLeft--;
+            run.send({ type: "again" });
+          } else if (stationWrongLeft > 0 && screen.role === "station" && first) {
+            stationWrongLeft--;
+            run.send({ type: "again" });
+          } else run.send({ type: "sat" });
         } else if (screen.role === "station" && stationWrongLeft > 0 && screen.round && !isRepeat(screen.round)) {
           stationWrongLeft--;
           run.send({ type: "submitText", text: "zzz" });

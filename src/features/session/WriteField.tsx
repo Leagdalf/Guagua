@@ -47,7 +47,7 @@ export function WriteField({ value, onChange, onSubmit, disabled }: WriteFieldPr
           if (!disabled) onSubmit();
         }}
       >
-        <TextField label="Spanisch" spanish value={value} onChange={onChange} disabled={disabled} enterKeyHint="go" />
+        <TextField label="Deine Antwort" spanish value={value} onChange={onChange} disabled={disabled} enterKeyHint="go" />
       </form>
       <div className="sx-chars" role="group" aria-label="Sonderzeichen">
         {SPECIAL_CHARS.map((char) => (
@@ -56,6 +56,7 @@ export function WriteField({ value, onChange, onSubmit, disabled }: WriteFieldPr
             type="button"
             lang="es"
             className="sx-char es"
+            aria-label={`${char} einfügen`}
             disabled={disabled}
             // Der Fokus bleibt im Feld, sonst schließt sich die Tastatur bei jedem Tippen.
             onMouseDown={(event) => event.preventDefault()}

@@ -44,6 +44,34 @@ export const REVIEW_TASK_BY_BOX: Record<Box, TaskType> = {
 /** „Schreiben“ ist gebaut: Wörter und Wendungen ab Fach 3 kommen als Schreibaufgabe, Satzmuster bleiben bei „Erinnern“. */
 export const WRITE_TASK_ENABLED = true;
 
+/**
+ * Karten, deren deutsche Vorgabe mehrere gleich richtige Übersetzungen zulässt (2.4, faire Schreibaufgaben).
+ * Sie kommen nie als „Schreiben“ und nie als „Sag es laut“, sondern als „Erinnern“.
+ */
+export const WRITE_EXCLUDED_ITEM_IDS: readonly string[] = [
+  "u01-i10", "u01-i16",
+  "u02-i01", "u02-i02", "u02-i14",
+  "u04-i09", "u04-i16",
+  "u05-i03", "u05-i07", "u05-i08", "u05-i09", "u05-i13",
+  "u06-i15",
+  "u07-i03", "u07-i07", "u07-i10",
+  "u08-i05", "u08-i15", "u08-i16",
+  "u09-i04",
+  "u10-i01", "u10-i02", "u10-i03", "u10-i11",
+];
+
+/** Höchstens so viele Schreibaufgaben je Wiederholrunde und je Endstation (2.4). Weitere Karten ab Fach 3 kommen als „Sag es laut“. */
+export const MAX_WRITE_TASKS_PER_ROUND = 6;
+
+/** „Sag es laut“ (2.9, Punkt 5). Ist es falsch, kommen die Karten über der Grenze als „Erinnern“. */
+export const SAY_TASK_ENABLED = true;
+
+/** Nach der Endstation hat die Wiederholrunde höchstens so viele Karten (2.9, Punkt 8). */
+export const REVIEW_ROUND_AFTER_FINAL = 20;
+
+/** „Oft falsch“ im Spickzettel: höchstens so viele Karten, die mindestens so oft falsch waren (2.9, Punkt 6). */
+export const OFTEN_WRONG = { maxCards: 10, minWrong: 2 } as const;
+
 /** Punkte je Ereignis, ohne Abzug (5.3). */
 export const POINTS = { correctAnswer: 10, dialogueDone: 20, missionDone: 50, unitDone: 100 } as const;
 

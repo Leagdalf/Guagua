@@ -14,7 +14,7 @@
 
 import { extraRoundIds, isRoundTimeUp } from "../../core/cards";
 import { EXTRA_ROUND_CARDS } from "../../core/config";
-import { getUnit } from "../../core/content";
+import { getItem, getUnit, units } from "../../core/content";
 import {
   buildClozeRound,
   buildExtraRound,
@@ -29,13 +29,13 @@ import {
 import { answerInRound, currentTask, isRepeat, isRoundDone } from "../../core/round";
 import type { RoundState } from "../../core/round";
 import { currentStreak, recordActivity } from "../../core/stats";
-import { evaluateBuild, evaluateChoice, evaluateWrite, isPairMatch, speakTextOf } from "../../core/tasks";
+import { acceptWrite, evaluateBuild, evaluateChoice, evaluateWrite, giveUpWrite, isPairMatch, speakTextOf } from "../../core/tasks";
 import type { ChoiceTask, Feedback, PairsTask, RoundTask, TaskEnv } from "../../core/tasks";
 import { today } from "../../core/time";
 import type { Clock } from "../../core/time";
 import type { Rng } from "../../core/random";
 import type { Day, Item, Progress, Step } from "../../core/types";
-import { completeStep, finalStationState, finishReviewRound, sessionPlan, startUnit, stopState, stopStates } from "../../core/units";
+import { completeStep, finalStationState, finishReviewRound, isUnitDone, sessionPlan, startUnit, stopState, stopStates } from "../../core/units";
 import type { StopState } from "../../core/units";
 import type { SessionRequest } from "./types";
 
@@ -122,6 +122,13 @@ export interface TaskScreen {
   /** Auswahl: gewählte Antwort. */
   chosen: number | null;
   answer: Feedback | null;
+  /**
+   * Schreiben: Die Antwort steht schon da (`answer`), ist aber noch nicht gewertet. Gewertet wird erst mit dem Weitergehen,
+   * damit „Meine Antwort stimmt auch“ noch gilt. Ein Neuladen dazwischen wertet nichts.
+   */
+  pending: boolean;
+  /** „Sag es laut“: Die Lösung ist aufgedeckt. */
+  uncovered: boolean;
 }
 
 /**
@@ -152,11 +159,14 @@ export interface MissionScreen {
   kind: "mission";
 }
 
-export type SummaryKind = "unit" | "review" | "extra";
+/** `replay`: Ende von „Dialog noch einmal spielen“ (oder der Satz, dass es noch nicht geht). */
+export type SummaryKind = "unit" | "review" | "extra" | "replay";
 
 export interface SummaryScreen {
   kind: "summary";
   summary: SummaryKind;
+  /** `replay`: Die Haltestelle ist noch nicht abgeschlossen, der Dialog wurde nicht gespielt. */
+  blocked?: boolean;
 }
 
 export type Screen = PlanScreen | CardsScreen | GrammarScreen | TaskScreen | DialogueScreen | MissionScreen | SummaryScreen | LineScreen;
@@ -167,6 +177,8 @@ export interface SessionTally {
   /** Erste Antworten in Wiederholen und Abschlussrunde: richtig und alle. */
   right: number;
   answered: number;
+  /** Karten, deren erste Antwort falsch war (ohne freie Runde): Sie kommen morgen wieder. Jede Karte einmal. */
+  wrongIds: readonly string[];
   /** Punkte beim Start, für „Punkte in dieser Einheit“. */
   startPoints: number;
 }
@@ -198,12 +210,16 @@ export type SessionEvent =
   | { type: "pair"; side: "left" | "right"; id: string }
   /** Übersetzung einer Dialogzeile aufdecken. */
   | { type: "reveal"; line: number }
-  /** Rollenspiel: „Aufdecken“, die Lösung der eigenen Zeile erscheint und wird gesprochen. */
+  /** Rollenspiel und „Sag es laut“: „Aufdecken“, die Lösung erscheint und wird gesprochen. */
   | { type: "uncover" }
-  /** Rollenspiel: „Saß“, weiter zur nächsten Zeile. */
+  /** Rollenspiel: „Saß“, weiter zur nächsten Zeile. „Sag es laut“: richtig, weiter. */
   | { type: "sat" }
-  /** Rollenspiel: „Noch mal“, die Zeile wird wieder verdeckt (höchstens einmal je Zeile). */
+  /** Rollenspiel: „Noch mal“, die Zeile wird wieder verdeckt (höchstens einmal je Zeile). „Sag es laut“: falsch, weiter. */
   | { type: "again" }
+  /** Schreiben: „Weiß ich nicht“, zeigt die Lösung und zählt als falsch. */
+  | { type: "giveUp" }
+  /** Schreiben: „Meine Antwort stimmt auch“ nach einer als falsch erkannten Eingabe. */
+  | { type: "accept" }
   /** App im Hintergrund: die Lernzeit pausiert. */
   | { type: "background" };
 
@@ -271,6 +287,8 @@ function taskScreenOf(role: TaskRole, round: RoundState, state: SessionState, pr
     placed: [],
     chosen: null,
     answer: null,
+    pending: false,
+    uncovered: false,
   };
 }
 
@@ -290,6 +308,8 @@ function clozeScreenOf(tasks: readonly ChoiceTask[], index: number, state: Sessi
     placed: [],
     chosen: null,
     answer: null,
+    pending: false,
+    uncovered: false,
   };
 }
 
@@ -332,10 +352,13 @@ function planScreenOf(progress: Progress, request: SessionRequest, day: Day, now
   if (request.kind === "final") {
     const review = sessionPlan(progress, null, day);
     const total = finalStationTaskCount(progress);
-    const running = progress.finalRun !== undefined;
+    const run = progress.finalRun;
     const rows: PlanRow[] = [];
     if (review.review) rows.push({ step: 1, name: STEP_NAMES[1], detail: cards(review.reviewCount), done: false });
     rows.push({ step: null, name: "Endstation", detail: `${total} Aufgaben`, done: false });
+    // Läuft sie schon: „Weiter bei Aufgabe n“. Ist die letzte Antwort schon gegeben, gibt es keine Aufgabe mehr, nur noch die Auswertung.
+    let button = "Beginnen";
+    if (run && !review.review) button = run.answered.length >= run.ids.length ? "Zur Auswertung" : `Weiter bei Aufgabe ${run.answered.length + 1}`;
     return {
       unitId: null,
       screen: {
@@ -343,7 +366,22 @@ function planScreenOf(progress: Progress, request: SessionRequest, day: Day, now
         label: "Heute · Endstation",
         title: { text: "Repaso final", spanish: true },
         rows,
-        button: running && !review.review ? `Weiter bei Aufgabe ${(progress.finalRun?.answered.length ?? 0) + 1}` : "Beginnen",
+        button,
+      },
+    };
+  }
+
+  if (request.kind === "dialogue") {
+    const unit = getUnit(request.unitId);
+    if (!unit) throw new Error(`Unbekannte Einheit ${request.unitId}`);
+    return {
+      unitId: unit.id,
+      screen: {
+        kind: "plan",
+        label: `Noch einmal · Haltestelle ${unit.stop}`,
+        title: { text: unit.title_es, spanish: true },
+        rows: [{ step: 4, name: STEP_NAMES[4], detail: unit.dialogue.setting_de.replaceAll("{name}", progress.profile.name), done: false }],
+        button: "Beginnen",
       },
     };
   }
@@ -402,15 +440,14 @@ export function createSession(progress: Progress, asked: SessionRequest, ctx: Se
   const day = today(ctx.now);
   // Die Endstation gibt es nur, solange sie offen ist. Sonst bleibt eine Sitzung nur zum Wiederholen.
   const request: SessionRequest = asked.kind === "final" && finalStationState(progress) !== "open" ? { kind: "day", unitId: null } : asked;
+  const tally: SessionTally = { reviewed: 0, right: 0, answered: 0, wrongIds: [], startPoints: progress.stats.points };
+  // Den Dialog noch einmal spielen kann nur, wer die Haltestelle abgeschlossen hat. Sonst endet die Sitzung sofort mit einem Satz.
+  if (request.kind === "dialogue" && !isUnitDone(progress, request.unitId)) {
+    const screen: SummaryScreen = { kind: "summary", summary: "replay", blocked: true };
+    return { state: { request, unitId: null, screen, lastInputMs: nowMs(ctx), activeMs: 0, tally }, progress, speak: null };
+  }
   const { unitId, screen } = planScreenOf(progress, request, day, ctx.now);
-  const state: SessionState = {
-    request,
-    unitId,
-    screen,
-    lastInputMs: nowMs(ctx),
-    activeMs: 0,
-    tally: { reviewed: 0, right: 0, answered: 0, startPoints: progress.stats.points },
-  };
+  const state: SessionState = { request, unitId, screen, lastInputMs: nowMs(ctx), activeMs: 0, tally };
   return { state, progress, speak: null };
 }
 
@@ -418,6 +455,13 @@ export function createSession(progress: Progress, asked: SessionRequest, ctx: Se
 function begin(s: SessionState, progress: Progress, ctx: SessionContext): SessionResult {
   const day = today(ctx.now);
   const request = s.request;
+
+  if (request.kind === "dialogue") {
+    // Nur anhören und spielen. Nichts am Lernstand ändert sich, auch nicht durch `startUnit` oder `completeStep`.
+    const first = unitOf(s)?.dialogue.lines[0];
+    if (!first) return { state: { ...s, screen: summaryScreen("replay") }, progress, speak: null };
+    return { state: { ...s, screen: { ...listenScreen(), shown: 1 } }, progress, speak: { text: first.es } };
+  }
 
   if (request.kind === "extra") {
     const round = buildExtraRound(progress, day, ctx.rng, envOf(ctx));
@@ -623,6 +667,7 @@ function startCloze(s: SessionState, p: Progress, ctx: SessionContext): SessionR
 
 function onTask(s: SessionState, screen: TaskScreen, event: SessionEvent, p: Progress, ctx: SessionContext): SessionResult | null {
   const task = screen.task;
+  if (task.kind === "say") return onSay(s, screen, task.speak, event, p, ctx);
   if (screen.answer === null) {
     switch (event.type) {
       case "choose":
@@ -640,14 +685,55 @@ function onTask(s: SessionState, screen: TaskScreen, event: SessionEvent, p: Pro
         return answer(s, screen, evaluateBuild(task, screen.placed.map((i) => task.tokens[i] ?? "")), null, p, ctx);
       case "submitText":
         return task.kind === "write" && event.text.trim() !== "" ? answer(s, screen, evaluateWrite(task, event.text), null, p, ctx) : null;
+      case "giveUp":
+        return task.kind === "write" ? answer(s, screen, giveUpWrite(task), null, p, ctx) : null;
       default:
         return null;
     }
   }
+  // Schreiben, noch nicht gewertet: Die Lernende darf einer falschen Eingabe widersprechen. „Weiß ich nicht“ lässt das nicht zu.
+  if (event.type === "accept" && screen.pending && !screen.answer.correct && screen.answer.chosen !== null) {
+    return { state: { ...s, screen: { ...screen, answer: acceptWrite(screen.answer) } }, progress: p, speak: null };
+  }
   return event.type === "next" ? advanceTask(s, screen, p, ctx) : null;
 }
 
-/** Antwort verbuchen und speichern: Fach, Fälligkeit und Punkte laufen über `answerInRound`. Lückensätze ändern nichts. */
+/**
+ * „Sag es laut“: „Aufdecken“ zeigt die Lösung und spricht sie im selben Tippen. Danach wertet „Saß“ (richtig) oder „Noch mal“
+ * (falsch) die Karte und geht gleich zur nächsten Aufgabe.
+ */
+function onSay(s: SessionState, screen: TaskScreen, solutionText: string, event: SessionEvent, p: Progress, ctx: SessionContext): SessionResult | null {
+  if (!screen.uncovered) {
+    if (event.type !== "uncover") return null;
+    return { state: { ...s, screen: { ...screen, uncovered: true } }, progress: p, speak: { text: solutionText } };
+  }
+  if (event.type !== "sat" && event.type !== "again") return null;
+  const scored = score(s, screen, event.type === "sat", p, ctx);
+  return advanceTask(scored.state, { ...screen, round: scored.round }, scored.progress, ctx);
+}
+
+/** Erste Antwort verbuchen (Fach, Fälligkeit, Punkte über `answerInRound`) und falsche Karten für „Kommen morgen wieder“ merken. */
+function score(
+  s: SessionState,
+  screen: TaskScreen,
+  correct: boolean,
+  p: Progress,
+  ctx: SessionContext,
+): { state: SessionState; progress: Progress; round: RoundState | null } {
+  const round = screen.round;
+  if (!round) return { state: s, progress: p, round };
+  const result = answerInRound(p, round, correct, ctx.now);
+  const itemId = screen.task.itemId;
+  const firstWrong = result.round.wrong > round.wrong && itemId !== null && !round.practice;
+  const wrongIds = firstWrong && !s.tally.wrongIds.includes(itemId) ? [...s.tally.wrongIds, itemId] : s.tally.wrongIds;
+  const state = wrongIds === s.tally.wrongIds ? s : { ...s, tally: { ...s.tally, wrongIds } };
+  return { state, progress: result.progress, round: result.round };
+}
+
+/**
+ * Antwort verbuchen und speichern. Auswahl und Satzbau werden gleich gewertet. Schreiben wird erst mit dem Weitergehen
+ * gewertet (`pending`), damit „Meine Antwort stimmt auch“ noch gilt. Lückensätze ändern nichts.
+ */
 function answer(
   s: SessionState,
   screen: TaskScreen,
@@ -656,19 +742,24 @@ function answer(
   p: Progress,
   ctx: SessionContext,
 ): SessionResult {
-  let progress = p;
-  let round = screen.round;
-  if (round) {
-    const result = answerInRound(p, round, feedback.correct, ctx.now);
-    progress = result.progress;
-    round = result.round;
+  if (screen.task.kind === "write") {
+    return { state: { ...s, screen: { ...screen, chosen, answer: feedback, pending: true } }, progress: p, speak: null };
   }
-  return { state: { ...s, screen: { ...screen, round, chosen, answer: feedback } }, progress, speak: null };
+  const scored = score(s, screen, feedback.correct, p, ctx);
+  return { state: { ...scored.state, screen: { ...screen, round: scored.round, chosen, answer: feedback } }, progress: scored.progress, speak: null };
 }
 
-/** „Weiter“ nach einer Antwort: nächste Aufgabe oder Ende der Runde. */
-function advanceTask(s: SessionState, screen: TaskScreen, p: Progress, ctx: SessionContext): SessionResult {
-  if (screen.role === "cloze" && screen.cloze) {
+/** „Weiter“ nach einer Antwort: nächste Aufgabe oder Ende der Runde. Eine noch nicht gewertete Schreibaufgabe wird jetzt gewertet. */
+function advanceTask(s0: SessionState, screen0: TaskScreen, p0: Progress, ctx: SessionContext): SessionResult {
+  let s = s0;
+  let p = p0;
+  let screen = screen0;
+  if (screen.pending && screen.answer) {
+    const scored = score(s, screen, screen.answer.correct, p, ctx);
+    s = scored.state;
+    p = scored.progress;
+    screen = { ...screen, round: scored.round, pending: false };
+  }  if (screen.role === "cloze" && screen.cloze) {
     const index = screen.cloze.index + 1;
     if (index < screen.cloze.tasks.length) {
       return { state: { ...s, screen: clozeScreenOf(screen.cloze.tasks, index, s, screen) }, progress: p, speak: null };
@@ -725,7 +816,7 @@ function onDialogue(s: SessionState, screen: DialogueScreen, event: SessionEvent
     if (line) return { state: { ...s, screen: { ...screen, shown: screen.shown + 1 } }, progress: p, speak: { text: line.es } };
     // Alles gehört: das Rollenspiel beginnt. Ohne eigene Zeile gibt es nichts zu spielen.
     const first = lines[0];
-    if (!first || !lines.some((line) => line.learner)) return enterStep(s, completeStep(p, unitId, 4, ctx.now), 5, ctx);
+    if (!first || !lines.some((line) => line.learner)) return finishDialogue(s, p, ctx);
     const role: DialogueScreen = { ...listenScreen(), phase: "role", shown: 1 };
     return { state: { ...s, screen: role }, progress: p, speak: first.learner ? null : { text: first.es } };
   }
@@ -748,6 +839,15 @@ function onDialogue(s: SessionState, screen: DialogueScreen, event: SessionEvent
   return event.type === "next" ? nextRoleLine(s, screen, lines, p, ctx) : null;
 }
 
+/**
+ * Schritt 4 ist durch. In der Tageseinheit zählt er (20 Punkte) und die Abschlussrunde folgt. Beim Wiederspielen des Dialogs
+ * (`dialogue`) ändert sich nichts: Es folgt der Schluss mit dem Hinweis.
+ */
+function finishDialogue(s: SessionState, p: Progress, ctx: SessionContext): SessionResult {
+  if (s.request.kind === "dialogue" || s.unitId === null) return { state: { ...s, screen: summaryScreen("replay") }, progress: p, speak: null };
+  return enterStep(s, completeStep(p, s.unitId, 4, ctx.now), 5, ctx);
+}
+
 /** Rollenspiel: zur nächsten Zeile. Eine Zeile der anderen Person wird im selben Tippen gesprochen. Nach der letzten Zeile ist Schritt 4 fertig. */
 function nextRoleLine(
   s: SessionState,
@@ -758,7 +858,7 @@ function nextRoleLine(
 ): SessionResult | null {
   if (s.unitId === null) return null;
   const next = lines[screen.shown];
-  if (!next) return enterStep(s, completeStep(p, s.unitId, 4, ctx.now), 5, ctx);
+  if (!next) return finishDialogue(s, p, ctx);
   return {
     state: { ...s, screen: { ...screen, shown: screen.shown + 1, uncovered: false } },
     progress: p,
@@ -783,8 +883,9 @@ export function stepNumberOf(state: SessionState): number | null {
     case "dialogue":
       return 4;
     case "mission":
-    case "summary":
       return 6;
+    case "summary":
+      return screen.summary === "replay" ? null : 6;
     case "task":
       if (state.request.kind === "final") return null;
       return screen.role === "review" ? 1 : screen.role === "cloze" ? 3 : 5;
@@ -810,7 +911,8 @@ export function counterOf(state: SessionState): string | null {
       const round = screen.round;
       if (!round) return null;
       // Vor der Antwort zählt eine erste Aufgabe schon mit, eine Wiedervorlage nicht.
-      const shown = screen.answer === null && !isRepeat(round) ? round.completed + 1 : round.completed;
+      // Eine Schreibaufgabe, die schon beantwortet, aber noch nicht gewertet ist (`pending`), zählt auch mit.
+      const shown = (screen.answer === null || screen.pending) && !isRepeat(round) ? round.completed + 1 : round.completed;
       const total = screen.offset + round.total;
       return `${Math.min(Math.max(screen.offset + shown, 1), Math.max(total, 1))} von ${total}`;
     }
@@ -829,6 +931,8 @@ export interface SummaryFacts {
   answered: number;
   pointsGained: number;
   streak: number;
+  /** `replay`: der Dialog wurde gespielt (`played`) oder die Haltestelle ist noch nicht abgeschlossen (`blocked`). */
+  replay?: "played" | "blocked";
 }
 
 export function summaryFacts(state: SessionState, progress: Progress, day: Day): SummaryFacts {
@@ -844,7 +948,21 @@ export function summaryFacts(state: SessionState, progress: Progress, day: Day):
     answered: state.tally.answered,
     pointsGained: progress.stats.points - state.tally.startPoints,
     streak: currentStreak(progress, day),
+    ...(kind === "replay" ? { replay: screen.kind === "summary" && screen.blocked ? ("blocked" as const) : ("played" as const) } : {}),
   };
+}
+
+/**
+ * Karten, deren erste Antwort in dieser Sitzung falsch war: „Kommen morgen wieder“ in der Zusammenfassung. Leer in der freien
+ * Runde (sie wertet nicht) und beim Wiederspielen des Dialogs.
+ */
+export function wrongCardsOf(state: SessionState): Item[] {
+  const screen = state.screen;
+  if (screen.kind !== "summary" || screen.summary === "extra" || screen.summary === "replay") return [];
+  return state.tally.wrongIds.flatMap((id) => {
+    const item = getItem(id);
+    return item ? [item] : [];
+  });
 }
 
 /** Zustände der zehn Haltestellen für den Berg. */
@@ -881,9 +999,15 @@ export function summaryText(facts: SummaryFacts, opts: { calm: boolean; missionT
   const lines: SummaryLine[] = [];
   const notes: string[] = [];
   let headline: string;
+  if (facts.kind === "replay") {
+    if (facts.replay === "blocked") {
+      return { headline: "Diese Haltestelle ist noch nicht abgeschlossen.", notes: ["Den Dialog kannst du danach noch einmal spielen."], lines };
+    }
+    return { headline: "Der Dialog ist durch.", notes: ["Das hat deinen Lernstand nicht verändert."], lines };
+  }
   if (facts.kind === "unit") {
     headline = `Haltestelle ${facts.stop ?? ""} ist geschafft.`;
-    notes.push(`${opts.doneStops} von 10 Haltestellen abgeschlossen.`);
+    notes.push(`${opts.doneStops} von ${units.length} Haltestellen abgeschlossen.`);
     if (opts.missionTitle) notes.push(`Deine Mission ist offen: ${opts.missionTitle}`);
     lines.push({ label: "Neue Karten", value: String(facts.newCards) });
   } else if (facts.kind === "extra") {

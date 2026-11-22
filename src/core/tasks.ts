@@ -2,7 +2,15 @@
 // Aufgabentypen heißen wie `TaskType` in types.ts. Alles reine Funktionen, Zufall wird hineingereicht.
 
 import { checkWritten } from "./answer";
-import { CHOICE_OPTION_COUNT, NEW_CARDS_BLOCK_SIZE, REVIEW_TASK_BY_BOX, WRITE_TASK_ENABLED } from "./config";
+import {
+  CHOICE_OPTION_COUNT,
+  MAX_WRITE_TASKS_PER_ROUND,
+  NEW_CARDS_BLOCK_SIZE,
+  REVIEW_TASK_BY_BOX,
+  SAY_TASK_ENABLED,
+  WRITE_EXCLUDED_ITEM_IDS,
+  WRITE_TASK_ENABLED,
+} from "./config";
 import { allItems, getItem, getUnit, units } from "./content";
 import { shuffle } from "./random";
 import type { Rng } from "./random";
@@ -14,6 +22,8 @@ export interface TaskEnv {
   hasSpanishVoice: boolean;
   /** Ist „Schreiben“ freigeschaltet? Standard: `WRITE_TASK_ENABLED` aus config.ts. */
   writeEnabled?: boolean;
+  /** Ist „Sag es laut“ freigeschaltet? Standard: `SAY_TASK_ENABLED` aus config.ts. */
+  sayEnabled?: boolean;
 }
 
 export type ChoiceTaskType = "recognize" | "listen" | "recall" | "cloze";
@@ -57,6 +67,23 @@ export interface WriteTask {
   note?: string;
 }
 
+/**
+ * „Sag es laut“: Deutsch lesen, laut sagen, aufdecken, die Lösung hören, dann „Saß“ (richtig) oder „Noch mal“ (falsch).
+ * Nie für Satzmuster und nie für Karten der Ausschlussliste.
+ */
+export interface SayTask {
+  kind: "say";
+  id: string;
+  type: "say";
+  itemId: string;
+  prompt: string;
+  promptLang: "de";
+  /** Spanischer Text der Lösung: wird beim Aufdecken gesprochen. */
+  speak: string;
+  solution: string;
+  note?: string;
+}
+
 /** Satzbau: Bausteine in die richtige Reihenfolge tippen. */
 export interface BuildTask {
   kind: "build";
@@ -89,7 +116,7 @@ export interface PairsTask {
 }
 
 /** Aufgaben, die in einer Runde (Wiederholen, Abschlussrunde) nacheinander kommen. */
-export type RoundTask = ChoiceTask | WriteTask | BuildTask;
+export type RoundTask = ChoiceTask | WriteTask | SayTask | BuildTask;
 export type Task = RoundTask | PairsTask;
 
 export interface Feedback {
@@ -149,26 +176,55 @@ function pickDistractors(item: Item, field: "es" | "de", rng: Rng, count: number
 
 // ---------- Aufgaben je Karte ----------
 
-/** Welcher Aufgabentyp beim Wiederholen für eine Karte in diesem Fach kommt (2.4 und Festlegungen zu `WRITE_TASK_ENABLED`). */
-export function taskTypeForReview(item: Item, box: Box, env: TaskEnv): TaskType {
+const excludedFromWriting = new Set(WRITE_EXCLUDED_ITEM_IDS);
+
+/** Darf die Karte als „Schreiben“ oder „Sag es laut“ kommen? Nicht Satzmuster und nicht die Karten der Ausschlussliste (2.4). */
+export function isWritable(item: Item): boolean {
+  return item.kind !== "frame" && !excludedFromWriting.has(item.id);
+}
+
+/**
+ * Welcher Aufgabentyp beim Wiederholen für eine Karte in diesem Fach kommt (2.4 und 2.9, Punkt 5).
+ * Ab Fach 3 gilt für Wörter und Wendungen: „Schreiben“, solange `writesSoFar` unter `MAX_WRITE_TASKS_PER_ROUND` liegt,
+ * danach „Sag es laut“ (oder „Erinnern“, wenn `SAY_TASK_ENABLED` aus ist). Satzmuster und Karten der Ausschlussliste: „Erinnern“.
+ * `writesSoFar`: Zahl der Schreibaufgaben, die die Runde schon hat.
+ */
+export function taskTypeForReview(item: Item, box: Box, env: TaskEnv, writesSoFar = 0): TaskType {
   let type: TaskType = REVIEW_TASK_BY_BOX[box];
-  if (type === "write" && (item.kind === "frame" || !(env.writeEnabled ?? WRITE_TASK_ENABLED))) type = "recall";
+  if (type === "write") {
+    if (!isWritable(item) || !(env.writeEnabled ?? WRITE_TASK_ENABLED)) type = "recall";
+    else if (writesSoFar >= MAX_WRITE_TASKS_PER_ROUND) type = env.sayEnabled ?? SAY_TASK_ENABLED ? "say" : "recall";
+  }
   if (type === "listen" && !env.hasSpanishVoice) type = "recognize";
   return type;
 }
 
 /**
- * Baut die Aufgabe zu einer Karte. Satzmuster werden nie zu „write“ (dann „recall“), ohne Stimme wird „listen“ zu „recognize“.
- * Andere Typen als recognize, listen, recall, write sind für Karten nicht vorgesehen und führen zu „recognize“.
+ * Baut die Aufgabe zu einer Karte. Satzmuster und Karten der Ausschlussliste werden nie zu „write“ oder „say“ (dann „recall“),
+ * ohne Stimme wird „listen“ zu „recognize“.
+ * Andere Typen als recognize, listen, recall, write, say sind für Karten nicht vorgesehen und führen zu „recognize“.
  */
-export function makeItemTask(item: Item, type: TaskType, rng: Rng, env: Pick<TaskEnv, "hasSpanishVoice">): ChoiceTask | WriteTask {
+export function makeItemTask(item: Item, type: TaskType, rng: Rng, env: Pick<TaskEnv, "hasSpanishVoice">): ChoiceTask | WriteTask | SayTask {
   let kind: TaskType = type;
-  if (kind === "write" && item.kind === "frame") kind = "recall";
+  if ((kind === "write" || kind === "say") && !isWritable(item)) kind = "recall";
   if (kind === "listen" && !env.hasSpanishVoice) kind = "recognize";
-  if (kind !== "recognize" && kind !== "listen" && kind !== "recall" && kind !== "write") kind = "recognize";
-
+  if (kind !== "recognize" && kind !== "listen" && kind !== "recall" && kind !== "write" && kind !== "say") kind = "recognize";
   const speak = speakTextOf(item);
   const note = item.note_de;
+
+  if (kind === "say") {
+    return {
+      kind: "say",
+      id: `say:${item.id}`,
+      type: "say",
+      itemId: item.id,
+      prompt: item.de,
+      promptLang: "de",
+      speak,
+      solution: item.es,
+      ...(note ? { note } : {}),
+    };
+  }
 
   if (kind === "write") {
     return {
@@ -209,11 +265,11 @@ export function makeItemTask(item: Item, type: TaskType, rng: Rng, env: Pick<Tas
   return task;
 }
 
-/** Aufgabe zu einer Karte beim Wiederholen: Typ nach Fach. */
-export function makeReviewTask(itemId: string, box: Box, rng: Rng, env: TaskEnv): ChoiceTask | WriteTask {
+/** Aufgabe zu einer Karte beim Wiederholen: Typ nach Fach (`writesSoFar` wie bei `taskTypeForReview`). */
+export function makeReviewTask(itemId: string, box: Box, rng: Rng, env: TaskEnv, writesSoFar = 0): ChoiceTask | WriteTask | SayTask {
   const item = getItem(itemId);
   if (!item) throw new Error(`Unbekannte Karte ${itemId}`);
-  return makeItemTask(item, taskTypeForReview(item, box, env), rng, env);
+  return makeItemTask(item, taskTypeForReview(item, box, env, writesSoFar), rng, env);
 }
 
 // ---------- Aufgaben je Einheit ----------
@@ -331,6 +387,16 @@ export function evaluateWrite(task: WriteTask, text: string): Feedback {
     undefined,
     check.verdict === "accent" ? task.solution : null,
   );
+}
+
+/** „Weiß ich nicht“: zeigt die Lösung, zählt als falsch. */
+export function giveUpWrite(task: WriteTask): Feedback {
+  return feedback(false, "wrong", task.solution, null, task.note, undefined);
+}
+
+/** „Meine Antwort stimmt auch“: macht aus einer als falsch erkannten Eingabe eine richtige. Andere Rückmeldungen bleiben, wie sie sind. */
+export function acceptWrite(fb: Feedback): Feedback {
+  return fb.correct ? fb : { ...fb, correct: true, verdict: "correct" };
 }
 
 /** Satzbau bewertet: Die gewählten Bausteine in ihrer Reihenfolge, mit Leerzeichen verbunden, müssen die Lösung ergeben. */

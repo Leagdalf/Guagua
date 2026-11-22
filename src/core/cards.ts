@@ -1,10 +1,12 @@
 // Karteikasten (docs/02-spezifikation.md, 5.1 und 5.2).
 
-import { BOX_INTERVAL_DAYS, EXTRA_ROUND_CARDS, MAX_BOX, POINTS, REVIEW_ROUND, WRONG_ANSWER } from "./config";
-import { allItems, unitOfItem } from "./content";
+import { BOX_INTERVAL_DAYS, EXTRA_ROUND_CARDS, MAX_BOX, OFTEN_WRONG, POINTS, REVIEW_ROUND, REVIEW_ROUND_AFTER_FINAL, WRONG_ANSWER } from "./config";
+import { allItems, getItem, unitOfItem } from "./content";
+import { shuffle } from "./random";
+import type { Rng } from "./random";
 import { addPoints, updateStreakAfterReview } from "./stats";
 import { addDays } from "./time";
-import type { Box, CardProgress, Day, Progress } from "./types";
+import type { Box, CardProgress, Day, Item, Progress } from "./types";
 
 /** Neue Karte nach Schritt 2: Fach 1, heute fällig. */
 export function newCard(today: Day): CardProgress {
@@ -74,19 +76,44 @@ export function dueCardIds(progress: Progress, today: Day): string[] {
     .map(([id]) => id);
 }
 
-/** Karten der Wiederholrunde: die fälligen, höchstens `limit` (Standard 40). Der Rest bleibt fällig. */
-export function reviewRoundIds(progress: Progress, today: Day, limit: number = REVIEW_ROUND.maxCards): string[] {
+/** Höchstzahl der Karten einer Wiederholrunde: 40, nach der Endstation 20 (2.9, Punkt 8). */
+export function reviewLimit(progress: Progress): number {
+  return progress.finalReview ? REVIEW_ROUND_AFTER_FINAL : REVIEW_ROUND.maxCards;
+}
+
+/** Karten der Wiederholrunde: die fälligen, höchstens `limit` (Standard `reviewLimit`). Der Rest bleibt fällig. */
+export function reviewRoundIds(progress: Progress, today: Day, limit: number = reviewLimit(progress)): string[] {
   return dueCardIds(progress, today).slice(0, limit);
 }
 
-/** Freie Runde „10 Karten extra“: erst die fälligen, dann die übrigen gelernten nach Fach und Fälligkeit. */
-export function extraRoundIds(progress: Progress, today: Day, count: number = EXTRA_ROUND_CARDS): string[] {
-  const learned = learnedCards(progress);
-  const due = learned.filter(([, card]) => card.due <= today).sort(byBoxThenDue);
-  const rest = learned.filter(([, card]) => card.due > today).sort(byBoxThenDue);
-  return [...due, ...rest].slice(0, count).map(([id]) => id);
+/**
+ * Freie Runde „10 Karten extra“: Karten in niedrigen Fächern zuerst, innerhalb eines Fachs zufällig (2.9, Punkt 7).
+ * Mit `rng` wählt jeder Aufruf neu. Ohne `rng` (zum Zählen) gilt die feste Reihenfolge nach Fälligkeit und Kurs.
+ */
+export function extraRoundIds(progress: Progress, _today: Day, count: number = EXTRA_ROUND_CARDS, rng?: Rng): string[] {
+  const learned = learnedCards(progress).sort(byBoxThenDue);
+  if (!rng) return learned.slice(0, count).map(([id]) => id);
+  const picked: string[] = [];
+  for (let box = 1; box <= MAX_BOX && picked.length < count; box++) {
+    const inBox = learned.filter(([, card]) => card.box === box).map(([id]) => id);
+    picked.push(...shuffle(inBox, rng));
+  }
+  return picked.slice(0, count);
 }
 
+/**
+ * Karten für „Oft falsch“ im Spickzettel: höchstens `OFTEN_WRONG.maxCards`, jede mindestens `OFTEN_WRONG.minWrong`-mal
+ * falsch (erste Antworten). Die mit den meisten Fehlern zuerst, bei Gleichstand das niedrigere Fach, dann Kursreihenfolge.
+ */
+export function oftenWrongCards(progress: Progress): { item: Item; wrong: number }[] {
+  const rows: { item: Item; wrong: number; box: Box }[] = [];
+  for (const [id, card] of Object.entries(progress.cards)) {
+    const item = getItem(id);
+    if (item && card.wrong >= OFTEN_WRONG.minWrong) rows.push({ item, wrong: card.wrong, box: card.box });
+  }
+  rows.sort((a, b) => b.wrong - a.wrong || a.box - b.box || (itemOrder.get(a.item.id) ?? 0) - (itemOrder.get(b.item.id) ?? 0));
+  return rows.slice(0, OFTEN_WRONG.maxCards).map(({ item, wrong }) => ({ item, wrong }));
+}
 /** Karten je Fach (alle angelegten Karten). */
 export function cardsPerBox(progress: Progress): Record<Box, number> {
   const out: Record<Box, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };

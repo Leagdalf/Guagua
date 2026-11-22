@@ -1,6 +1,8 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import { MAX_WRITE_TASKS_PER_ROUND } from "../../core/config";
 import { allItems } from "../../core/content";
+import { isWritable } from "../../core/tasks";
 import { checkWritten } from "../../core/answer";
 import type { Progress } from "../../core/types";
 import type { SessionState, TaskScreen } from "./machine";
@@ -30,7 +32,7 @@ function nextDayWithBox(box: 2 | 3 | 4 | 5) {
 }
 
 describe("Aufgabe „Schreiben“ in der Wiederholrunde", () => {
-  it("eine Karte in Fach 3 kommt als Schreibaufgabe, ein Satzmuster nie", () => {
+  it("eine Karte in Fach 3 kommt als Schreibaufgabe (höchstens sechs), ein Satzmuster nie", () => {
     const { clock, progress } = nextDayWithBox(3);
     const run = new Run(progress, { kind: "day", unitId: null }, clock);
     const round = run.task.round!;
@@ -40,13 +42,13 @@ describe("Aufgabe „Schreiben“ in der Wiederholrunde", () => {
     let writes = 0;
     for (const task of tasks) {
       const item = byId.get(task.itemId!)!;
-      if (item.kind === "frame") expect(task.type).toBe("recall");
-      else {
+      if (!isWritable(item)) expect(task.type).toBe("recall");
+      else if (writes < MAX_WRITE_TASKS_PER_ROUND) {
         expect(task.type).toBe("write");
         writes++;
-      }
+      } else expect(task.type).toBe("say");
     }
-    expect(writes).toBeGreaterThan(0);
+    expect(writes).toBe(MAX_WRITE_TASKS_PER_ROUND);
     expect(tasks.some((task) => task.type === "recall")).toBe(true);
   });
 
@@ -75,6 +77,9 @@ describe("Aufgabe „Schreiben“ in der Wiederholrunde", () => {
     const points = run.progress.stats.points;
     run.send({ type: "submitText", text: `  ${task.solution.toUpperCase()} ` });
     expect(run.task.answer).toMatchObject({ correct: true });
+    // Gewertet wird erst mit dem Weitergehen.
+    expect(run.progress.cards[task.itemId]?.box).toBe(3);
+    run.send({ type: "next" });
     expect(run.progress.cards[task.itemId]?.box).toBe(4);
     expect(run.progress.stats.points).toBe(points + 10);
   });
@@ -89,11 +94,13 @@ describe("Aufgabe „Schreiben“ in der Wiederholrunde", () => {
     expect(run.task.answer).toBeNull();
     run.send({ type: "submitText", text: "qqqq" });
     expect(run.task.answer).toMatchObject({ correct: false, solution: task.solution, chosen: "qqqq" });
-    expect(run.progress.cards[task.itemId]).toMatchObject({ box: 1, due: "2026-11-25" });
+    expect(run.progress.cards[task.itemId]).toMatchObject({ box: 3 });
     const page = html(run.state, run.progress);
     expect(page).toContain("Falsch. Richtig ist:");
     expect(page).toContain("Deine Antwort:");
     expect(page).toContain("qqqq");
+    run.send({ type: "next" });
+    expect(run.progress.cards[task.itemId]).toMatchObject({ box: 1, due: "2026-11-25" });
   });
 
   it("fehlender Akzent: richtig mit Hinweis „Richtig. Achte auf den Akzent: …“, Fach steigt", () => {
@@ -117,10 +124,11 @@ describe("Aufgabe „Schreiben“ in der Wiederholrunde", () => {
     const stripped = task.solution.normalize("NFD").replace(/[̀-ͯ]/g, "");
     run.send({ type: "submitText", text: stripped });
     expect(run.task.answer).toMatchObject({ correct: true, verdict: "accent", accentHint: task.solution });
-    expect(run.progress.cards[task.itemId]?.box).toBe(4);
     const page = html(run.state, run.progress);
     expect(page).toContain("Richtig. Achte auf den Akzent:");
     expect(page).toContain(task.solution);
+    run.send({ type: "next" });
+    expect(run.progress.cards[task.itemId]?.box).toBe(4);
   });
 
   it("„esta“ für „está“ ist richtig mit Hinweis, „manana“ für „mañana“ ist falsch", () => {
@@ -154,7 +162,7 @@ describe("Eingabefeld und Zeichenknöpfe", () => {
 
   it("neun Zeichenknöpfe mit lang=es, „Prüfen“ gesperrt bei leerem Feld und unter dem Feld", () => {
     const page = writePage();
-    for (const char of SPECIAL_CHARS) expect(page).toContain(`lang="es" class="sx-char es">${char}</button>`);
+    for (const char of SPECIAL_CHARS) expect(page).toContain(`lang="es" class="sx-char es" aria-label="${char} einfügen">${char}</button>`);
     expect(SPECIAL_CHARS.join("")).toBe("áéíóúñü¿¡");
     expect(page).toMatch(/<button type="button" class="btn" disabled="">Prüfen<\/button>/);
     expect(page.indexOf("sx-chars")).toBeLessThan(page.indexOf(">Prüfen<"));

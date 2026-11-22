@@ -382,3 +382,51 @@
   /* Der Knopf bleibt beim Scrollen über der Tastatur erreichbar, solange das Feld Fokus hat. */
   scroll-margin-bottom: var(--s6);
 }
+.sx-write-action .sx-write-link {
+  margin-top: var(--s2);
+}
+
+.sx-write-link-row {
+  align-self: stretch;
+  margin-top: var(--s2);
+}
+
+/* „Sag es laut“: die aufgedeckte Lösung bekommt den Fokus, ohne sichtbaren Rahmen. */
+.sx-say-solution {
+  align-self: stretch;
+}
+
+.sx-say-solution:focus,
+.sx-dialogue__line:focus {
+  outline: none;
+}
+
+/* „Kommen morgen wieder“: Liste mit Haarlinien, Spanisch, darunter Deutsch in ceniza, rechts „Anhören“. */
+.sx-wrong {
+  align-self: stretch;
+  margin: var(--s3) 0 0;
+  padding: 0;
+  list-style: none;
+  border-bottom: var(--hair) solid var(--raya);
+}
+
+.sx-wrong__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+  min-height: var(--row-h);
+  padding: var(--s2) 0;
+  border-top: var(--hair) solid var(--raya);
+}
+
+.sx-wrong__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sx-wrong__de {
+  font-size: var(--fs-note);
+  color: var(--ceniza);
+}

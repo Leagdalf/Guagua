@@ -138,9 +138,9 @@ export type Step = 1 | 2 | 3 | 4 | 5 | 6;
 /**
  * Aufgabentypen aus Abschnitt 2.4 der Spezifikation:
  * recognize = Erkennen, listen = Hören, write = Schreiben, recall = Erinnern,
- * pairs = Paare, cloze = Lücke, build = Satzbau.
+ * pairs = Paare, cloze = Lücke, build = Satzbau, say = „Sag es laut“ (Selbsteinschätzung).
  */
-export type TaskType = "recognize" | "listen" | "write" | "recall" | "pairs" | "cloze" | "build";
+export type TaskType = "recognize" | "listen" | "write" | "recall" | "pairs" | "cloze" | "build" | "say";
 
 /** Lokaler Kalendertag im Format JJJJ-MM-TT. */
 export type Day = string;
