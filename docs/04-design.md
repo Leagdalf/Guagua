@@ -139,7 +139,7 @@ Die zehn Haltepunkte liegen auf der Linie an der linken Flanke, von unten nach o
 
 Zustände wie bei der Linie: gesperrt mit Radius 3,2 in página, abgeschlossen mit Radius 4 in atlántico, die heutige mit Radius 5,5 in plátano. Alle mit Rand in tinta. Die Fahne am Gipfel steht für die Endstation.
 
-Der Berg ist Schmuck mit Bedeutung, aber keine Bedienung: `aria-hidden`, nicht antippbar. Der Stand steht daneben als Text („Tag 2 von 10“).
+Der Berg ist Schmuck mit Bedeutung, aber keine Bedienung: `aria-hidden`, nicht antippbar. Der Stand steht als Text bei der Linie („1 von 10 abgeschlossen“).
 
 ## Aufbau der Ansichten
 
@@ -147,7 +147,7 @@ Unter 700 px Breite gilt das Telefon-Raster, ab 700 px das iPad-Raster.
 
 | Ansicht | Telefon | iPad |
 |---|---|---|
-| Startseite | Eine Spalte: Kopf mit Datum, „Tag n von 10“ und Berg, Block „Heute“, Zeile mit der offenen Mission, Linie zum Scrollen. Der Hauptknopf sitzt fest über der unteren Leiste. | Kopf über die volle Breite. Darunter zwei gleich breite Spalten mit 48 px Abstand: links Block „Heute“, Hauptknopf und die offene Mission mit ihren Sätzen zum Mitnehmen, rechts die ganze Linie mit allen elf Punkten. |
+| Startseite | Eine Spalte: Kopf mit Datum, „Tag n“ und Berg, Block „Heute“, Zeile mit der offenen Mission, Linie zum Scrollen. Der Hauptknopf sitzt fest über der unteren Leiste. | Kopf über die volle Breite. Darunter zwei gleich breite Spalten mit 48 px Abstand: links Block „Heute“, Hauptknopf und die offene Mission mit ihren Sätzen zum Mitnehmen, rechts die ganze Linie mit allen elf Punkten. |
 | Lerneinheit | Eine Spalte mit 28 px Rand. Oben Schließen, die kurze Linie mit sechs Punkten und der Zähler. Hauptknopf am unteren Rand über dem sicheren Rand. | Dieselbe Spalte, 620 px breit, zentriert. |
 | Missionen, Sprachführer, Mehr | Eine Spalte mit 28 px Rand. | Eine Spalte, höchstens 680 px breit, zentriert. |
 
@@ -164,6 +164,14 @@ Unter 700 px Breite gilt das Telefon-Raster, ab 700 px das iPad-Raster.
 - Richtig: Der Auswahlkreis wird zum Haken in drago, der Text bekommt Schnitt 600, rechts steht „richtig“ in drago.
 - Falsch gewählt: Der Auswahlkreis wird zum Kreuz in mojo, der Text ist durchgestrichen mit Strich in mojo, rechts steht „deine Antwort“ in mojo. Die richtige Zeile wird zugleich wie oben markiert.
 - Unter den Antworten steht die Lösung als Satz, darunter in ceniza der Hinweis der Karte.
+
+## Paare, Satzbau, Eingabe, Zusammenfassung
+
+- Paare: zwei Spalten nebeneinander, links die vier spanischen Zeilen, rechts die vier deutschen. Jede Zeile ist wie eine Antwortzeile gebaut (Haarlinien, 56 px, iPad 68 px), aber ohne Auswahlkreis. Gewählt: Marker hinter dem Text, auch beim deutschen. Gefunden: Text in ceniza mit Haken in drago, nicht mehr wählbar. Falsches Paar: Beide Zeilen zeigen das Kreuz in mojo, bis die nächste Zeile angetippt wird.
+- Satzbau: Oben steht die Satzzeile auf einer Grundlinie von 1,5 px in tinta, mindestens 56 px hoch, sie bricht um. Darunter liegen die Bausteine als Wortknöpfe: Newsreader kursiv 20 px (iPad 24 px), Rand 1,5 px in tinta, 8 px Eckenradius, mindestens 48 px hoch und 44 px breit, 8 px Abstand. Ein gesetzter Baustein wandert in die Satzzeile und hinterlässt einen leeren Platz mit Rand in raya. Tippen auf ein Wort in der Satzzeile nimmt es zurück. Der Hauptknopf heißt „Prüfen“ und ist gesperrt, bis alle Bausteine gesetzt sind.
+- Eingabefelder (Name, Notiz, Suche, Schreiben): Beschriftung darüber im Stil der Großbuchstaben-Beschriftung, darunter das Feld ohne Kasten mit Unterstrich von 1,5 px in tinta, im Fokus 2,5 px in atlántico. Schrift 17 px (iPad 19 px). Wird Spanisch getippt, steht es in Newsreader kursiv mit 24 px (iPad 32 px).
+- Zusammenfassung am Ende einer Haltestelle: der Berg mit dem neuen Stand, eine Zeile Anerkennung, darunter eine Liste mit Haarlinien (neue Karten, richtige Antworten, Punkte und Serie außer im Ruhemodus), danach die Mission mit ihren Sätzen zum Mitnehmen.
+- Wo die Vorlagen Zwischenwerte benutzen, zum Beispiel 14 px zwischen Haltepunkt und Name, gelten die Werte der Vorlagen.
 
 ## Bewegung
 
@@ -193,7 +201,18 @@ Der Block „Heute“ besteht aus Beschriftung, großer Zeile, Erklärzeile und 
 | Nur Mission offen | Heute | Mission offen (Deutsch, Figtree 600) | Bestellen ohne Englisch | Mission ansehen |
 | Alles erledigt | Heute | Für heute fertig (Deutsch, Figtree 600) | Morgen: Haltestelle 3, Los números | 10 Karten extra |
 
-Ist nichts fällig und eine Haltestelle offen, lautet die Erklärzeile „Getränke bestellen. 15 neue Karten.“ und der Knopf „Haltestelle beginnen“.
+Weitere Fälle:
+
+| Zustand | Beschriftung | Große Zeile | Erklärzeile | Hauptknopf |
+|---|---|---|---|---|
+| Nichts fällig, Haltestelle offen | Heute · Haltestelle 2 | En el café | Getränke bestellen. 15 neue Karten. | Haltestelle beginnen |
+| Wiederholen fällig, Haltestelle läuft schon | Heute · Haltestelle 2 | En el café | Erst 16 Karten wiederholen, dann weiter bei Schritt 3 von 6. | Mit Wiederholen beginnen |
+| Nichts fällig, Haltestelle läuft schon | Heute · Haltestelle 2 | En el café | Weiter bei Schritt 3 von 6: Grammatik. | Haltestelle fortsetzen |
+| Nur Wiederholen, alle Haltestellen geschafft | Heute | Wiederholen (Deutsch, Figtree 600) | 12 Karten sind fällig. | Mit Wiederholen beginnen |
+
+Die Schritte heißen: 1 Wiederholen, 2 Neue Karten, 3 Grammatik, 4 Dialog, 5 Abschlussrunde, 6 Mission.
+
+Im Kopf der Startseite steht unter dem Datum „Tag n“: die Kalendertage seit dem ersten Start, ohne Obergrenze und ohne „von 10“.
 
 ## Was nicht vorkommt
 

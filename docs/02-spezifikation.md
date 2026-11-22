@@ -44,7 +44,7 @@ Der Speicher einer Web-App auf dem Home-Bildschirm ist von Safari getrennt. Desh
 - Punkte und Serie stehen nicht auf der Startseite. Sie erscheinen in der Zusammenfassung am Ende einer Haltestelle und unter „Mehr, Über“. Im Ruhemodus fehlen sie überall.
 - Auf dem iPad steht die Linie mit allen elf Punkten neben dem Block „Heute“, auf dem Telefon darunter.
 - Tippen auf eine abgeschlossene Haltestelle öffnet deren Übersicht: Karten, Grammatik, Dialog zum Wiederanhören.
-- Knopf „10 Karten extra“ startet jederzeit eine freie Wiederholrunde.
+- Knopf „10 Karten extra“ startet jederzeit eine freie Wiederholrunde. Sie ist reine Übung: Sie ändert keine Fächer und gibt keine Punkte, zählt aber für die Serie (Entscheidung der Hauptsitzung vom 22.11.2026, weil sich sonst Karten vor ihrer Fälligkeit hochstufen ließen).
 
 Haltestelle n+1 öffnet, wenn die Abschlussrunde von Haltestelle n beendet ist. Das Datum spielt keine Rolle. Die Endstation öffnet nach Haltestelle 10.
 
@@ -60,6 +60,8 @@ Sechs Schritte in fester Reihenfolge. Nach jedem Schritt wird der Stand gespeich
 | 4 Dialog | Erst anhören, dann Rollenspiel. | 3 min |
 | 5 Abschlussrunde | Jede neue Karte einmal als Aufgabe, dazu die drei Satzbau-Aufgaben. | 3 bis 4 min |
 | 6 Mission | Mission des Tages mit Sätzen zum Mitnehmen, danach Zusammenfassung. | 1 min |
+
+Wiederholen steht einmal am Tag am Anfang, auch wenn eine Haltestelle vom Vortag bei einem späteren Schritt liegt. Danach geht es am gespeicherten Schritt weiter. Endet die Runde an der Grenze von 40 Karten oder 6 Minuten, bleibt der Rest fällig und kommt am nächsten Tag. Ein Neuladen mitten in der Abschlussrunde wertet keine Aufgabe doppelt: Schon beantwortete Aufgaben kommen nicht erneut.
 
 Die Richtzeiten rechnen mit 8 Sekunden je Aufgabe. Das ist eine Annahme. Die App misst die aktive Zeit, damit sie sich prüfen lässt (Abschnitt 5.4).
 
@@ -154,6 +156,7 @@ interface Progress {
     step: 1 | 2 | 3 | 4 | 5 | 6;  // nächster offener Schritt
     startedAt: string;
     completedAt?: string;
+    answered?: string[];          // in der laufenden Abschlussrunde schon beantwortete Aufgaben
   }>;
   missions: Record<string, {      // Schlüssel: Mission-id
     state: "done" | "skipped";
@@ -165,6 +168,7 @@ interface Progress {
     points: number;
     streak: number;
     lastActiveDay: string | null;
+    lastReviewDay?: string;       // Tag der letzten beendeten Wiederholrunde
     activeMsByDay: Record<string, number>;
   };
   favorites: string[];            // ids aus dem Sprachführer

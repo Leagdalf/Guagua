@@ -162,6 +162,11 @@ export interface UnitProgress {
   /** ISO-Zeitpunkt. */
   startedAt: string;
   completedAt?: string;
+  /**
+   * Ids der Aufgaben (Karten und Satzbau), die in der laufenden Abschlussrunde schon beantwortet sind.
+   * Damit wertet ein Neuladen mitten in Schritt 5 nichts doppelt. Entfällt mit dem Abschluss der Haltestelle.
+   */
+  answered?: string[];
 }
 
 export interface MissionProgress {
@@ -194,6 +199,8 @@ export interface Progress {
     points: number;
     streak: number;
     lastActiveDay: Day | null;
+    /** Tag der letzten beendeten Wiederholrunde. Wiederholen steht einmal am Tag am Anfang. */
+    lastReviewDay?: Day;
     activeMsByDay: Record<Day, number>;
   };
   /** ids aus dem Sprachführer. */
