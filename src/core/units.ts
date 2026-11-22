@@ -53,17 +53,18 @@ export function finalStationState(progress: Progress): "locked" | "open" | "done
 
 /**
  * Beginnt eine Haltestelle (oder setzt sie fort). Gesperrte oder abgeschlossene Haltestellen bleiben unverändert.
- * Schritt 1 entfällt, wenn nichts fällig ist: dann beginnt die Einheit bei Schritt 2.
+ * Schritt 1 entfällt, wenn heute keine Wiederholrunde mehr aussteht (nichts fällig oder heute schon gemacht):
+ * Dann beginnt die Einheit bei Schritt 2, ein gespeicherter Schritt 1 springt auf 2.
  */
 export function startUnit(progress: Progress, unitId: string, now: Clock): Progress {
   const state = stopState(progress, unitId);
   if (state === "locked" || state === "done") return progress;
-  const hasDue = dueCardIds(progress, today(now)).length > 0;
+  const pending = reviewPending(progress, today(now));
   const existing = progress.units[unitId];
   if (!existing) {
-    return { ...progress, units: { ...progress.units, [unitId]: { step: hasDue ? 1 : 2, startedAt: now().toISOString() } } };
+    return { ...progress, units: { ...progress.units, [unitId]: { step: pending ? 1 : 2, startedAt: now().toISOString() } } };
   }
-  if (existing.step === 1 && !hasDue) {
+  if (existing.step === 1 && !pending) {
     return { ...progress, units: { ...progress.units, [unitId]: { ...existing, step: 2 } } };
   }
   return progress;
@@ -103,9 +104,10 @@ export function completeStep(progress: Progress, unitId: string, step: Step, now
     case 4:
       return withStep(addPoints(progress, POINTS.dialogueDone), unitId, 5);
     case 5: {
+      const { answered: _answered, ...rest } = entry;
       const done: Progress = {
         ...progress,
-        units: { ...progress.units, [unitId]: { ...entry, step: 6, completedAt: now().toISOString() } },
+        units: { ...progress.units, [unitId]: { ...rest, step: 6, completedAt: now().toISOString() } },
       };
       return markStreakDay(addPoints(done, POINTS.unitDone), day);
     }
@@ -193,7 +195,49 @@ export function dueCount(progress: Progress, day: Day): number {
   return dueCardIds(progress, day).length;
 }
 
-/** Tageszähler im Kopf: Tage seit dem Anlegen des Profils, der erste Tag ist 1. */
+/** Es sind Karten fällig und die Wiederholrunde ist heute noch nicht beendet. */
+export function reviewPending(progress: Progress, day: Day): boolean {
+  return progress.stats.lastReviewDay !== day && dueCount(progress, day) > 0;
+}
+
+/**
+ * Die Wiederholrunde von `day` ist beendet: Sie ist durch oder an der Grenze (40 Karten oder 6 Minuten) gestoppt.
+ * Ein Abbruch mitten in der Runde ruft das nicht auf. Der Rest bleibt fällig und kommt am nächsten Tag.
+ * Schließt Schritt 1 nicht ab: Das macht `completeStep(p, unitId, 1, now)`.
+ */
+export function finishReviewRound(progress: Progress, day: Day): Progress {
+  if (progress.stats.lastReviewDay === day) return progress;
+  return { ...progress, stats: { ...progress.stats, lastReviewDay: day } };
+}
+
+/**
+ * Was die Lerneinheit als Nächstes tut: erst die Wiederholrunde, falls sie aussteht, dann die Haltestelle.
+ * `unitId` null oder eine gesperrte oder abgeschlossene Haltestelle: Sitzung nur zum Wiederholen (`unitId` und `step` null).
+ * `step` ist der Schritt der Haltestelle nach der Wiederholrunde. Ein gespeicherter Schritt 1 gilt als erledigt
+ * und wird zu 2, ebenso eine noch nicht begonnene Haltestelle.
+ */
+export interface SessionPlan {
+  /** Die Wiederholrunde kommt zuerst. */
+  review: boolean;
+  /** Karten der Wiederholrunde, höchstens 40. 0 ohne Runde. */
+  reviewCount: number;
+  unitId: string | null;
+  step: Step | null;
+}
+
+export function sessionPlan(progress: Progress, unitId: string | null, day: Day): SessionPlan {
+  const review = reviewPending(progress, day);
+  const reviewCount = review ? Math.min(dueCount(progress, day), REVIEW_ROUND.maxCards) : 0;
+  const state = unitId === null ? "locked" : stopState(progress, unitId);
+  if (unitId === null || (state !== "open" && state !== "running")) return { review, reviewCount, unitId: null, step: null };
+  return { review, reviewCount, unitId, step: effectiveStep(progress.units[unitId]?.step ?? 2) };
+}
+
+function effectiveStep(step: Step): Step {
+  return step === 1 ? 2 : step;
+}
+
+/** Tageszähler im Kopf: Kalendertage seit dem Anlegen des Profils, der erste Tag ist 1, ohne Obergrenze. */
 export function dayCounter(progress: Progress, day: Day): number {
   const created = dayOfIso(progress.profile.createdAt);
   return created === null ? 1 : Math.max(1, daysBetween(created, day) + 1);
@@ -201,20 +245,24 @@ export function dayCounter(progress: Progress, day: Day): number {
 
 /**
  * Der Block „Heute“.
- * work: Wiederholungen fällig und/oder eine Haltestelle offen oder laufend. `unitId` ist die Haltestelle (oder `null`).
- * missionOnly: nichts fällig, die Haltestelle des Tages ist erledigt, aber eine Mission ist offen.
+ * work: die Wiederholrunde steht aus (`reviewPending`) und/oder eine Haltestelle ist offen oder läuft. `unitId` ist die Haltestelle (oder `null`).
+ *   Mit `unitId` null und `reviewPending`: nur Wiederholen (alle Haltestellen geschafft, aber Karten fällig).
+ * missionOnly: nichts steht aus, die Haltestelle des Tages ist erledigt, aber eine Mission ist offen.
  * allDone: alles erledigt. `nextUnitId` für „Morgen: Haltestelle n“, `finalStationOpen` wenn die Endstation wartet.
  * Hat heute schon eine Haltestelle abgeschlossen, bietet der Block keine weitere an. Über die Linie lässt sie sich trotzdem öffnen.
+ * Ist die Wiederholrunde heute beendet, zählen übrig gebliebene fällige Karten nicht mehr als Arbeit.
  */
 export interface TodayPlan {
   kind: "work" | "missionOnly" | "allDone";
-  /** Alle fälligen Karten. */
+  /** Alle fälligen Karten, auch nach einer beendeten Runde. */
   dueCount: number;
-  /** Karten der heutigen Runde, höchstens 40. */
+  /** Die Wiederholrunde steht heute noch aus. */
+  reviewPending: boolean;
+  /** Karten der heutigen Wiederholrunde, höchstens 40. 0, wenn sie nicht aussteht. */
   reviewCount: number;
   unitId: string | null;
   unitState: "open" | "running" | null;
-  /** Nächster Schritt der laufenden Haltestelle. */
+  /** Schritt der laufenden Haltestelle nach der Wiederholrunde (ein gespeicherter Schritt 1 gilt als 2). `null`, wenn sie noch nicht begonnen ist. */
   unitStep: Step | null;
   /** Zahl der neuen Karten der angebotenen Haltestelle. */
   newCardCount: number;
@@ -236,14 +284,16 @@ export function todayPlan(progress: Progress, day: Day): TodayPlan {
   const offered = candidate && (candidate.state === "running" || !doneToday) ? candidate : null;
   const openMissionId = openMissionIds(progress)[0] ?? null;
 
-  const kind: TodayPlan["kind"] = due > 0 || offered ? "work" : openMissionId ? "missionOnly" : "allDone";
+  const pending = reviewPending(progress, day);
+  const kind: TodayPlan["kind"] = pending || offered ? "work" : openMissionId ? "missionOnly" : "allDone";
   return {
     kind,
     dueCount: due,
-    reviewCount: Math.min(due, REVIEW_ROUND.maxCards),
+    reviewPending: pending,
+    reviewCount: pending ? Math.min(due, REVIEW_ROUND.maxCards) : 0,
     unitId: offered ? offered.unitId : null,
     unitState: offered ? (offered.state as "open" | "running") : null,
-    unitStep: offered ? offered.step : null,
+    unitStep: offered && offered.step !== null ? effectiveStep(offered.step) : null,
     newCardCount: offered ? (getUnit(offered.unitId)?.items.length ?? 0) : 0,
     openMissionId,
     nextUnitId: candidate ? candidate.unitId : null,

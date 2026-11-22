@@ -37,7 +37,18 @@ export function recordCardAnswer(progress: Progress, itemId: string, correct: bo
   return updateStreakAfterReview(next, today);
 }
 
-const itemOrder = new Map(allItems.map((item, index) => [item.id, index]));
+/**
+ * Antwort in der freien Runde („10 Karten extra“): reine Übung. Kein Fach, keine Fälligkeit, keine Punkte.
+ * Nur `lastSeen` wird heute, damit die Karte für die Serie zählt (5.3).
+ */
+export function recordPracticeAnswer(progress: Progress, itemId: string, today: Day): Progress {
+  const card = progress.cards[itemId];
+  if (!card) return progress;
+  const next: Progress = { ...progress, cards: { ...progress.cards, [itemId]: { ...card, lastSeen: today } } };
+  return updateStreakAfterReview(next, today);
+}
+
+const itemOrder =new Map(allItems.map((item, index) => [item.id, index]));
 
 /** Wiederholt wird nur, was zu einer abgeschlossenen Haltestelle gehört. Neue Karten laufen über die Abschlussrunde. */
 function learnedCards(progress: Progress): [string, CardProgress][] {

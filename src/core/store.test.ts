@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { STORAGE_KEY } from "./config";
-import { createProgress, parseProgress, serializeProgress, updateProfile } from "./progress";
+import { NAME_MAX_LENGTH, STORAGE_KEY } from "./config";
+import { createProgress, parseProgress, serializeProgress, updateProfile, validateProgress } from "./progress";
 import { createProgressStore } from "./store";
 import type { StorageLike } from "./store";
 import { freshProgress, makeClock } from "./testkit";
@@ -38,6 +38,30 @@ describe("Laden", () => {
     expect(parseProgress('{"schema":1}')).toMatchObject({ status: "error", reason: "invalid" });
     const broken = { ...freshProgress(clock), cards: { "u01-i01": { box: 9, due: "heute", right: 0, wrong: 0, lastSeen: "x" } } };
     expect(parseProgress(JSON.stringify(broken))).toMatchObject({ status: "error", reason: "invalid" });
+  });
+
+  it("strengere Prüfung: Name, Endstation und die neuen Felder", () => {
+    const base = freshProgress(clock);
+    const invalid = (value: unknown) => validateProgress(JSON.parse(JSON.stringify(value))) === null;
+    expect(validateProgress(JSON.parse(JSON.stringify(base)))).not.toBeNull();
+
+    expect(invalid({ ...base, profile: { ...base.profile, name: "" } })).toBe(true);
+    expect(invalid({ ...base, profile: { ...base.profile, name: "   " } })).toBe(true);
+    expect(invalid({ ...base, profile: { ...base.profile, name: "x".repeat(NAME_MAX_LENGTH + 1) } })).toBe(true);
+    expect(invalid({ ...base, profile: { ...base.profile, name: "x".repeat(NAME_MAX_LENGTH) } })).toBe(false);
+
+    const at = "2026-11-23T10:00:00.000Z";
+    expect(invalid({ ...base, finalReview: { at, right: 31, total: 30 } })).toBe(true);
+    expect(invalid({ ...base, finalReview: { at, right: 30, total: 30 } })).toBe(false);
+
+    expect(invalid({ ...base, stats: { ...base.stats, lastReviewDay: "2026-11-23" } })).toBe(false);
+    expect(invalid({ ...base, stats: { ...base.stats, lastReviewDay: 5 } })).toBe(true);
+    expect(invalid({ ...base, stats: { ...base.stats, lastReviewDay: "gestern" } })).toBe(true);
+
+    const unit = { step: 5, startedAt: at };
+    expect(invalid({ ...base, units: { u01: { ...unit, answered: ["recognize:u01-i01"] } } })).toBe(false);
+    expect(invalid({ ...base, units: { u01: { ...unit, answered: "recognize:u01-i01" } } })).toBe(true);
+    expect(invalid({ ...base, units: { u01: { ...unit, answered: [1] } } })).toBe(true);
   });
 
   it("ungültiger Name beim Anlegen", () => {
@@ -117,6 +141,32 @@ describe("Speicher", () => {
       expect(store.createProfile("Ana")).toBe(true);
       expect(JSON.parse(data.get(STORAGE_KEY) ?? "null").profile.name).toBe("Ana");
     }
+  });
+
+  it("restart() meldet den Erfolg", () => {
+    const { storage } = fakeStorage({ [STORAGE_KEY]: "{kaputt" });
+    const store = createProgressStore({ storage, now: clock.now });
+    expect(store.restart()).toBe(true);
+    expect(store.restart()).toBe(false); // nicht mehr im Fehlerzustand
+  });
+
+  it("scheitert das Sichern, bleibt der Fehlerzustand und nichts wird überschrieben", () => {
+    const { storage, data } = fakeStorage({ [STORAGE_KEY]: "{kaputt" });
+    const store = createProgressStore({ storage, now: clock.now });
+    storage.setItem.mockImplementation(() => {
+      throw new Error("voll");
+    });
+    expect(store.restart()).toBe(false);
+    expect(store.getSnapshot()).toMatchObject({ status: "error", raw: "{kaputt" });
+    expect(store.createProfile("Ana")).toBe(false);
+    expect(data.get(STORAGE_KEY)).toBe("{kaputt");
+    expect([...data.keys()]).toEqual([STORAGE_KEY]);
+    // Danach klappt der Neustart, sobald das Sichern wieder geht.
+    storage.setItem.mockImplementation((key: string, value: string) => {
+      data.set(key, value);
+    });
+    expect(store.restart()).toBe(true);
+    expect(store.getSnapshot()).toEqual({ status: "empty" });
   });
 
   it("wirft getItem, ist das ein Fehlerzustand und kein Absturz", () => {

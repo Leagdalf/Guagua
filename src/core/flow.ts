@@ -22,9 +22,12 @@ export function buildReviewRound(progress: Progress, day: Day, rng: Rng, env: Ta
   return createRound(tasksForCards(progress, reviewRoundIds(progress, day, limit), rng, env));
 }
 
-/** Freie Runde „10 Karten extra“. Leer, wenn noch keine Haltestelle abgeschlossen ist. */
+/**
+ * Freie Runde „10 Karten extra“. Leer, wenn noch keine Haltestelle abgeschlossen ist.
+ * Reine Übung: Die Runde trägt `practice`, `answerInRound` ändert dann kein Fach und gibt keine Punkte.
+ */
 export function buildExtraRound(progress: Progress, day: Day, rng: Rng, env: TaskEnv, count: number = EXTRA_ROUND_CARDS): RoundState {
-  return createRound(tasksForCards(progress, extraRoundIds(progress, day, count), rng, env));
+  return createRound(tasksForCards(progress, extraRoundIds(progress, day, count), rng, env), { practice: true });
 }
 
 /**
@@ -40,9 +43,15 @@ export function buildClozeRound(unitId: string, rng: Rng): ChoiceTask[] {
   return buildClozeTasks(unitId, rng);
 }
 
-/** Schritt 5: jede neue Karte einmal („Erkennen“), dazu die Satzbau-Aufgaben. Die Antworten ändern die Fächer der neuen Karten. */
-export function buildFinalRound(unitId: string, rng: Rng, env: Pick<TaskEnv, "hasSpanishVoice">): RoundState {
-  return createRound(buildFinalRoundTasks(unitId, rng, env));
+/**
+ * Schritt 5: jede neue Karte einmal („Erkennen“), dazu die Satzbau-Aufgaben. Die Antworten ändern die Fächer der neuen Karten.
+ * Aufgaben, die laut `progress.units[unitId].answered` schon ihre erste Antwort haben, fehlen. `total` zählt nur den Rest.
+ * Die Runde merkt sich `unitId`, damit `answerInRound` jede erste Antwort in `answered` einträgt.
+ */
+export function buildFinalRound(progress: Progress, unitId: string, rng: Rng, env: Pick<TaskEnv, "hasSpanishVoice">): RoundState {
+  const answered = new Set(progress.units[unitId]?.answered ?? []);
+  const tasks = buildFinalRoundTasks(unitId, rng, env).filter((task) => !answered.has(task.id));
+  return createRound(tasks, { unitId });
 }
 
 /**

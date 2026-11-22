@@ -35,8 +35,10 @@ export interface ProgressStore {
   /**
    * Ausdrücklicher Neustart nach einem Fehler: Der alte Text wird unter `<Schlüssel>:backup-<Zeitpunkt>` gesichert,
    * der Zustand wird „empty“. Erst `createProfile` schreibt wieder unter den eigentlichen Schlüssel.
+   * Scheitert das Sichern, bleibt der Zustand „error“ und nichts wird überschrieben. Gibt zurück, ob der Neustart geklappt hat
+   * (`false` auch, wenn der Zustand gar nicht „error“ ist).
    */
-  restart(): void;
+  restart(): boolean;
 }
 
 export interface ProgressStoreOptions {
@@ -103,15 +105,17 @@ export function createProgressStore({ storage, now, key = STORAGE_KEY }: Progres
     },
 
     restart() {
-      if (state.status !== "error") return;
+      if (state.status !== "error") return false;
       if (state.raw !== null) {
         try {
           storage.setItem(`${key}:backup-${now().toISOString()}`, state.raw);
         } catch {
-          // Sicherung ist best effort. Der alte Text bleibt unter dem Hauptschlüssel, bis das neue Profil ihn ersetzt.
+          // Ohne Sicherung des alten Textes bleibt der Fehlerzustand bestehen, damit nichts verloren geht.
+          return false;
         }
       }
       emit({ status: "empty" });
+      return true;
     },
   };
 }

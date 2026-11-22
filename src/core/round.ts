@@ -3,7 +3,7 @@
 // Nur die erste Antwort auf eine Karte ändert Fach und Punkte. Wiedervorlagen sind Übung ohne Wertung.
 
 import { POINTS, WRONG_ANSWER } from "./config";
-import { recordCardAnswer } from "./cards";
+import { recordCardAnswer, recordPracticeAnswer } from "./cards";
 import { addPoints } from "./stats";
 import { today } from "./time";
 import type { Clock } from "./time";
@@ -22,10 +22,31 @@ export interface RoundState {
   /** Erste Antworten richtig und falsch. */
   readonly right: number;
   readonly wrong: number;
+  /**
+   * Haltestelle, zu deren Abschlussrunde die Runde gehört. Dann merkt sich der Fortschritt in `units[unitId].answered`
+   * jede Aufgabe mit erster Antwort, damit ein Neuladen nichts doppelt wertet.
+   */
+  readonly unitId?: string;
+  /** Reine Übung (freie Runde): Antworten ändern kein Fach und geben keine Punkte, setzen nur `lastSeen` auf heute. */
+  readonly practice?: boolean;
 }
 
-export function createRound(tasks: readonly RoundTask[]): RoundState {
-  return { queue: tasks, attempts: {}, total: tasks.length, completed: 0, right: 0, wrong: 0 };
+export interface RoundOptions {
+  unitId?: string;
+  practice?: boolean;
+}
+
+export function createRound(tasks: readonly RoundTask[], options: RoundOptions = {}): RoundState {
+  return {
+    queue: tasks,
+    attempts: {},
+    total: tasks.length,
+    completed: 0,
+    right: 0,
+    wrong: 0,
+    ...(options.unitId !== undefined ? { unitId: options.unitId } : {}),
+    ...(options.practice ? { practice: true } : {}),
+  };
 }
 
 export function currentTask(round: RoundState): RoundTask | null {
@@ -62,8 +83,13 @@ export function answerInRound(progress: Progress, round: RoundState, correct: bo
   const first = attempt === 0;
   let nextProgress = progress;
   if (first) {
-    if (task.itemId !== null) nextProgress = recordCardAnswer(progress, task.itemId, correct, today(now));
-    else if (correct) nextProgress = addPoints(progress, POINTS.correctAnswer);
+    if (round.practice) {
+      if (task.itemId !== null) nextProgress = recordPracticeAnswer(progress, task.itemId, today(now));
+    } else {
+      if (task.itemId !== null) nextProgress = recordCardAnswer(progress, task.itemId, correct, today(now));
+      else if (correct) nextProgress = addPoints(progress, POINTS.correctAnswer);
+      if (round.unitId !== undefined) nextProgress = markAnswered(nextProgress, round.unitId, task.id);
+    }
   }
 
   const rest = round.queue.slice(1);
@@ -80,8 +106,19 @@ export function answerInRound(progress: Progress, round: RoundState, correct: bo
       completed: round.completed + (first ? 1 : 0),
       right: round.right + (first && correct ? 1 : 0),
       wrong: round.wrong + (first && !correct ? 1 : 0),
+      ...(round.unitId !== undefined ? { unitId: round.unitId } : {}),
+      ...(round.practice ? { practice: true } : {}),
     },
   };
+}
+
+/** Merkt die Aufgabe in `units[unitId].answered`. Nur bei einer laufenden Haltestelle. */
+function markAnswered(progress: Progress, unitId: string, taskId: string): Progress {
+  const entry = progress.units[unitId];
+  if (!entry || entry.completedAt !== undefined) return progress;
+  const answered = entry.answered ?? [];
+  if (answered.includes(taskId)) return progress;
+  return { ...progress, units: { ...progress.units, [unitId]: { ...entry, answered: [...answered, taskId] } } };
 }
 
 function insertAt<T>(list: readonly T[], index: number, value: T): T[] {

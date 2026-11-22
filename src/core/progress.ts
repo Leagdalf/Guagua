@@ -85,7 +85,8 @@ function validUnit(value: unknown): boolean {
     isRecord(value) &&
     inRange(value.step, 1, 6) &&
     typeof value.startedAt === "string" &&
-    (value.completedAt === undefined || typeof value.completedAt === "string")
+    (value.completedAt === undefined || typeof value.completedAt === "string") &&
+    (value.answered === undefined || (Array.isArray(value.answered) && value.answered.every((id) => typeof id === "string")))
   );
 }
 
@@ -110,6 +111,7 @@ export function validateProgress(value: unknown): Progress | null {
   if (
     !isRecord(profile) ||
     typeof profile.name !== "string" ||
+    normalizeName(profile.name) === null ||
     typeof profile.createdAt !== "string" ||
     !(profile.voiceURI === null || typeof profile.voiceURI === "string") ||
     !(profile.rate === "normal" || profile.rate === "slow") ||
@@ -122,6 +124,7 @@ export function validateProgress(value: unknown): Progress | null {
     !isNonNegativeNumber(stats.points) ||
     !isNonNegativeNumber(stats.streak) ||
     !(stats.lastActiveDay === null || isDay(stats.lastActiveDay)) ||
+    !(stats.lastReviewDay === undefined || isDay(stats.lastReviewDay)) ||
     !allValues(stats.activeMsByDay, isNonNegativeNumber)
   ) {
     return null;
@@ -133,7 +136,13 @@ export function validateProgress(value: unknown): Progress | null {
   const review = value.finalReview;
   if (
     review !== undefined &&
-    !(isRecord(review) && typeof review.at === "string" && isNonNegativeNumber(review.right) && isNonNegativeNumber(review.total))
+    !(
+      isRecord(review) &&
+      typeof review.at === "string" &&
+      isNonNegativeNumber(review.right) &&
+      isNonNegativeNumber(review.total) &&
+      review.right <= review.total
+    )
   ) {
     return null;
   }

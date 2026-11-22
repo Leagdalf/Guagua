@@ -1,5 +1,5 @@
 ﻿import { describe, expect, it } from "vitest";
-import { dueCardIds, extraRoundIds, gradeCard, newCard, reviewRoundIds } from "./cards";
+import { dueCardIds, extraRoundIds, gradeCard, isRoundTimeUp, newCard, reviewRoundIds } from "./cards";
 import { BOX_INTERVAL_DAYS, REVIEW_ROUND } from "./config";
 import { allItems, units } from "./content";
 import { buildFinalRound, buildReviewRound } from "./flow";
@@ -127,7 +127,7 @@ describe("Simulation über elf Tage", () => {
         progress = completeStep(progress, unit.id, 2, clock.now);
         progress = completeStep(progress, unit.id, 3, clock.now);
         progress = completeStep(progress, unit.id, 4, clock.now);
-        progress = drain(progress, buildFinalRound(unit.id, rng, env), clock.now);
+        progress = drain(progress, buildFinalRound(progress, unit.id, rng, env), clock.now);
         progress = completeStep(progress, unit.id, 5, clock.now);
       }
       clock.advance(1);
@@ -139,8 +139,9 @@ describe("Simulation über elf Tage", () => {
     expect(simulate()).toEqual([0, 16, 15, 15, 32, 30, 31, 31, 31, 31, 40]);
   });
 
-  it("stimmt mit der Rechnung aus tools/simulate-reviews.mjs bei Grenze 40 überein", () => {
-    // Nachbau des Skripts: neue Karten nach der Abschlussrunde in Fach 2 (richtig), niedrigstes Fach zuerst.
+  it("stimmt mit einem Nachbau der Rechnung von tools/simulate-reviews.mjs bei Grenze 40 überein", () => {
+    // Das Skript selbst läuft hier nicht (kein node:-Import in Tests). Der Nachbau rechnet: neue Karten nach der
+    // Abschlussrunde in Fach 2 (richtig), niedrigstes Fach zuerst.
     const interval: Record<number, number> = { 1: 0, 2: 1, 3: 3, 4: 6, 5: 12 };
     const cards: { box: number; due: number }[] = [];
     const reference: number[] = [];
@@ -156,5 +157,16 @@ describe("Simulation über elf Tage", () => {
     }
     expect(reference).toEqual([0, 16, 15, 15, 32, 30, 31, 31, 31, 31, 40]);
     expect(simulate()).toEqual(reference);
-  });});
+  });
+});
+
+describe("Zeitgrenze der Wiederholrunde", () => {
+  it("isRoundTimeUp: nach 6 Minuten wahr, knapp davor falsch", () => {
+    const start = 1_000_000;
+    expect(isRoundTimeUp(start, start)).toBe(false);
+    expect(isRoundTimeUp(start, start + REVIEW_ROUND.maxMinutes * 60_000 - 1)).toBe(false);
+    expect(isRoundTimeUp(start, start + REVIEW_ROUND.maxMinutes * 60_000)).toBe(true);
+    expect(isRoundTimeUp(start, start + 60 * 60_000)).toBe(true);
+  });
+});
 

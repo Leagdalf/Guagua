@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { dueCardIds } from "./cards";
 import { POINTS } from "./config";
-import { units } from "./content";
+import { allItems, units } from "./content";
 import { buildClozeRound, buildExtraRound, buildFinalRound, buildFinalStationRound, buildNewCards, buildReviewRound, finishFinalReview } from "./flow";
 import { parseProgress, serializeProgress } from "./progress";
 import { createRng } from "./random";
 import { answerInRound, isRoundDone } from "./round";
 import type { RoundState } from "./round";
-import { currentStreak, markStreakDay, recordActivity } from "./stats";
+import { currentStreak, markStreakDay, recordActivity, reviewedCardsOn } from "./stats";
 import { freshProgress, makeClock } from "./testkit";
 import { today } from "./time";
 import {
@@ -16,9 +16,12 @@ import {
   currentStep,
   dayCounter,
   finalStationState,
+  finishReviewRound,
   missionState,
   missionStates,
   openMissionIds,
+  reviewPending,
+  sessionPlan,
   skipMission,
   startUnit,
   stopState,
@@ -43,7 +46,7 @@ function playUnit(progress: Progress, unitId: string, clock: ReturnType<typeof m
   let p = startUnit(progress, unitId, clock.now);
   if (currentStep(p, unitId) === 1) p = completeStep(p, unitId, 1, clock.now);
   for (const step of [2, 3, 4] as const) p = completeStep(p, unitId, step, clock.now);
-  p = drain(p, buildFinalRound(unitId, createRng(1), env), clock.now, correct);
+  p = drain(p, buildFinalRound(p, unitId, createRng(1), env), clock.now, correct);
   return completeStep(p, unitId, 5, clock.now);
 }
 
@@ -85,11 +88,16 @@ describe("Haltestellen und Schritte", () => {
   it("Neuladen mitten in Schritt 3 setzt bei Schritt 3 fort", () => {
     const clock = makeClock();
     let p = startUnit(freshProgress(clock), u1.id, clock.now);
-    p = completeStep(completeStep(p, u1.id, 2, clock.now), u1.id, 3, clock.now);
-    p = completeStep(p, u1.id, 3, clock.now); // schon weiter, zweiter Aufruf wirkt nicht
+    p = completeStep(p, u1.id, 2, clock.now); // Schritt 2 fertig, Schritt 3 ist offen
+    expect(currentStep(p, u1.id)).toBe(3);
     const reloaded = parseProgress(serializeProgress(p));
     expect(reloaded.status).toBe("ok");
-    if (reloaded.status === "ok") expect(currentStep(reloaded.progress, u1.id)).toBe(4);
+    if (reloaded.status !== "ok") return;
+    expect(currentStep(reloaded.progress, u1.id)).toBe(3);
+    expect(reloaded.progress).toEqual(p);
+    // Der zweite Aufruf von Schritt 2 wirkt nach dem Neuladen nicht, Schritt 3 geht weiter zu 4.
+    expect(completeStep(reloaded.progress, u1.id, 2, clock.now)).toBe(reloaded.progress);
+    expect(currentStep(completeStep(reloaded.progress, u1.id, 3, clock.now), u1.id)).toBe(4);
   });
 
   it("Abschlussrunde: Haltestelle abgeschlossen, 100 Punkte, nächste offen, Mission offen, Serie 1", () => {
@@ -163,6 +171,182 @@ describe("Startseite", () => {
     expect(buildExtraRound(empty, "2026-11-23", createRng(1), env).total).toBe(0);
     const p = playUnit(empty, u1.id, clock);
     expect(buildExtraRound(p, "2026-11-23", createRng(1), env).total).toBe(10);
+  });
+});
+
+/** Antwortet nach einer festen Regel je Aufgaben-id, damit zwei Läufe dieselben Antworten geben. */
+const correctOf = (id: string): boolean => (id.charCodeAt(id.length - 1) + id.length) % 3 !== 0;
+
+function answerWhile(progress: Progress, round: RoundState, now: () => Date, keepGoing: (r: RoundState) => boolean): { progress: Progress; round: RoundState } {
+  let p = progress;
+  let r = round;
+  while (!isRoundDone(r) && keepGoing(r)) {
+    const task = r.queue[0]!;
+    ({ progress: p, round: r } = answerInRound(p, r, correctOf(task.id), now));
+  }
+  return { progress: p, round: r };
+}
+
+describe("Neuladen in der Abschlussrunde", () => {
+  function atStep5(clock: ReturnType<typeof makeClock>): Progress {
+    let p = startUnit(freshProgress(clock), u1.id, clock.now);
+    for (const step of [2, 3, 4] as const) p = completeStep(p, u1.id, step, clock.now);
+    return p;
+  }
+
+  it("halb beantworten, serialisieren, lesen, neu bauen: nur die beantworteten fehlen, am Ende gleiche Fächer und Punkte", () => {
+    const clock = makeClock();
+    const start = atStep5(clock);
+    const full = buildFinalRound(start, u1.id, createRng(1), env);
+    const half = Math.floor(full.total / 2);
+
+    // Lauf ohne Neuladen
+    const straight = answerWhile(start, full, clock.now, () => true).progress;
+
+    // Lauf mit Neuladen nach der Hälfte
+    const first = answerWhile(start, full, clock.now, (r) => r.completed < half);
+    const answeredIds = first.progress.units[u1.id]?.answered ?? [];
+    expect(answeredIds).toHaveLength(half);
+    const parsed = parseProgress(serializeProgress(first.progress));
+    expect(parsed.status).toBe("ok");
+    if (parsed.status !== "ok") return;
+    const rebuilt = buildFinalRound(parsed.progress, u1.id, createRng(99), env);
+    const allIds = buildFinalRound(start, u1.id, createRng(1), env).queue.map((t) => t.id);
+    expect(rebuilt.queue.map((t) => t.id).sort()).toEqual(allIds.filter((id) => !answeredIds.includes(id)).sort());
+    expect(rebuilt.total).toBe(full.total - half);
+    const reloaded = answerWhile(parsed.progress, rebuilt, clock.now, () => true).progress;
+
+    expect(reloaded.cards).toEqual(straight.cards);
+    expect(reloaded.stats.points).toBe(straight.stats.points);
+    expect(reloaded.stats.streak).toBe(straight.stats.streak);
+  });
+
+  it("alles beantwortet und neu geladen: die Runde ist leer, mit dem Abschluss verschwindet das Feld", () => {
+    const clock = makeClock();
+    const start = atStep5(clock);
+    let p = answerWhile(start, buildFinalRound(start, u1.id, createRng(1), env), clock.now, () => true).progress;
+    expect(p.units[u1.id]?.answered).toHaveLength(u1.items.length + u1.build.length);
+    expect(isRoundDone(buildFinalRound(p, u1.id, createRng(1), env))).toBe(true);
+    p = completeStep(p, u1.id, 5, clock.now);
+    expect(p.units[u1.id]).not.toHaveProperty("answered");
+    expect(JSON.stringify(p)).not.toContain("answered");
+  });
+});
+
+describe("Wiederholen einmal am Tag", () => {
+  /** Haltestelle 1 fertig am ersten Tag, Haltestelle 2 bis Schritt 3 begonnen, dann über Nacht. */
+  function overnight(): { p: Progress; clock: ReturnType<typeof makeClock> } {
+    const clock = makeClock();
+    let p = playUnit(freshProgress(clock), u1.id, clock);
+    p = startUnit(p, u2.id, clock.now);
+    p = completeStep(p, u2.id, 2, clock.now);
+    expect(currentStep(p, u2.id)).toBe(3);
+    clock.advance(1);
+    return { p, clock };
+  }
+
+  it("reviewPending: fällig und heute noch nicht beendet", () => {
+    const { p } = overnight();
+    expect(reviewPending(freshProgress(makeClock()), "2026-11-24")).toBe(false);
+    expect(reviewPending(p, "2026-11-23")).toBe(false);
+    expect(reviewPending(p, "2026-11-24")).toBe(true);
+    const done = finishReviewRound(p, "2026-11-24");
+    expect(done.stats.lastReviewDay).toBe("2026-11-24");
+    expect(reviewPending(done, "2026-11-24")).toBe(false);
+    expect(finishReviewRound(done, "2026-11-24")).toBe(done);
+    expect(reviewPending(done, "2026-11-25")).toBe(true);
+  });
+
+  it("ein Abbruch mitten in der Runde setzt lastReviewDay nicht", () => {
+    const { p, clock } = overnight();
+    const round = buildReviewRound(p, "2026-11-24", createRng(1), env);
+    const part = answerWhile(p, round, clock.now, (r) => r.completed < 5);
+    expect(part.progress.stats.lastReviewDay).toBeUndefined();
+    expect(reviewPending(part.progress, "2026-11-24")).toBe(true);
+  });
+
+  it("Haltestelle über Nacht bei Schritt 3: erst die Wiederholrunde, dann Schritt 3", () => {
+    const { p } = overnight();
+    expect(sessionPlan(p, u2.id, "2026-11-24")).toEqual({ review: true, reviewCount: 16, unitId: u2.id, step: 3 });
+    const after = finishReviewRound(p, "2026-11-24");
+    expect(sessionPlan(after, u2.id, "2026-11-24")).toEqual({ review: false, reviewCount: 0, unitId: u2.id, step: 3 });
+  });
+
+  it("gespeicherter Schritt 1 gilt als erledigt, sobald nichts mehr aussteht", () => {
+    const { p } = overnight();
+    const atOne = startUnit({ ...p, units: { ...p.units, [u2.id]: { step: 1, startedAt: "x" } } }, u2.id, () => new Date(2026, 10, 24, 12));
+    expect(sessionPlan(atOne, u2.id, "2026-11-24")).toMatchObject({ review: true, step: 2 });
+    const after = finishReviewRound(atOne, "2026-11-24");
+    expect(sessionPlan(after, u2.id, "2026-11-24")).toMatchObject({ review: false, step: 2 });
+    expect(currentStep(startUnit(after, u2.id, () => new Date(2026, 10, 24, 12)), u2.id)).toBe(2);
+  });
+
+  it("ohne offene Haltestelle: Sitzung nur zum Wiederholen", () => {
+    const { p } = overnight();
+    expect(sessionPlan(p, null, "2026-11-24")).toEqual({ review: true, reviewCount: 16, unitId: null, step: null });
+    // gesperrte und abgeschlossene Haltestelle zählen nicht als offen
+    expect(sessionPlan(p, units[3]!.id, "2026-11-24")).toMatchObject({ unitId: null, step: null });
+    expect(sessionPlan(p, u1.id, "2026-11-24")).toMatchObject({ unitId: null, step: null });
+  });
+
+  it("todayPlan: Haltestelle läuft schon, Wiederholen fällig / nichts fällig", () => {
+    const { p } = overnight();
+    expect(todayPlan(p, "2026-11-24")).toMatchObject({
+      kind: "work",
+      reviewPending: true,
+      reviewCount: 16,
+      dueCount: 16,
+      unitId: u2.id,
+      unitState: "running",
+      unitStep: 3,
+    });
+    expect(todayPlan(p, "2026-11-23")).toMatchObject({ kind: "work", reviewPending: false, reviewCount: 0, unitState: "running", unitStep: 3 });
+  });
+
+  it("todayPlan: nur Wiederholen, alle Haltestellen geschafft, höchstens 40 Karten; nach der Runde nichts mehr", () => {
+    const clock = makeClock();
+    const base = freshProgress(clock);
+    const doneUnits = Object.fromEntries(units.map((u) => [u.id, { step: 6 as const, startedAt: "x", completedAt: "2026-11-20T10:00:00.000Z" }]));
+    const cards = Object.fromEntries(allItems.slice(0, 55).map((item) => [item.id, { box: 2 as const, due: "2026-11-22", right: 1, wrong: 0, lastSeen: "2026-11-21" }]));
+    const missions = Object.fromEntries(units.map((u) => [u.mission.id, { state: "done" as const, at: "2026-11-20T10:00:00.000Z" }]));
+    const finished: Progress = { ...base, units: doneUnits, cards, missions, finalReview: { at: "2026-11-20T10:00:00.000Z", right: 1, total: 1 } };
+    expect(todayPlan(finished, "2026-11-23")).toMatchObject({
+      kind: "work",
+      reviewPending: true,
+      reviewCount: 40,
+      dueCount: 55,
+      unitId: null,
+      unitState: null,
+      nextUnitId: null,
+    });
+    const after = todayPlan(finishReviewRound(finished, "2026-11-23"), "2026-11-23");
+    expect(after).toMatchObject({ kind: "allDone", reviewPending: false, reviewCount: 0, dueCount: 55 });
+  });
+});
+
+describe("Freie Runde ist Übung", () => {
+  it("ändert kein Fach, gibt keine Punkte, setzt lastSeen und zählt für die Serie; Fälliges bleibt fällig", () => {
+    const clock = makeClock();
+    const base = playUnit(freshProgress(clock), u1.id, clock);
+    clock.advance(1);
+    const day = today(clock.now);
+    const dueBefore = dueCardIds(base, day);
+    expect(dueBefore).toHaveLength(16);
+
+    const round = buildExtraRound(base, day, createRng(1), env);
+    expect(round.total).toBe(10);
+    const { progress: p } = answerWhile(base, round, clock.now, () => true);
+
+    for (const [id, card] of Object.entries(p.cards)) {
+      const before = base.cards[id]!;
+      expect({ ...card, lastSeen: before.lastSeen }).toEqual(before);
+    }
+    expect(p.stats.points).toBe(base.stats.points);
+    expect(dueCardIds(p, day)).toEqual(dueBefore);
+    expect(reviewedCardsOn(p, day)).toBe(10);
+    expect(p.stats.lastActiveDay).toBe(day);
+    expect(p.stats.streak).toBe(2);
+    expect(p.stats.lastReviewDay).toBeUndefined();
   });
 });
 
