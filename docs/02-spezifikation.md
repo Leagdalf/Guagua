@@ -44,6 +44,7 @@ Der Speicher einer Web-App auf dem Home-Bildschirm ist von Safari getrennt. Desh
 - Punkte und Serie stehen nicht auf der Startseite. Sie erscheinen in der Zusammenfassung am Ende einer Haltestelle und unter „Mehr, Über“. Im Ruhemodus fehlen sie überall.
 - Auf dem iPad steht die Linie mit allen elf Punkten neben dem Block „Heute“, auf dem Telefon darunter.
 - Tippen auf eine abgeschlossene Haltestelle öffnet deren Übersicht: Karten, Grammatik, Dialog zum Wiederanhören.
+- Tippen auf eine offene oder laufende Haltestelle beginnt sie, auch wenn heute schon eine geschafft ist. Zwei Haltestellen an einem Tag sind möglich.
 - Knopf „10 Karten extra“ startet jederzeit eine freie Wiederholrunde. Sie ist reine Übung: Sie ändert keine Fächer und gibt keine Punkte, zählt aber für die Serie (Entscheidung der Hauptsitzung vom 22.11.2026, weil sich sonst Karten vor ihrer Fälligkeit hochstufen ließen).
 
 Haltestelle n+1 öffnet, wenn die Abschlussrunde von Haltestelle n beendet ist. Das Datum spielt keine Rolle. Die Endstation öffnet nach Haltestelle 10.
@@ -60,6 +61,8 @@ Sechs Schritte in fester Reihenfolge. Nach jedem Schritt wird der Stand gespeich
 | 4 Dialog | Erst anhören, dann Rollenspiel. | 3 min |
 | 5 Abschlussrunde | Jede neue Karte einmal als Aufgabe, dazu die drei Satzbau-Aufgaben. | 3 bis 4 min |
 | 6 Mission | Mission des Tages mit Sätzen zum Mitnehmen, danach Zusammenfassung. | 1 min |
+
+Jede Lerneinheit beginnt mit einer Übersicht der heutigen Schritte (docs/04-design.md, „Fahrplan der Einheit“). Erst das Tippen auf ihren Hauptknopf baut die erste Aufgabe. Die Grenze von 6 Minuten zählt aktive Zeit nach Abschnitt 5.4, keine Pausen im Hintergrund.
 
 Wiederholen steht einmal am Tag am Anfang, auch wenn eine Haltestelle vom Vortag bei einem späteren Schritt liegt. Danach geht es am gespeicherten Schritt weiter. Endet die Runde an der Grenze von 40 Karten oder 6 Minuten, bleibt der Rest fällig und kommt am nächsten Tag. Ein Neuladen mitten in der Abschlussrunde wertet keine Aufgabe doppelt: Schon beantwortete Aufgaben kommen nicht erneut.
 

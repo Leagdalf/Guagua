@@ -72,6 +72,8 @@ Die Trennung ist eine Lernhilfe: Was kursiv in der Serifenschrift steht, ist Spa
 | Spanisch im Fließtext, Dialog, Listen | Newsreader kursiv | 20 px | 24 px | 400 |
 | Deutsch, Bedienung | Figtree | 17 px | 19 px | 400 |
 | Knöpfe | Figtree | 17 px | 19 px | 600 |
+| Deutsche große Zeile im Block „Heute“ | Figtree | 34 px | 44 px | 600 |
+| Deutsche Frage in einer Aufgabe, Titel einer Mission | Figtree | 24 px | 32 px | 600 |
 | Erklärzeile im Block „Heute“ | Figtree | 16 px | 19 px | 400, in ceniza |
 | Nebentext | Figtree | 14 bis 16 px | 16 px | 400 |
 | Beschriftung in Großbuchstaben | Figtree | 13 px | 14 px | 600, Laufweite 0,1 em |
@@ -99,6 +101,8 @@ Umsetzung als eine CSS-Regel auf einem Inline-Element: `box-shadow: inset 0 -0.3
 - Es gibt keine Karten und keine Kästen. Gruppen entstehen durch Abstand und durch Haarlinien von 1 px in raya. Die Grundlinie unter dem Berg ist 1,5 px in tinta.
 - Der Hauptknopf ist eine volle Fläche in atlántico mit Schrift in nieve, 54 px hoch (iPad 60 px), 8 px Eckenradius. Pro Ansicht gibt es genau einen. Gesperrt (zum Beispiel „Prüfen“ ohne Eingabe) ist die Fläche raya und die Schrift ceniza. Dieses Paar hat 4,39 zu 1 und kommt nur am gesperrten Knopf vor.
 - Nebenaktionen sind Textknöpfe in atlántico, Schnitt 600, mit mindestens 44 px Höhe: „Abhaken“, „Anhören“, „Langsam“.
+- Die offene Haltestelle heißt in der Linie „heute“, solange sie die Haltestelle des Tages ist. Ist die Haltestelle des Tages schon geschafft, heißt die nächste „offen“. Tippen auf eine offene oder laufende Haltestelle beginnt sie, auch wenn heute schon eine geschafft ist. Gesperrte Haltestellen tragen für Screenreader den Text „gesperrt“.
+- Eine Beschriftung in Großbuchstaben, die innerhalb einer Ansicht einen neuen Abschnitt beginnt, hat 24 px Abstand nach oben (iPad 32 px).
 - In der Linie steht am Telefon rechts neben dem Namen nur ein kurzer Text: das Thema bei gesperrten Haltestellen, sonst der Zustand („abgeschlossen“, „heute“, „läuft“), bei der Endstation „Endstation“. Kein Name bricht dort in zwei Zeilen um.
 - Antwortflächen sind gestapelte Zeilen über die volle Spaltenbreite, getrennt durch Haarlinien, 56 px hoch (iPad 68 px). Links steht ein Kreis von 20 px mit 1,5 px Rand in ceniza. Kein Raster aus Kacheln.
 - Rund sind nur Haltepunkte und Auswahlkreise.
@@ -165,6 +169,15 @@ Unter 700 px Breite gilt das Telefon-Raster, ab 700 px das iPad-Raster.
 - Falsch gewählt: Der Auswahlkreis wird zum Kreuz in mojo, der Text ist durchgestrichen mit Strich in mojo, rechts steht „deine Antwort“ in mojo. Die richtige Zeile wird zugleich wie oben markiert.
 - Unter den Antworten steht die Lösung als Satz, darunter in ceniza der Hinweis der Karte.
 
+## Fahrplan der Einheit
+
+Jede Lerneinheit beginnt mit einer Übersicht dessen, was heute kommt. Sie greift die Liste zum Abhaken aus dem Tagebuch-Entwurf auf.
+
+- Oben die Beschriftung („Heute · Haltestelle 2“) und der Name der Haltestelle mit Marker. Bei einer Sitzung nur zum Wiederholen oder der freien Runde steht dort die deutsche große Zeile („Wiederholen“, „10 Karten extra“).
+- Darunter die Schritte als Liste mit Haarlinien, jede Zeile mindestens 48 px hoch. Links ein Kästchen von 20 px mit 1,5 px Rand in tinta und 4 px Eckenradius, erledigt gefüllt in atlántico mit Haken in nieve. Dann der Name des Schritts, rechts in ceniza eine kurze Angabe: „16 Karten“, „15 Karten“, das Grammatikthema, der Ort des Dialogs, „18 Aufgaben“, der Titel der Mission.
+- Wiederholen steht nur in der Liste, wenn es heute aussteht. Schon erledigte Schritte der Haltestelle sind abgehakt.
+- Der Hauptknopf heißt „Beginnen“ oder, wenn die Haltestelle schon läuft, „Weiter bei Schritt 3“. Erst dieses Tippen baut die erste Aufgabe und spricht sie. So startet auch der erste Ton der Einheit in einem Tippen, und die Stimmenliste des Geräts hatte Zeit zu laden.
+
 ## Paare, Satzbau, Eingabe, Zusammenfassung
 
 - Paare: zwei Spalten nebeneinander, links die vier spanischen Zeilen, rechts die vier deutschen. Jede Zeile ist wie eine Antwortzeile gebaut (Haarlinien, 56 px, iPad 68 px), aber ohne Auswahlkreis. Gewählt: Marker hinter dem Text, auch beim deutschen. Gefunden: Text in ceniza mit Haken in drago, nicht mehr wählbar. Falsches Paar: Beide Zeilen zeigen das Kreuz in mojo, bis die nächste Zeile angetippt wird.
@@ -177,7 +190,7 @@ Unter 700 px Breite gilt das Telefon-Raster, ab 700 px das iPad-Raster.
 
 - Übergänge zwischen Aufgaben 150 ms, nur Deckkraft und 8 px Versatz.
 - Kein Wackeln, kein Aufblitzen des ganzen Bildschirms.
-- Abschluss einer Haltestelle: Der Punkt auf der Linie füllt sich, die Linie wächst zum nächsten Punkt, am Berg rückt die Markierung einen Punkt höher. Das ist die einzige längere Animation (600 ms).
+- Abschluss einer Haltestelle: Der Punkt auf der Linie füllt sich, die Linie wächst zum nächsten Punkt, am Berg rückt die Markierung einen Punkt höher. Das ist die einzige längere Animation (600 ms). Sie läuft in der Zusammenfassung am Ende der Haltestelle: Der Berg erscheint mit dem alten Stand und wechselt dann auf den neuen.
 - Bei `prefers-reduced-motion` und im Ruhemodus entfallen alle Animationen.
 
 ## App-Symbol
@@ -198,8 +211,10 @@ Der Block „Heute“ besteht aus Beschriftung, großer Zeile, Erklärzeile und 
 | Zustand | Beschriftung | Große Zeile | Erklärzeile | Hauptknopf |
 |---|---|---|---|---|
 | Wiederholungen fällig, Haltestelle offen | Heute · Haltestelle 2 | En el café (Spanisch, mit Marker) | Getränke bestellen. Erst 16 Karten wiederholen, dann 15 neue. | Mit Wiederholen beginnen |
-| Nur Mission offen | Heute | Mission offen (Deutsch, Figtree 600) | Bestellen ohne Englisch | Mission ansehen |
+| Nur Mission offen | Heute | Für heute fertig (Deutsch, Figtree 600) | Morgen geht es weiter mit Haltestelle 3, Los números. Draußen wartet deine Mission. | Mission ansehen |
 | Alles erledigt | Heute | Für heute fertig (Deutsch, Figtree 600) | Morgen: Haltestelle 3, Los números | 10 Karten extra |
+
+Die offene Mission steht nur einmal auf der Startseite: in der angehefteten Zeile, nicht zusätzlich im Block „Heute“. Gibt es keine nächste Haltestelle mehr, entfällt der Satz mit „Morgen“. „10 Karten extra“ erscheint nur, wenn es Karten aus abgeschlossenen Haltestellen gibt.
 
 Weitere Fälle:
 
