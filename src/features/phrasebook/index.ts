@@ -1,0 +1,1 @@
+export { PhrasebookView } from "./PhrasebookView";

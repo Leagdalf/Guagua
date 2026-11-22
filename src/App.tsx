@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { appClock, progressStore, useStoreState, useToday } from "./app/index";
+import { appClock, progressStore, useStoreState, useToday } from "./state";
 import { NoVoiceNotice } from "./audio";
 import { completeMission, skipMission } from "./core/units";
 import { updateProfile } from "./core/progress";

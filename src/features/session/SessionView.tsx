@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { appClock, newRng, progressStore, useStoreState, useToday } from "../../app/index";
+import { appClock, newRng, progressStore, useStoreState, useToday } from "../../state";
 import { NoVoiceNotice, speak, useVoices } from "../../audio";
 import type { Rng } from "../../core/random";
 import type { Progress } from "../../core/types";
