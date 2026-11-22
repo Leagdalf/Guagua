@@ -85,7 +85,7 @@
 
 .today__text {
   margin-top: var(--s3);
-  font-size: var(--fs-note);
+  font-size: var(--fs-today-text);
   color: var(--ceniza);
 }
 

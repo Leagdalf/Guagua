@@ -3,6 +3,11 @@ import { AnswerList, AnswerRow } from "./AnswerRow";
 import { ActionBar, AudioButton, PrimaryButton, TextButton } from "./buttons";
 import { applyCalm } from "./calm";
 import { Es, Marker } from "./Es";
+import { Feedback } from "./Feedback";
+import { TextArea, TextField } from "./fields";
+import { PairsBoard, type PairItem, type PairState } from "./PairsBoard";
+import { SentenceBuilder, type SentenceWord } from "./SentenceBuilder";
+import { SummaryList } from "./SummaryList";
 import { HomeHeader, HomePage, Label, LessonPage, MissionRow, SimplePage, Today } from "./layout";
 import { Line, type LineStop } from "./Line";
 import { Mountain } from "./Mountain";
@@ -55,6 +60,23 @@ const MOUNTAIN_CASES: ReadonlyArray<readonly [string, readonly StopState[]]> = [
   ["Alle zehn abgeschlossen", Array.from({ length: 10 }, (): StopState => "done")],
 ];
 
+const PAIR_STATES: readonly PairState[] = ["selectable", "selected", "found", "wrong"];
+const PAIR_ES = ["el café", "la leche", "el agua", "el zumo"];
+const PAIR_DE = ["der Kaffee", "die Milch", "das Wasser", "der Saft"];
+
+function pairItems(texts: readonly string[], states: readonly PairState[]): PairItem[] {
+  return texts.map((text, i) => ({ id: `p${i}`, text, state: states[i] ?? "selectable" }));
+}
+
+const WORDS: readonly SentenceWord[] = [
+  { id: "w1", text: "Quiero" },
+  { id: "w2", text: "un" },
+  { id: "w3", text: "café" },
+  { id: "w4", text: "con" },
+  { id: "w5", text: "leche" },
+  { id: "w6", text: "por favor." },
+];
+
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="pv-section">
@@ -79,6 +101,13 @@ export default function Preview() {
   const [calm, setCalm] = useState(false);
   const [picked, setPicked] = useState<string | null>(null);
   const [tab, setTab] = useState("line");
+  const [placed, setPlaced] = useState<string[]>(["w1", "w2"]);
+  const [pairStates, setPairStates] = useState<{ left: PairState[]; right: PairState[] }>({
+    left: ["selectable", "selectable", "selectable", "selectable"],
+    right: ["selectable", "selectable", "selectable", "selectable"],
+  });
+  const [name, setName] = useState("");
+  const [note, setNote] = useState("");
 
   return (
     <div className="pv">
@@ -113,6 +142,9 @@ export default function Preview() {
       <Section title="Hauptknopf">
         <PrimaryButton>Mit Wiederholen beginnen</PrimaryButton>
         <PrimaryButton href="#">Als Link</PrimaryButton>
+        <Frame title="Gesperrt (zum Beispiel Prüfen ohne Eingabe)">
+          <PrimaryButton disabled>Prüfen</PrimaryButton>
+        </Frame>
       </Section>
 
       <Section title="Textknopf und Tonknopf">
@@ -156,6 +188,99 @@ export default function Preview() {
             </AnswerRow>
           </AnswerList>
         </Frame>
+      </Section>
+
+      <Section title="Rückmeldung">
+        <Frame title="Richtig">
+          <Feedback result="correct" solution={<Es>Un agua sin gas, por favor.</Es>} hint={<><Es>sin gas</Es> heißt ohne Kohlensäure.</>} />
+        </Frame>
+        <Frame title="Falsch">
+          <Feedback result="wrong" solution={<Es>Un agua sin gas, por favor.</Es>} hint={<><Es>sin gas</Es> heißt ohne Kohlensäure.</>} />
+        </Frame>
+        <Frame title="Richtig, achte auf den Akzent">
+          <Feedback result="accent" solution={<Es>está</Es>} hint="Ohne Akzent wäre es ein anderes Wort." />
+        </Frame>
+        <Frame title="Ohne Hinweis">
+          <Feedback result="correct" solution={<Es>Buenos días.</Es>} />
+        </Frame>
+      </Section>
+
+      <Section title="Paare">
+        <div className="pv-cols">
+          {PAIR_STATES.map((state) => (
+            <Frame key={state} title={`Erste Zeile: ${state === "selectable" ? "wählbar" : state === "selected" ? "gewählt" : state === "found" ? "gefunden" : "falsch"}`}>
+              <PairsBoard
+                left={pairItems(PAIR_ES, [state])}
+                right={pairItems(PAIR_DE, [state])}
+              />
+            </Frame>
+          ))}
+        </div>
+        <Frame title="Bedienbar: erst links, dann rechts tippen (gleiche Nummer ist ein Paar)">
+          <PairsBoard
+            left={pairItems(PAIR_ES, pairStates.left)}
+            right={pairItems(PAIR_DE, pairStates.right)}
+            onSelect={(side, id) => {
+              const i = Number(id.slice(1));
+              const next = { left: [...pairStates.left], right: [...pairStates.right] };
+              next[side][i] = next[side][i] === "selected" ? "selectable" : "selected";
+              setPairStates(next);
+            }}
+          />
+        </Frame>
+      </Section>
+
+      <Section title="Satzbau">
+        <Frame title="Zwei Bausteine gesetzt, Tippen setzt oder nimmt zurück">
+          <SentenceBuilder
+            words={WORDS}
+            placed={placed}
+            onPlace={(id) => setPlaced([...placed, id])}
+            onRemove={(id) => setPlaced(placed.filter((p) => p !== id))}
+          />
+          <PrimaryButton disabled={placed.length < WORDS.length}>Prüfen</PrimaryButton>
+        </Frame>
+        <Frame title="Nichts gesetzt">
+          <SentenceBuilder words={WORDS} placed={[]} />
+        </Frame>
+        <Frame title="Alle gesetzt">
+          <SentenceBuilder words={WORDS} placed={WORDS.map((w) => w.id)} />
+          <PrimaryButton>Prüfen</PrimaryButton>
+        </Frame>
+      </Section>
+
+      <Section title="Eingabefelder">
+        <div className="pv-cols">
+          <Frame title="Deutsch, leer">
+            <TextField label="Dein Name" placeholder="Vorname" value={name} onChange={setName} />
+          </Frame>
+          <Frame title="Spanisch, ausgefüllt">
+            <TextField label="Schreibe auf Spanisch" spanish defaultValue="Quiero un café." />
+          </Frame>
+          <Frame title="Suche">
+            <TextField label="Suchen" type="search" placeholder="Spanisch oder Deutsch" />
+          </Frame>
+          <Frame title="Mehrzeilig">
+            <TextArea label="Notiz" value={note} onChange={setNote} help="Bleibt auf diesem Gerät." />
+          </Frame>
+          <Frame title="Mehrzeilig, Spanisch">
+            <TextArea label="Schreibe zwei Sätze" spanish defaultValue="Me llamo Ana. Vivo en Berlín." />
+          </Frame>
+          <Frame title="Gesperrt">
+            <TextField label="Dein Name" disabled defaultValue="Ana" />
+          </Frame>
+        </div>
+      </Section>
+
+      <Section title="Zusammenfassung">
+        <SummaryList
+          items={[
+            { label: "Neue Karten", value: "15" },
+            { label: "Richtige Antworten", value: "22 von 26" },
+            { label: "Punkte", value: "180" },
+            { label: "Serie", value: "3 Tage" },
+          ]}
+        />
       </Section>
 
       <Section title="Haltepunkt">
@@ -234,7 +359,7 @@ export default function Preview() {
       <Section title="Seitenraster">
         <Frame title="Startseite: Telefon eine Spalte, iPad zwei Spalten, höchstens 1000 px">
           <HomePage
-            header={<HomeHeader date="Dienstag, 24. November" progress="Tag 2 von 10" stops={["done", "open"]} />}
+            header={<HomeHeader date="Dienstag, 24. November" progress="Tag 2" stops={["done", "open"]} />}
             today={
               <Today
                 label="Heute · Haltestelle 2"

@@ -41,13 +41,16 @@
 }
 
 .pv-frame {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
   min-width: 0;
   padding-top: var(--s2);
   border-top: var(--hair) solid var(--raya);
 }
 
 .pv-frame__title {
-  margin-bottom: var(--s2);
+  margin-bottom: calc(var(--s2) * -1);
   font-size: var(--fs-label);
   color: var(--ceniza);
 }

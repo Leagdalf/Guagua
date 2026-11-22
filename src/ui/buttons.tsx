@@ -8,12 +8,14 @@ export interface PrimaryButtonProps {
   /** Mit `href` wird ein Link (`a`) daraus. */
   href?: string;
   type?: "button" | "submit";
+  /** Gesperrt: Fläche raya, Schrift ceniza, nicht antippbar. Ein gesperrter Knopf ist nie ein Link. */
+  disabled?: boolean;
   className?: string;
 }
 
 /** Hauptknopf: volle Fläche in atlántico. Pro Ansicht genau einer. */
-export function PrimaryButton({ children, onClick, href, type = "button", className }: PrimaryButtonProps) {
-  if (href !== undefined) {
+export function PrimaryButton({ children, onClick, href, type = "button", disabled, className }: PrimaryButtonProps) {
+  if (href !== undefined && !disabled) {
     return (
       <a className={cx("btn", className)} href={href} onClick={onClick}>
         {children}
@@ -21,7 +23,7 @@ export function PrimaryButton({ children, onClick, href, type = "button", classN
     );
   }
   return (
-    <button type={type} className={cx("btn", className)} onClick={onClick}>
+    <button type={type} className={cx("btn", className)} onClick={onClick} disabled={disabled}>
       {children}
     </button>
   );
@@ -54,11 +56,13 @@ export interface AudioButtonProps {
   disabled?: boolean;
   /** Eigene Beschriftung statt „Anhören“ / „Langsam“. */
   label?: string;
+  /** id eines Elements, das beschreibt, was der Knopf spricht (zum Beispiel der spanische Satz mit `lang="es"`). */
+  describedBy?: string;
   className?: string;
 }
 
 /** Tonknopf mit Lautsprecher-Symbol. Ruft selbst nie die Sprachausgabe auf. */
-export function AudioButton({ onClick, variant = "normal", disabled, label, className }: AudioButtonProps) {
+export function AudioButton({ onClick, variant = "normal", disabled, label, describedBy, className }: AudioButtonProps) {
   const text = label ?? (variant === "slow" ? "Langsam" : "Anhören");
   return (
     <button
@@ -66,6 +70,7 @@ export function AudioButton({ onClick, variant = "normal", disabled, label, clas
       className={cx("text-btn", "audio-btn", variant === "slow" && "audio-btn--slow", className)}
       onClick={onClick}
       disabled={disabled}
+      aria-describedby={describedBy}
     >
       <SpeakerIcon />
       {text}

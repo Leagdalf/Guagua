@@ -10,14 +10,17 @@ export function Label({
   as = "p",
   tone = "muted",
   className,
+  id,
   children,
 }: {
   as?: "p" | "h1" | "h2" | "h3" | "span";
   tone?: "muted" | "accent";
   className?: string;
+  /** Zum Beispiel für `aria-labelledby` eines Abschnitts. */
+  id?: string;
   children: ReactNode;
 }) {
-  return createElement(as, { className: cx("label", tone === "accent" && "label--accent", className) }, children);
+  return createElement(as, { id, className: cx("label", tone === "accent" && "label--accent", className) }, children);
 }
 
 /** Rahmen der App: Inhalt, darunter fest die untere Leiste. Ein Hinweis steht ganz oben. */

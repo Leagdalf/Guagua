@@ -9,14 +9,16 @@ export interface EsProps {
   /** text 20/24 px, card 48/72, today 50/68, stop 23/26, inherit übernimmt die Größe. */
   size?: EsSize;
   className?: string;
+  /** Damit andere Elemente per `aria-describedby` darauf zeigen können, etwa ein Tonknopf. */
+  id?: string;
   children: ReactNode;
 }
 
 /** Spanischer Text: Newsreader kursiv, trägt immer `lang="es"`. */
-export function Es({ as = "span", size = "text", className, children }: EsProps) {
+export function Es({ as = "span", size = "text", className, id, children }: EsProps) {
   return createElement(
     as,
-    { lang: "es", className: cx("es", size !== "text" && `es--${size}`, className) },
+    { id, lang: "es", className: cx("es", size !== "text" && `es--${size}`, className) },
     children,
   );
 }

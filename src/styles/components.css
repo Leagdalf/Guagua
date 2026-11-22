@@ -31,6 +31,14 @@
   cursor: pointer;
 }
 
+/* Gesperrt: raya mit ceniza (4,39 zu 1), nur an diesem Knopf erlaubt. */
+.btn:disabled {
+  background: var(--raya);
+  color: var(--ceniza);
+  cursor: default;
+  -webkit-text-fill-color: currentcolor;
+}
+
 /* Textknopf und Tonknopf */
 .text-btn {
   display: inline-flex;
@@ -128,9 +136,22 @@
   height: var(--stop-size);
 }
 
+/* Haken und Kreuz in der Rückmeldung: 2,4 px Strich (Symbole sonst 1,8 px). */
+.answer__mark .icon,
+.feedback__mark .icon,
+.pair__mark .icon {
+  stroke-width: 2.4px;
+}
+
 .answer__mark .icon {
   width: 100%;
   height: 100%;
+}
+
+/* Spanisch in der Antwortzeile: 20 px, iPad 24 px, auch mit size="inherit". */
+.answer .es {
+  font-size: var(--fs-es-text);
+  line-height: 1.2;
 }
 
 .answer__circle {
@@ -282,8 +303,19 @@ button.stop__body {
   cursor: pointer;
 }
 
+/* Ein Name bricht nie um; bei Platzmangel gibt der Text rechts nach. */
 .stop__name {
+  flex: none;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.stop__meta {
   min-width: 0;
+}
+
+.stop__end {
+  display: none;
 }
 
 .stop--open .stop__name,
@@ -316,13 +348,17 @@ button.stop__body {
 }
 
 @media (max-width: 699.98px) {
-  /* Telefon: erledigt, offen und laufend zeigen rechts nur den Zustand. Das Thema bleibt für Vorlesegeräte. */
+  /* Telefon: rechts steht nur ein kurzer Text. Gesperrt: das Thema. Sonst der Zustand.
+     Endstation: „Endstation“. Das Übrige bleibt für Vorlesegeräte im Text. */
   .stop--done .stop__topic,
   .stop--open .stop__topic,
   .stop--running .stop__topic,
   .stop--done .stop__sep,
   .stop--open .stop__sep,
-  .stop--running .stop__sep {
+  .stop--running .stop__sep,
+  .stop--terminus .stop__topic,
+  .stop--terminus .stop__sep,
+  .stop--terminus .stop__status {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -330,6 +366,10 @@ button.stop__body {
     overflow: hidden;
     clip-path: inset(50%);
     white-space: nowrap;
+  }
+
+  .stop--terminus .stop__end {
+    display: inline;
   }
 }
 

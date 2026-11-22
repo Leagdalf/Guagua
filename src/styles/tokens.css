@@ -40,6 +40,8 @@
   --fs-es-today: 50px;
   --fs-es-stop: 23px;
   --fs-es-text: 20px;
+  --fs-es-field: 24px;
+  --fs-today-text: 16px;
   --lh-de: 1.4;
   --lh-es-big: 1.05;
   --icon: 20px;
@@ -78,6 +80,8 @@
     --fs-es-today: 68px;
     --fs-es-stop: 26px;
     --fs-es-text: 24px;
+    --fs-es-field: 32px;
+    --fs-today-text: 19px;
     --icon: 24px;
     --btn-h: 60px;
     --answer-h: 68px;

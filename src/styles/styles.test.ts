@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 // Keine Node-Typen installiert und Vitest leert CSS-Importe: Quellen über process.getBuiltinModule lesen.
 interface FsLike {
   readFileSync(path: string, enc: "utf8"): string;
-  readdirSync(path: string): string[];
+  readdirSync(path: string, options: { withFileTypes: true }): Array<{ name: string; isDirectory(): boolean }>;
 }
 const fs = (
   globalThis as unknown as { process: { getBuiltinModule(name: string): unknown; cwd(): string } }
@@ -14,12 +14,16 @@ function read(rel: string): string {
   return fs.readFileSync(`${base}/${rel}`, "utf8");
 }
 
+// Alle CSS-Dateien unter src, in jedem Unterordner. Neue Ordner brauchen keine Änderung am Test.
 const cssRaw: Record<string, string> = {};
-for (const dir of ["src/styles", "src/ui"]) {
-  for (const f of fs.readdirSync(`${base}/${dir}`)) {
-    if (f.endsWith(".css")) cssRaw[`${dir}/${f}`] = read(`${dir}/${f}`);
+function collect(dir: string): void {
+  for (const entry of fs.readdirSync(`${base}/${dir}`, { withFileTypes: true })) {
+    const rel = `${dir}/${entry.name}`;
+    if (entry.isDirectory()) collect(rel);
+    else if (entry.name.endsWith(".css")) cssRaw[rel] = read(rel);
   }
 }
+collect("src");
 const fontsTs = read("src/styles/fonts.ts");
 function stripComments(css: string): string {
   return css.replace(/\/\*[\s\S]*?\*\//g, "");
@@ -40,8 +44,17 @@ function rulesOf(css: string): Rule[] {
 const PALETTE = new Set(["#FAFBFC", "#18233D", "#2546C7", "#FFE56B", "#B3261E", "#1C6B48", "#5A6474", "#D8DDE5", "#C9824F", "#FFFFFF"]);
 
 describe("CSS-Regeln aus docs/04-design.md", () => {
-  it("es gibt CSS-Quellen", () => {
-    expect(sources.length).toBeGreaterThanOrEqual(5);
+  it("es gibt CSS-Quellen, und der Test liest alle unter src", () => {
+    const names = Object.keys(cssRaw);
+    expect(sources.length).toBeGreaterThanOrEqual(7);
+    for (const expected of [
+      "src/styles/tokens.css",
+      "src/styles/tasks.css",
+      "src/ui/preview.css",
+      "src/features/phrasebook/phrasebook.css",
+    ]) {
+      expect(names, expected).toContain(expected);
+    }
   });
 
   it("nur Farben der Palette, kein rgb, hsl oder benanntes Farbwort außer transparent und currentcolor", () => {
@@ -186,5 +199,84 @@ describe("Tippflächen, sichere Ränder, Bewegung, iOS", () => {
     for (const m of allCss.matchAll(/font-size:\s*(\d+(?:\.\d+)?)px/g)) {
       expect(Number(m[1])).toBeGreaterThanOrEqual(13);
     }
+  });
+});
+
+describe("Nachträge aus docs/04-design.md", () => {
+  const rules = sources.flatMap((s) => rulesOf(s.css));
+  const body = (selector: string) =>
+    rules
+      .filter((r) => r.selector.split(",").map((s) => s.trim()).includes(selector))
+      .map((r) => r.body)
+      .join(";");
+  const tokens = stripComments(cssRaw["src/styles/tokens.css"]!);
+  const phoneTokens = tokens.slice(0, tokens.indexOf("@media"));
+  const ipadTokens = tokens.slice(tokens.indexOf("@media"));
+
+  it("gesperrter Hauptknopf: Fläche raya, Schrift ceniza", () => {
+    const disabled = body(".btn:disabled");
+    expect(disabled).toMatch(/background:\s*var\(--raya\)/);
+    expect(disabled).toMatch(/(?:^|[;\s])color:\s*var\(--ceniza\)/);
+  });
+
+  it("Symbole 1,8 px Strich, Haken und Kreuz der Rückmeldung 2,4 px", () => {
+    expect(body(".icon")).toMatch(/stroke-width:\s*1\.8px/);
+    for (const sel of [".answer__mark .icon", ".feedback__mark .icon", ".pair__mark .icon"]) {
+      expect(body(sel), sel).toMatch(/stroke-width:\s*2\.4px/);
+    }
+    expect(body(".icon *")).toContain("non-scaling-stroke");
+  });
+
+  it("Erklärzeile im Block Heute: 16 px, iPad 19 px", () => {
+    expect(body(".today__text")).toMatch(/font-size:\s*var\(--fs-today-text\)/);
+    expect(phoneTokens).toMatch(/--fs-today-text:\s*16px/);
+    expect(ipadTokens).toMatch(/--fs-today-text:\s*19px/);
+  });
+
+  it("Spanisch in der Antwortzeile: 20 px, iPad 24 px", () => {
+    expect(body(".answer .es")).toMatch(/font-size:\s*var\(--fs-es-text\)/);
+    expect(phoneTokens).toMatch(/--fs-es-text:\s*20px/);
+    expect(ipadTokens).toMatch(/--fs-es-text:\s*24px/);
+  });
+
+  it("großes Spanisch und der Name im Block Heute: Zeilenhöhe 1,05", () => {
+    expect(phoneTokens).toMatch(/--lh-es-big:\s*1\.05/);
+    expect(body(".es--card")).toMatch(/line-height:\s*var\(--lh-es-big\)/);
+    expect(body(".es--today")).toMatch(/line-height:\s*var\(--lh-es-big\)/);
+    expect(body(".today__title--de")).toMatch(/line-height:\s*1\.05/);
+  });
+
+  it("Linie am Telefon: Namen brechen nie um, Endstation zeigt rechts „Endstation“", () => {
+    expect(body(".stop__name")).toMatch(/white-space:\s*nowrap/);
+    expect(body(".stop__end")).toMatch(/display:\s*none/);
+    expect(allCss).toMatch(/@media \(max-width: 699\.98px\)[\s\S]*?\.stop--terminus \.stop__end\s*\{[^}]*display:\s*inline/);
+  });
+
+  it("Eingabefelder: Unterstrich 1,5 px in tinta, im Fokus 2,5 px in atlántico, Spanisch 24 px (iPad 32 px)", () => {
+    expect(body(".field__input")).toMatch(/border-bottom:\s*var\(--base-line\) solid var\(--tinta\)/);
+    expect(phoneTokens).toMatch(/--base-line:\s*1\.5px/);
+    expect(body(".field__input:focus")).toMatch(/border-bottom-width:\s*2\.5px/);
+    expect(body(".field__input:focus")).toMatch(/border-bottom-color:\s*var\(--atlantico\)/);
+    expect(body(".field__input--es")).toMatch(/font-size:\s*var\(--fs-es-field\)/);
+    expect(body(".field__input--es")).toMatch(/font-style:\s*italic/);
+    expect(phoneTokens).toMatch(/--fs-es-field:\s*24px/);
+    expect(ipadTokens).toMatch(/--fs-es-field:\s*32px/);
+  });
+
+  it("Wortknöpfe: Rand 1,5 px in tinta, 8 px Radius, mindestens 48 mal 44 px; leerer Platz mit Rand in raya", () => {
+    const chip = body(".chip");
+    expect(chip).toMatch(/border:\s*1\.5px solid var\(--tinta\)/);
+    expect(chip).toMatch(/border-radius:\s*8px/);
+    expect(chip).toMatch(/min-height:\s*48px/);
+    expect(chip).toMatch(/min-width:\s*var\(--tap\)/);
+    expect(body(".chip--empty")).toMatch(/border-color:\s*var\(--raya\)/);
+    expect(body(".builder__sentence")).toMatch(/border-bottom:\s*var\(--base-line\) solid var\(--tinta\)/);
+    expect(body(".builder__sentence")).toMatch(/min-height:\s*56px/);
+  });
+
+  it("Paare und Antwortzeilen sind 56 px hoch, auf dem iPad 68 px", () => {
+    expect(body(".pair")).toMatch(/min-height:\s*var\(--answer-h\)/);
+    expect(phoneTokens).toMatch(/--answer-h:\s*56px/);
+    expect(ipadTokens).toMatch(/--answer-h:\s*68px/);
   });
 });

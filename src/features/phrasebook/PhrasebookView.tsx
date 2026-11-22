@@ -1,34 +1,33 @@
 import { useState } from "react";
 import { NoVoiceNotice, useVoices } from "../../audio";
+import { SimplePage, TextField } from "../../ui";
 import { PhrasebookResults } from "./PhrasebookResults";
 import "./phrasebook.css";
 
-/** Sprachführer (docs/02-spezifikation.md, 2.6), MVP ohne Sterne und „Zeigen“. Braucht keine Props. */
+/**
+ * Sprachführer (docs/02-spezifikation.md, 2.6), MVP ohne Sterne und „Zeigen“. Braucht keine Props.
+ * Gehört in `AppShell`, das das einzige `main` liefert. Überschriften: h1 „Sprachführer“, h2 je Kategorie.
+ */
 export function PhrasebookView() {
   const [query, setQuery] = useState("");
   const { hasVoice } = useVoices();
 
   return (
-    <main className="pb">
-      <h1 className="pb-title">Sprachführer</h1>
+    <>
       <NoVoiceNotice />
-
-      <label className="pb-search">
-        <span className="pb-label">Suchen</span>
-        <input
+      <SimplePage className="pb">
+        <h1 className="pb-title">Sprachführer</h1>
+        <TextField
+          className="pb-search"
+          label="Suchen"
           type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
           placeholder="Spanisch oder Deutsch"
-          autoCapitalize="none"
-          autoCorrect="off"
-          autoComplete="off"
-          spellCheck={false}
+          value={query}
+          onChange={setQuery}
           enterKeyHint="search"
         />
-      </label>
-
-      <PhrasebookResults query={query} hasVoice={hasVoice} />
-    </main>
+        <PhrasebookResults query={query} hasVoice={hasVoice} />
+      </SimplePage>
+    </>
   );
 }

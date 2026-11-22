@@ -1,0 +1,280 @@
+/* Bausteine für Aufgaben: Rückmeldung, Paare, Satzbau, Eingabefelder, Zusammenfassung (docs/04-design.md). */
+
+/* Rückmeldung unter den Antworten */
+.feedback {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  margin-top: var(--s5);
+}
+
+.feedback__lead {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  font-weight: 600;
+}
+
+.feedback--ok .feedback__lead {
+  color: var(--drago);
+}
+
+.feedback--bad .feedback__lead {
+  color: var(--mojo);
+}
+
+.feedback__mark {
+  flex: none;
+  display: flex;
+  width: var(--stop-size);
+  height: var(--stop-size);
+}
+
+.feedback__mark .icon {
+  width: 100%;
+  height: 100%;
+}
+
+.feedback__solution {
+  font-weight: 600;
+}
+
+.feedback__solution .es {
+  font-weight: 500;
+}
+
+.feedback__hint {
+  font-size: var(--fs-note);
+  color: var(--ceniza);
+}
+
+/* Paare */
+.pairs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s4);
+}
+
+.pairs__col {
+  display: flex;
+  flex-direction: column;
+  align-self: start;
+  min-width: 0;
+  border-bottom: var(--hair) solid var(--raya);
+}
+
+.pair {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2);
+  width: 100%;
+  min-height: var(--answer-h);
+  padding: 0;
+  border: 0;
+  border-top: var(--hair) solid var(--raya);
+  background: transparent;
+  color: var(--tinta);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pair:disabled {
+  cursor: default;
+  -webkit-text-fill-color: currentcolor;
+}
+
+.pair__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.pair .es {
+  font-size: var(--fs-es-text);
+  line-height: 1.2;
+}
+
+.pair__mark {
+  flex: none;
+  display: flex;
+  width: var(--stop-size);
+  height: var(--stop-size);
+}
+
+.pair__mark .icon {
+  width: 100%;
+  height: 100%;
+}
+
+.pair--found {
+  color: var(--ceniza);
+}
+
+.pair--found .pair__mark {
+  color: var(--drago);
+}
+
+.pair--wrong .pair__mark {
+  color: var(--mojo);
+}
+
+@media (min-width: 700px) {
+  .pairs {
+    gap: var(--s8);
+  }
+}
+
+/* Satzbau */
+.builder {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s6);
+}
+
+.builder__sentence {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s1) var(--s2);
+  min-height: 56px;
+  padding-bottom: var(--s1);
+  border-bottom: var(--base-line) solid var(--tinta);
+}
+
+.builder__placed {
+  min-width: var(--tap);
+  min-height: var(--tap);
+  padding: 0 var(--s1);
+  border: 0;
+  background: transparent;
+  color: var(--tinta);
+  font: inherit;
+  cursor: pointer;
+}
+
+.builder__words {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tap);
+  min-height: 48px;
+  padding: 0 var(--s4);
+  border: 1.5px solid var(--tinta);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--tinta);
+  font: inherit;
+  cursor: pointer;
+}
+
+.chip--empty {
+  border-color: var(--raya);
+  cursor: default;
+}
+
+.chip--empty .es {
+  visibility: hidden;
+}
+
+.builder .es {
+  font-size: var(--fs-es-text);
+  line-height: 1.2;
+}
+
+/* Eingabefelder: Beschriftung darüber, Feld ohne Kasten mit Unterstrich */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  min-width: 0;
+}
+
+.field__label {
+  display: block;
+}
+
+.field__input {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  margin: 0;
+  padding: 0 0 4px;
+  border: 0;
+  border-bottom: var(--base-line) solid var(--tinta);
+  border-radius: 0;
+  background: transparent;
+  color: var(--tinta);
+  font-family: var(--font-de);
+  font-size: var(--fs-body);
+  line-height: 1.3;
+  appearance: none;
+  -webkit-appearance: none;
+  outline: none;
+}
+
+.field__input:focus {
+  padding-bottom: 3px;
+  border-bottom-width: 2.5px;
+  border-bottom-color: var(--atlantico);
+}
+
+.field__input::placeholder {
+  color: var(--ceniza);
+  opacity: 1;
+}
+
+.field__input:disabled {
+  color: var(--ceniza);
+  -webkit-text-fill-color: currentcolor;
+}
+
+.field__input--area {
+  min-height: 96px;
+  padding-top: var(--s2);
+  resize: none;
+}
+
+.field__input--es {
+  font-family: var(--font-es);
+  font-style: italic;
+  font-size: var(--fs-es-field);
+  line-height: 1.2;
+}
+
+.field__help {
+  font-size: var(--fs-small);
+  color: var(--ceniza);
+}
+
+/* Zusammenfassung */
+.summary {
+  margin: 0;
+  border-bottom: var(--hair) solid var(--raya);
+}
+
+.summary__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s4);
+  min-height: 52px;
+  padding: var(--s3) 0;
+  border-top: var(--hair) solid var(--raya);
+}
+
+.summary__label,
+.summary__value {
+  margin: 0;
+}
+
+.summary__value {
+  font-weight: 600;
+  text-align: right;
+}

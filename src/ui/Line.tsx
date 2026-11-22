@@ -36,7 +36,8 @@ const STATUS_TEXT: Record<StopState, string | null> = {
 
 /**
  * Die Linie: Liste der Haltestellen mit Haltepunkt, spanischem Namen, deutschem Thema und Zustand.
- * Telefon: Thema und Zustand rechts. iPad: Thema und Zustand unter dem Namen.
+ * Telefon: rechts nur ein kurzer Text (Thema bei gesperrt, sonst Zustand, bei der Endstation „Endstation“), der Name bricht nie um.
+ * iPad: Thema und Zustand unter dem Namen.
  */
 export function Line({ stops, title, summary, onSelect, className }: LineProps) {
   return (
@@ -61,6 +62,11 @@ export function Line({ stops, title, summary, onSelect, className }: LineProps) 
                 {marked ? <Marker>{stop.name}</Marker> : stop.name}
               </Es>
               <span className="stop__meta">
+                {stop.terminus && (
+                  <span className="stop__end" aria-hidden="true">
+                    Endstation
+                  </span>
+                )}
                 <span className="stop__topic">{stop.topic}</span>
                 {status && (
                   <>

@@ -90,7 +90,7 @@ textarea {
 
 .es--today {
   font-size: var(--fs-es-today);
-  line-height: 1;
+  line-height: var(--lh-es-big);
   letter-spacing: -0.01em;
 }
 
