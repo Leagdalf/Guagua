@@ -187,6 +187,17 @@ Die Angabe rechts in einer Fahrplanzeile steht in einer Zeile und ist rechtsbün
 - Zeigen im Sprachführer: Vollbild auf página über der ganzen App, auch über der unteren Leiste. Der Satz steht so groß, wie er in vier Zeilen passt (mindestens 48 px, iPad 72 px), zentriert in der Höhe, darunter klein in ceniza die Übersetzung. Unten zwei Textknöpfe „Langsam vorlesen“ und „Schließen“, kein Hauptknopf.
 - Sterne im Sprachführer: Der Stern ist ein Strichsymbol rechts in der Zeile, gemerkt gefüllt in plátano mit Kontur in tinta, mit dem Namen „Merken“ oder „Nicht mehr merken“.
 
+## Ergänzungen vom 23.11.2026
+
+Die Ergänzungen aus Spezifikation 2.9 benutzen vorhandene Muster und führen keine neuen Formen ein.
+
+- „Sag es laut“ sieht aus wie eine eigene Zeile im Rollenspiel: deutsche Frage (24 px, iPad 32 px), Hauptknopf „Aufdecken“, danach die Lösung mit Marker, Tonknöpfe und die zwei Antwortzeilen „Saß“ und „Noch mal“.
+- Suchtreffer aus dem Kurs sind Zeilen wie im Sprachführer. Unter dem Deutschen steht klein in ceniza die Haltestelle („Haltestelle 5 · ¿Dónde está?“).
+- Die Sprungliste des Sprachführers ist eine umbrechende Reihe von Textknöpfen unter dem Suchfeld, 8 px Abstand, jeder mindestens 44 px hoch.
+- Die Liste „Kommen morgen wieder“ in der Zusammenfassung ist eine Liste mit Haarlinien: Spanisch, darunter Deutsch in ceniza, rechts „Anhören“. Die Überschrift ist sachlich, ohne Farbe mojo.
+- „Zahlen üben“ zeigt keine Zahl, nur die Tonknöpfe „Anhören“ und „Langsam“, darunter ein Eingabefeld für Ziffern (Zifferntastatur) und den Hauptknopf „Prüfen“. Die Rückmeldung nennt die Zahl in Ziffern und auf Spanisch.
+- Der Satz zum Abgleich mit dem Plan steht in der Erklärzeile, in ceniza, ohne Hervorhebung.
+
 ## Paare, Satzbau, Eingabe, Zusammenfassung
 
 - Paare: zwei Spalten nebeneinander, links die vier spanischen Zeilen, rechts die vier deutschen. Jede Zeile ist wie eine Antwortzeile gebaut (Haarlinien, 56 px, iPad 68 px), aber ohne Auswahlkreis. Gewählt: Marker hinter dem Text, auch beim deutschen. Gefunden: Text in ceniza mit Haken in drago, nicht mehr wählbar. Falsches Paar: Beide Zeilen zeigen das Kreuz in mojo, bis die nächste Zeile angetippt wird.

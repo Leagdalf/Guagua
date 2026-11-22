@@ -126,6 +126,26 @@ Nach jeder Antwort: richtige Lösung zeigen, bei Fehlern zusätzlich die gewähl
 
 Öffnet nach Haltestelle 10. 30 Aufgaben über alle Karten: zuerst Karten in Fach 1 bis 3, der Rest zufällig, Aufgabentyp nach Fach. Danach die Ansicht „Deine Linie“ mit Karten je Fach, erledigten Missionen, aktiven Tagen, gesamter Lernzeit und dem Ergebnis der 30 Aufgaben.
 
+### 2.9 Ergänzungen nach dem frischen Blick
+
+Am 23.11.2026 hat ein Agent, der nur Kontext und Ziel kannte, die fertige App aus Sicht der Lernenden durchgespielt und Lücken benannt. Florians Auftrag war, sinnvolle Ergänzungen selbstständig umzusetzen. Die Hauptsitzung hat diese beschlossen. Wo eine Stellgröße genannt ist, steht sie in `src/core/config.ts` und lässt sich dort abschalten.
+
+1. **Suche über alles.** Die Suche im Sprachführer findet auch alle Lernkarten des Kurses (Spanisch, Deutsch, Beispielsatz), auch aus noch gesperrten Haltestellen. Treffer aus Karten stehen nach den Sätzen des Sprachführers unter „Aus dem Kurs“, mit Anhören, Zeigen und Stern. Bei Satzmustern werden Muster und Beispielsatz gezeigt, gesprochen und im Vollbild gezeigt wird der Beispielsatz. Ohne Suchwort bleibt der Sprachführer, wie er ist. Gemerkte Karten stehen mit in „Gemerkt“, `favorites` nimmt dafür auch Karten-Ids auf.
+2. **Sprungliste.** Über der Liste des Sprachführers stehen die Kategorien als Textknöpfe. Antippen springt zur Kategorie.
+3. **Rettungssätze.** Die erste Kategorie des Sprachführers heißt „Wenn du nichts verstehst“ und enthält die Sätze dazu aus Haltestelle 7, damit sie vom ersten Tag an greifbar sind.
+4. **Missionen für draußen.** Jede Mission bekommt zu ihren Sätzen die Übersetzungen (`mission.say_de`, gleich lang wie `say`). Jeder Satz hat Anhören, Langsam, Zeigen und eine aufdeckbare Übersetzung. Aufgabe und Sätze bleiben bei erledigten Missionen sichtbar. Auf der Startseite bleibt nur die Mission der zuletzt abgeschlossenen Haltestelle angeheftet, und nur bis zum zweiten Tag nach deren Abschluss. Ältere offene Missionen stehen nur unter „Missionen“.
+5. **Sag es laut.** Neuer Aufgabentyp `say`: Deutsch lesen, laut sagen, „Aufdecken“, die Lösung hören, dann „Saß“ oder „Noch mal“. „Saß“ zählt als richtig, „Noch mal“ als falsch. Beim Wiederholen und in der Endstation bekommen Wörter und Wendungen ab Fach 3 zuerst bis zu sechs Schreibaufgaben (`MAX_WRITE_TASKS_PER_ROUND`), alle weiteren „Sag es laut“. Satzmuster bleiben bei „Erinnern“. Mit `SAY_TASK_ENABLED = false` kommen die weiteren wieder als „Erinnern“. Die Regel ersetzt Tippen durch Sprechen, das eigentliche Ziel des Kurses. Sie stützt sich auf Selbsteinschätzung. Florian soll das bestätigen oder abschalten.
+6. **Falsche Karten.** Die Zusammenfassung einer Runde listet die falsch beantworteten Karten mit Spanisch, Deutsch und Tonknopf unter „Kommen morgen wieder“. Der Spickzettel hat einen Abschnitt „Oft falsch“ mit höchstens zehn Karten, die mindestens zweimal falsch waren.
+7. **10 Karten extra** wählt bei jedem Start neu und zufällig, Karten in niedrigen Fächern zuerst.
+8. **Nach der Endstation.** Die Wiederholrunde hat dann höchstens 20 Karten (`REVIEW_ROUND_AFTER_FINAL`). Steht heute nichts an, nennt der Block „Heute“ die nächste Wiederholung mit Wochentag und Zahl der Karten. Bleiben nach der Runde Karten fällig, sagt er, wie viele warten und dass morgen die nächsten kommen.
+9. **Abgleich mit dem Plan.** Maßgeblich ist `plan.last_stop_date` aus `content/course.json`. Sind mehr Haltestellen offen, als Tage bis dahin bleiben (heute eingeschlossen), steht im Zustand „Für heute fertig“ zusätzlich ein sachlicher Satz („Bis zum 2. Dezember sind es noch 6 Haltestellen in 5 Tagen.“) und ein Textknopf „Noch eine Haltestelle“. Liegt sie im Plan oder ist der Plan vorbei, steht dort nichts.
+10. **Dialog noch einmal spielen.** Die Übersicht einer abgeschlossenen Haltestelle hat einen Textknopf dafür: Anhören und Rollenspiel wie in Schritt 4, ohne Punkte und ohne Wirkung auf den Lernstand (`{ kind: "dialogue", unitId }`).
+11. **Zahlen hören.** Im Spickzettel startet „Zahlen üben“ zehn Aufgaben: Die App spricht eine Zahl von 0 bis 100 oder einen Preis, sie tippt die Ziffern. Keine Wertung, keine Punkte, nur mit spanischer Stimme. Preise folgen dem Muster aus Haltestelle 3 („tres euros con cincuenta“): Euro von 2 bis 99 ohne die Zahlen, die auf 1 enden, Cent in Zehnerschritten. So muss die App weder „un euro“ noch „veintiún euros“ bilden.
+12. **Rückmeldung.** Unter „Mehr“ gibt es die Unterseite „Rückmeldung“: kurze Notizen wie „Hat mir gefehlt“ oder „Fehler gefunden“, gespeichert im Lernstand (`notes`, optional), mit „Teilen“ als Text zusammen mit den Notizen der Missionen.
+13. **Stand der Inhalte** ist das Datum des Builds, nicht mehr ein festes Datum.
+
+Nicht umgesetzt: neue Haltestellen für die Zeit nach dem Urlaub (zu groß für diese Nacht, Themen in docs/03-lehrplan.md unter „Nicht enthalten“).
+
 ## 3. Ton
 
 Web Speech API, `speechSynthesis`. Keine Audiodateien.

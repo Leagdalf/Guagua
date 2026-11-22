@@ -2,7 +2,7 @@
 
 Spanisch lernen im Teneriffa-Urlaub: eine Web-App fürs iPad mit zehn Tageseinheiten und einem Sprachführer. „Guagua“ ist das kanarische Wort für Bus, der Kurs ist als Linie mit zehn Haltestellen gebaut.
 
-Stand 22.11.2026: Dieser Ordner enthält die Vorbereitung. Konzept, Lerninhalte, Prüfskripte und die Agenten für Claude Code sind fertig, App-Code gibt es noch nicht.
+Stand 23.11.2026: Die App ist gebaut und getestet, aber noch nicht veröffentlicht. Der Weg aufs iPad steht in docs/06-deployment-und-ipad.md.
 
 ## In fünf Schritten zur App auf dem iPad
 

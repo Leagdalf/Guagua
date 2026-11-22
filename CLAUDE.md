@@ -4,7 +4,7 @@ Web-App (PWA) fürs iPad, mit der eine Anfängerin im Teneriffa-Urlaub Spanisch 
 
 ## Stand
 
-22.11.2026: Konzept, Lerninhalte, Prüfskripte und Agenten sind fertig. App-Code gibt es noch nicht. Der Fahrplan steht in docs/05-arbeitspakete.md.
+23.11.2026: Die App ist gebaut. Alle Arbeitspakete AP0 bis AP6 und die Folgeaufträge aus docs/05-arbeitspakete.md sind umgesetzt, dazu die Ergänzungen aus docs/02-spezifikation.md, Abschnitt 2.9. Veröffentlicht ist sie noch nicht. Ablauftests liegen in `e2e` (`npm run test:e2e`, Playwright mit WebKit).
 
 Am selben Tag hat Florian die Gestaltung gewählt (Entwurf 6: Tagebuch-Gestaltung, Fahrplan-Linie, Berg) und das iPad als Hauptgerät festgelegt. docs/04-design.md und die Vorlagen in docs/mockups/project beschreiben diesen Stand. Die App wird über GitHub Pages ausgeliefert, Florian hat seit dem 22.11.2026 ein GitHub-Konto. Das Repository liegt unter `https://github.com/Leagdalf/Guagua` (`origin`), bisher privat. Solange es privat ist, lädt die Hauptsitzung nach jedem geprüften Arbeitspaket hoch. Sobald es öffentlich ist, gilt jeder Push als Veröffentlichung und braucht Florians Freigabe. Einzelheiten in docs/06-deployment-und-ipad.md.
 
