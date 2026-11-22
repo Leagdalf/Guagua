@@ -10,6 +10,7 @@ import { MissionsView } from "./features/missions";
 import { MoreView } from "./features/more";
 import { LoadErrorView, Onboarding, detectStandalone } from "./features/onboarding";
 import { PhrasebookView } from "./features/phrasebook/PhrasebookView";
+import { useUpdateNotice } from "./pwa";
 import { SessionView } from "./features/session";
 import type { SessionRequest } from "./features/session";
 import { AppShell, Notice, TabBar } from "./ui";
@@ -35,6 +36,7 @@ export function App() {
   // Nach dem Anlegen des Profils ist der Speicher „bereit“, der Stimmentest läuft aber noch im ersten Start.
   const [onboarding, setOnboarding] = useState(false);
   const [standalone] = useState(detectStandalone);
+  const newVersion = useUpdateNotice();
 
   if (state.status === "error") {
     return (
@@ -93,6 +95,7 @@ export function App() {
   // Der Sprachführer zeigt den Hinweis „keine spanische Stimme“ selbst; hier nicht doppelt.
   const notice = (
     <>
+      {newVersion.ready && <Notice text="Neue Version bereit." actionLabel="Neu laden" onAction={newVersion.reload} />}
       {tab !== "phrasebook" && <NoVoiceNotice />}
       {state.saveFailed && (
         <Notice text="Dein Lernstand lässt sich auf diesem Gerät nicht speichern. Er geht verloren, wenn du die App schließt." />
