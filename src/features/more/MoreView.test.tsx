@@ -8,7 +8,7 @@ import { units } from "../../core/content";
 import { newClock, newProgress, afterUnit1 } from "../home/testProgress";
 import { AI_NOTE, CALM_EXPLANATION } from "./aboutModel";
 import { AboutPage } from "./AboutPage";
-import { buildExport, checkImport } from "../../core/backup";
+import { buildExport, checkImport, formatDay } from "../../core/backup";
 import { BackupPage, ImportConfirm } from "./BackupPage";
 import { BACKUP_HINT } from "./backupModel";
 import { NO_GRAMMAR_TEXT } from "./cheatModel";
@@ -20,16 +20,17 @@ import { VoiceTest } from "./VoiceTest";
 const noop = () => {};
 const count = (html: string, needle: string) => html.split(needle).length - 1;
 
-describe("Mehr: Liste mit vier Unterseiten", () => {
+describe("Mehr: Liste mit fünf Unterseiten", () => {
   const clock = newClock();
   const html = renderToStaticMarkup(<MoreView progress={newProgress(clock, "Ana")} day={clock.current()} onUpdate={noop} />);
 
-  it("zeigt Spickzettel, Einstellungen, Fortschritt sichern und Über die App", () => {
+  it("zeigt Spickzettel, Einstellungen, Fortschritt sichern, Rückmeldung und Über die App", () => {
     expect(html).toContain("Spickzettel");
     expect(html).toContain("Einstellungen");
     expect(html).toContain("Fortschritt sichern");
+    expect(html).toContain("Rückmeldung");
     expect(html).toContain("Über die App");
-    expect(count(html, "more-menu__row")).toBe(4);
+    expect(count(html, "more-menu__row")).toBe(5);
   });
 
   it("zeigt die Inhalte der Unterseiten noch nicht", () => {
@@ -38,7 +39,7 @@ describe("Mehr: Liste mit vier Unterseiten", () => {
   });
 
   it("jede Unterseite hat den Textknopf „Zurück“", () => {
-    const pages = ["cheat", "settings", "backup", "about"] as const;
+    const pages = ["cheat", "settings", "backup", "feedback", "about"] as const;
     for (const initialPage of pages) {
       const out = renderToStaticMarkup(
         <MoreView progress={newProgress(clock, "Ana")} day={clock.current()} onUpdate={noop} initialPage={initialPage} />,
@@ -131,7 +132,7 @@ describe("Über die App", () => {
   it("zeigt Version, Stand, Punkte, Serie, Schriftlizenzen und den KI-Satz wörtlich", () => {
     const html = renderToStaticMarkup(<AboutPage progress={newProgress(clock, "Ana")} day={clock.current()} onBack={noop} />);
     expect(html).toContain(pkg.version);
-    expect(html).toContain("22.11.2026");
+    expect(html).toContain(formatDay(__BUILD_DATE__));
     expect(html).toContain("Punkte");
     expect(html).toContain("Serie");
     expect(html).toContain("Newsreader (SIL Open Font License 1.1)");
@@ -167,7 +168,9 @@ describe("Über die App", () => {
     expect(out).toContain('Summe</dt><dd class="summary__value">60 min');
     expect(out).toContain('Median</dt><dd class="summary__value">20 min');
     expect(out).toContain("Zielwert: Median zwischen 15 und 20 Minuten pro Tag.");
-    expect(out.indexOf("25.11.2026")).toBeLessThan(out.indexOf("23.11.2026")); // neuester zuerst
+    // neuester zuerst (der Stand der Inhalte oben trägt das Datum des Builds und zählt nicht mit)
+    const list = out.slice(out.indexOf("Lernzeit je Tag"));
+    expect(list.indexOf("25.11.2026")).toBeLessThan(list.indexOf("23.11.2026"));
   });
 
   it("ohne Lernzeit steht ein Satz, keine Summe", () => {
@@ -180,7 +183,13 @@ describe("Über die App", () => {
 describe("Fortschritt sichern", () => {
   const clock = newClock();
   const html = renderToStaticMarkup(
-    <BackupPage progress={newProgress(clock, "Ana")} now={clock.now} onReplace={() => ({ ok: true, backupKey: null })} onBack={noop} />,
+    <BackupPage
+      progress={newProgress(clock, "Ana")}
+      now={clock.now}
+      onReplace={() => ({ ok: true, backupKey: null })}
+      getBackup={() => null}
+      onBack={noop}
+    />,
   );
 
   it("nennt den Hinweis aus docs/06: Symbol löschen löscht den Lernstand, einmal in der Woche und vor dem Heimflug sichern", () => {
@@ -204,18 +213,18 @@ describe("Fortschritt sichern", () => {
   });
 });
 describe("Rückfrage vor dem Import", () => {
-  it("zeigt Name, Karten, abgeschlossene Haltestellen, Punkte, Datum und fragt ausdrücklich", () => {
+  it("ohne lesbaren aktuellen Stand: zeigt Name, Karten, Haltestellen, Punkte, Datum und fragt ausdrücklich", () => {
     const { clock, progress } = afterUnit1();
     const check = checkImport(buildExport(progress, clock.now));
     if (!check.ok) throw new Error("Import");
-    const html = renderToStaticMarkup(<ImportConfirm summary={check.summary} currentName="Eva" onConfirm={noop} onCancel={noop} />);
+    const html = renderToStaticMarkup(<ImportConfirm summary={check.summary} current={null} onConfirm={noop} onCancel={noop} />);
     expect(html).toContain("Stand importieren?");
     expect(html).toContain('Name</dt><dd class="summary__value">Ana');
     expect(html).toContain("Karten</dt>");
     expect(html).toContain("Abgeschlossene Haltestellen</dt><dd class=\"summary__value\">1 von 10");
     expect(html).toContain('Punkte</dt><dd class="summary__value">120');
     expect(html).toContain("Exportiert am</dt><dd class=\"summary__value\">23.11.2026");
-    expect(html).toContain("Dein aktueller Stand von Eva wird ersetzt");
+    expect(html).toContain("nicht lesbar");
     expect(html).toContain("Jetzt importieren");
     expect(html).toContain("Abbrechen");
     expect(count(html, 'class="btn')).toBe(1);

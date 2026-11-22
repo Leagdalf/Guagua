@@ -1,5 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { buildExport, checkImport, EXPORT_FORMAT, exportFileName, formatDay, summaryRows } from "./backup";
+import {
+  buildExport,
+  checkImport,
+  compareImport,
+  EXPORT_FORMAT,
+  exportFileName,
+  formatDateTime,
+  formatDay,
+  lastActivityDay,
+  summarizeProgress,
+  summaryRows,
+} from "./backup";
+import { updateProfile } from "./progress";
 import { createProgressStore } from "./store";
 import type { StorageLike } from "./store";
 import { freshProgress, makeClock } from "./testkit";
@@ -113,11 +125,20 @@ describe("Zusammenfassung", () => {
       unitsDone: 1,
       unitsTotal: 10,
       points: original.stats.points,
+      calm: false,
+      lastActiveOn: "2026-11-23",
       exportedOn: "2026-11-23",
     });
     expect(check.summary.cardCount).toBeGreaterThan(0);
     const rows = summaryRows(check.summary);
-    expect(rows.map((row) => row.label)).toEqual(["Name", "Karten", "Abgeschlossene Haltestellen", "Punkte", "Exportiert am"]);
+    expect(rows.map((row) => row.label)).toEqual([
+      "Name",
+      "Karten",
+      "Abgeschlossene Haltestellen",
+      "Zuletzt gelernt",
+      "Punkte",
+      "Exportiert am",
+    ]);
     expect(rows.find((row) => row.label === "Abgeschlossene Haltestellen")?.value).toBe("1 von 10");
     expect(rows.find((row) => row.label === "Exportiert am")?.value).toBe("23.11.2026");
   });
@@ -132,5 +153,91 @@ describe("Zusammenfassung", () => {
 
   it("formatDay", () => {
     expect(formatDay("2026-12-03")).toBe("03.12.2026");
+  });
+
+  it("formatDateTime: Tag und Uhrzeit in Ortszeit, unlesbar ergibt „unbekannt“", () => {
+    expect(formatDateTime(new Date(2026, 10, 23, 9, 5).toISOString())).toBe("23.11.2026, 09:05 Uhr");
+    expect(formatDateTime("gestern")).toBe("unbekannt");
+  });
+});
+
+describe("Alter Export ohne die neueren optionalen Felder", () => {
+  it("wird eingelesen: ohne finalRun, finalReview, lastReviewDay und notes", () => {
+    const old = JSON.parse(buildExport(learned(), clock.now));
+    delete old.progress.finalRun;
+    delete old.progress.finalReview;
+    delete old.progress.notes;
+    delete old.progress.stats.lastReviewDay;
+    const text = JSON.stringify(old);
+    for (const field of ["finalRun", "finalReview", "lastReviewDay", "notes"]) expect(text).not.toContain(field);
+    const check = checkImport(text);
+    expect(check.ok).toBe(true);
+    if (check.ok) {
+      expect(check.progress.profile.name).toBe("Ana-Lena");
+      expect(check.progress.notes).toBeUndefined();
+      expect(check.summary.unitsDone).toBe(1);
+    }
+  });
+});
+
+describe("Rückfrage: aktueller und importierter Stand nebeneinander", () => {
+  const summaryOf = (progress: Progress, exportedAt = "2026-11-23T12:00:00.000Z") => summarizeProgress(progress, exportedAt);
+  const later = (day: string): Progress => {
+    const c = makeClock(day);
+    let p = startUnit(freshProgress(c, "Ana-Lena"), "u01", c.now);
+    for (const step of [1, 2, 3, 4, 5] as Step[]) p = completeStep(p, "u01", step, c.now);
+    return p;
+  };
+
+  it("die Zeilen nennen beide Stände: Karten, Haltestellen, Datum, Punkte", () => {
+    const now = learned();
+    const cmp = compareImport(summaryOf(now), summaryOf(later("2026-11-25"), "2026-11-25T12:00:00.000Z"));
+    expect(cmp.rows.map((r) => r.label)).toEqual(["Name", "Karten", "Abgeschlossene Haltestellen", "Zuletzt gelernt", "Punkte", "Exportiert am"]);
+    const dateRow = cmp.rows.find((r) => r.label === "Zuletzt gelernt");
+    expect(dateRow).toEqual({ label: "Zuletzt gelernt", current: "23.11.2026", imported: "25.11.2026" });
+    expect(cmp.warnings).toEqual([]);
+  });
+
+  it("warnt, wenn der importierte Stand weniger Karten hat", () => {
+    const full = learned();
+    const empty = freshProgress(clock, "Ana-Lena");
+    const cmp = compareImport(summaryOf(full), summaryOf(empty));
+    expect(cmp.warnings.some((w) => /weniger Karten/.test(w) && w.includes(`${Object.keys(full.cards).length}`))).toBe(true);
+    expect(cmp.warnings.some((w) => /weniger abgeschlossene Haltestellen/.test(w))).toBe(true);
+  });
+
+  it("warnt, wenn der importierte Stand älter ist, auch bei gleich vielen Karten", () => {
+    const current = later("2026-11-25");
+    const older = later("2026-11-23");
+    const cmp = compareImport(summaryOf(current), summaryOf(older));
+    expect(cmp.warnings).toHaveLength(1);
+    expect(cmp.warnings[0]).toMatch(/älter/);
+    expect(cmp.warnings[0]).toContain("23.11.2026");
+    expect(cmp.warnings[0]).toContain("25.11.2026");
+  });
+
+  it("keine Warnung, wenn der Import gleich viel oder mehr hat und nicht älter ist", () => {
+    const a = learned();
+    expect(compareImport(summaryOf(a), summaryOf(a)).warnings).toEqual([]);
+  });
+
+  it("im Ruhemodus fehlen die Punkte, bei einem der beiden Stände genügt", () => {
+    const a = updateProfile(learned(), { calm: true });
+    const b = learned();
+    for (const [x, y] of [[a, b], [b, a], [a, a]] as const) {
+      const labels = compareImport(summaryOf(x), summaryOf(y)).rows.map((r) => r.label);
+      expect(labels).not.toContain("Punkte");
+    }
+    expect(summaryRows(summaryOf(a)).map((r) => r.label)).not.toContain("Punkte");
+  });
+
+  it("lastActivityDay nimmt den spätesten Tag aus Karten, Haltestellen, Missionen und Lernzeit", () => {
+    const base = freshProgress(clock, "Ana");
+    expect(lastActivityDay(base)).toBeNull();
+    const withTime = { ...base, stats: { ...base.stats, activeMsByDay: { "2026-11-24": 1000, "2026-11-20": 5 } } };
+    expect(lastActivityDay(withTime)).toBe("2026-11-24");
+    const withCard = { ...withTime, cards: { "u01-i01": { box: 1 as const, due: "2026-11-27", right: 0, wrong: 1, lastSeen: "2026-11-26" } } };
+    expect(lastActivityDay(withCard)).toBe("2026-11-26");
+    expect(lastActivityDay(learned())).toBe("2026-11-23");
   });
 });

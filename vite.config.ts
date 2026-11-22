@@ -6,11 +6,19 @@ import { VitePWA } from "vite-plugin-pwa";
 // Gebaut und in der Vorschau (`npm run preview`) gilt dieser Pfad, im Entwicklungsserver und in Tests "/".
 const REPO_BASE = "/Guagua/";
 
+/** Datum des Builds (lokaler Kalendertag, JJJJ-MM-TT) für „Stand der Inhalte“; auch im Entwicklungsserver und in Tests gesetzt. */
+function buildDate(): string {
+  const now = new Date();
+  const two = (n: number): string => String(n).padStart(2, "0");
+  return `${now.getFullYear()}-${two(now.getMonth() + 1)}-${two(now.getDate())}`;
+}
+
 export default defineConfig(({ command, isPreview }) => {
   const base = command === "build" || isPreview ? REPO_BASE : "/";
 
   return {
     base,
+    define: { __BUILD_DATE__: JSON.stringify(buildDate()) },
     plugins: [
       react(),
       VitePWA({

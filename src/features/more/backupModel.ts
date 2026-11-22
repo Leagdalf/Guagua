@@ -39,6 +39,21 @@ export function importedText(name: string): string {
   return `Der Stand von ${name} ist importiert. Dein vorheriger Stand liegt als Sicherung auf diesem Gerät.`;
 }
 
+/** Erklärung zu den automatischen Sicherungen auf der Seite „Fortschritt sichern“. */
+export const AUTO_BACKUP_INFO =
+  "Vor jedem Import und vor jedem Neustart legt die App eine Sicherung deines Standes auf diesem Gerät an. Sie behält die drei neuesten und löscht ältere.";
+
+export const NO_AUTO_BACKUP_TEXT = "Es gibt noch keine automatische Sicherung auf diesem Gerät.";
+
+/** Zeile zur letzten automatischen Sicherung: von wann und was drin ist. */
+export function backupLine(when: string, cards: number, unitsDone: number, unitsTotal: number): string {
+  return `Vom ${when}: ${cards} Karten, ${unitsDone} von ${unitsTotal} Haltestellen abgeschlossen.`;
+}
+
+export function restoredText(when: string): string {
+  return `Die Sicherung vom ${when} ist wieder dein Stand. Dein vorheriger Stand liegt als neue Sicherung auf diesem Gerät.`;
+}
+
 /** Ob das Gerät eine Datei über das Teilen-Menü schicken kann. Ohne Browser immer `false`. */
 export function canShareFiles(): boolean {
   if (typeof navigator === "undefined" || typeof File === "undefined") return false;

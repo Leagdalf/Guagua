@@ -1,8 +1,14 @@
+import { useState } from "react";
 import { speak, useVoices } from "../../audio";
-import type { Progress } from "../../core/types";
-import { AudioButton, Es, Label } from "../../ui";
-import { NO_GRAMMAR_TEXT, numberRows, pronunciationTips, startedGrammar, weekdayRows } from "./cheatModel";
+import { speakTextOf } from "../../core/tasks";
+import type { Item, Progress } from "../../core/types";
+import { newRng } from "../../state";
+import { AudioButton, Es, Label, PrimaryButton } from "../../ui";
+import { NO_GRAMMAR_TEXT, numberRows, oftenWrongItems, pronunciationTips, startedGrammar, weekdayRows } from "./cheatModel";
 import type { CheatGrammar } from "./cheatModel";
+import { NumbersPractice } from "./NumbersPractice";
+import { NEEDS_VOICE_TEXT, makeNumberTasks, spokenText } from "./numbersModel";
+import type { PracticeTask } from "./numbersModel";
 import { SubPage } from "./SubPage";
 
 export interface CheatSheetPageProps {
@@ -10,11 +16,33 @@ export interface CheatSheetPageProps {
   onBack: () => void;
 }
 
-/** Spickzettel (Spezifikation 2.7): Grammatik begonnener Haltestellen, Zahlen 0 bis 100, Wochentage, Aussprache. */
+/** Spickzettel (Spezifikation 2.7): Grammatik begonnener Haltestellen, Zahlen 0 bis 100 mit Übung, Wochentage, oft falsche Karten, Aussprache. */
 export function CheatSheetPage({ progress, onBack }: CheatSheetPageProps) {
   const { hasVoice } = useVoices();
+  const [practice, setPractice] = useState<{ tasks: PracticeTask[]; round: number } | null>(null);
   const grammar = startedGrammar(progress);
+  const wrong = oftenWrongItems(progress);
   const tips = pronunciationTips();
+
+  // Der Ton der ersten Zahl startet direkt im Tippen auf „Zahlen üben“ (iOS verlangt die Geste).
+  const handleStartPractice = (): void => {
+    const tasks = makeNumberTasks(newRng());
+    const first = tasks[0];
+    setPractice({ tasks, round: (practice?.round ?? 0) + 1 });
+    if (first) speak(spokenText(first));
+  };
+
+  if (practice) {
+    return (
+      <NumbersPractice
+        key={practice.round}
+        tasks={practice.tasks}
+        hasVoice={hasVoice}
+        onClose={() => setPractice(null)}
+        onAgain={handleStartPractice}
+      />
+    );
+  }
 
   return (
     <SubPage title="Spickzettel" onBack={onBack}>
@@ -28,6 +56,20 @@ export function CheatSheetPage({ progress, onBack }: CheatSheetPageProps) {
           grammar.map((entry) => <GrammarBlock key={entry.unitId} entry={entry} hasVoice={hasVoice} />)
         )}
       </section>
+
+      {wrong.length > 0 && (
+        <section className="sec" aria-labelledby="cheat-wrong">
+          <h2 className="sec__title" id="cheat-wrong">
+            Oft falsch
+          </h2>
+          <p className="sec__muted">Karten, bei denen du mindestens zweimal danebenlagst.</p>
+          <ul className="examples">
+            {wrong.map((item) => (
+              <WrongRow key={item.id} item={item} hasVoice={hasVoice} />
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="sec" aria-labelledby="cheat-numbers">
         <h2 className="sec__title" id="cheat-numbers">
@@ -44,6 +86,13 @@ export function CheatSheetPage({ progress, onBack }: CheatSheetPageProps) {
             </li>
           ))}
         </ul>
+        <p className="sec__text">Zehn Aufgaben mit Zahlen und Preisen: Du hörst, du tippst die Ziffern. Es gibt keine Punkte.</p>
+        <div className="more__actions">
+          <PrimaryButton disabled={!hasVoice} onClick={handleStartPractice}>
+            Zahlen üben
+          </PrimaryButton>
+        </div>
+        {!hasVoice && <p className="sec__muted">{NEEDS_VOICE_TEXT}</p>}
       </section>
 
       <section className="sec" aria-labelledby="cheat-weekdays">
@@ -75,6 +124,28 @@ export function CheatSheetPage({ progress, onBack }: CheatSheetPageProps) {
         </section>
       )}
     </SubPage>
+  );
+}
+
+/** Zeile einer oft falschen Karte: Spanisch, Deutsch, Tonknopf. Bei Satzmustern spricht der Knopf den Beispielsatz. */
+function WrongRow({ item, hasVoice }: { item: Item; hasVoice: boolean }) {
+  const id = `wrong-${item.id}`;
+  const spoken = speakTextOf(item);
+  return (
+    <li>
+      <div>
+        <Es as="p" id={id}>
+          {item.example ? item.example.es : item.es}
+        </Es>
+        <p className="examples__de">{item.example ? item.example.de : item.de}</p>
+        {item.example && (
+          <p className="examples__de">
+            Muster: <Es as="span" size="inherit">{item.es}</Es> · {item.de}
+          </p>
+        )}
+      </div>
+      <AudioButton disabled={!hasVoice} describedBy={id} onClick={() => speak(spoken)} />
+    </li>
   );
 }
 

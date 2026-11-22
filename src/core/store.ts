@@ -4,6 +4,7 @@
 //
 // Unlesbare oder fremde Daten überschreibt der Speicher nie. Er geht in den Zustand „error“ und wartet, bis die
 // Oberfläche `restart()` aufruft. Auch dann bleibt der alte Text unter einem Sicherungsschlüssel erhalten.
+// Von den Sicherungen behält der Speicher die drei neuesten (`BACKUPS_KEPT`), sofern der Speicher `keys` und `removeItem` kann.
 
 import { STORAGE_KEY } from "./config";
 import { createProgress, parseProgress, serializeProgress, validateProgress } from "./progress";
@@ -15,6 +16,20 @@ import type { Progress } from "./types";
 export interface StorageLike {
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;
+  /** Optional. Ohne `removeItem` löscht der Speicher nie etwas (alte Sicherungen bleiben dann liegen). */
+  removeItem?(key: string): void;
+  /** Optional. Alle Schlüssel des Speichers. Ohne `keys` kennt der Speicher keine Sicherungen und bietet keine zum Zurückholen an. */
+  keys?(): string[];
+}
+
+/** So viele automatische Sicherungen bleiben erhalten, ältere werden gelöscht, sobald eine neue geschrieben ist. */
+export const BACKUPS_KEPT = 3;
+
+/** Eine automatische Sicherung, die sich lesen lässt. `at` ist der ISO-Zeitpunkt, an dem sie angelegt wurde. */
+export interface BackupInfo {
+  key: string;
+  at: string;
+  progress: Progress;
 }
 
 export type StoreState =
@@ -52,6 +67,12 @@ export interface ProgressStore {
    * zu sichern (`backupKey: null`), im Zustand „error“ wird der unlesbare Text gesichert.
    */
   replaceProgress(next: Progress): ReplaceResult;
+  /**
+   * Die neueste automatische Sicherung, die sich als gültiger Fortschritt lesen lässt, oder `null`
+   * (keine vorhanden, oder der Speicher kann seine Schlüssel nicht auflisten). Ändert nichts.
+   * Zurückholen: `replaceProgress(info.progress)`; das sichert vorher den aktuellen Stand.
+   */
+  latestBackup(): BackupInfo | null;
 }
 
 export interface ProgressStoreOptions {
@@ -92,17 +113,57 @@ export function createProgressStore({ storage, now, key = STORAGE_KEY }: Progres
     }
   }
 
-  /** Schreibt `text` unter einen freien Sicherungsschlüssel und liest ihn zurück. `null`, wenn das scheitert. */
-  function writeBackup(text: string): string | null {
-    const base = `${key}:backup-${now().toISOString()}`;
+  /** Sicherungsschlüssel `<Schlüssel>:backup-<ISO-Zeitpunkt>` mit optionalem Zähler `-2`, `-3` für denselben Zeitpunkt. */
+  const backupPattern = new RegExp(`^${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}:backup-(\\d{4}-\\d{2}-\\d{2}T[\\d:.]+Z)(?:-(\\d+))?$`);
+
+  /** Alle Sicherungen, neueste zuerst. Leer, wenn der Speicher keine Schlüssel auflisten kann. */
+  function listBackups(): { key: string; at: string; n: number }[] {
+    if (!storage.keys) return [];
+    let all: string[];
     try {
-      let backupKey = base;
-      for (let n = 2; storage.getItem(backupKey) !== null; n++) backupKey = `${base}-${n}`;
+      all = storage.keys();
+    } catch {
+      return [];
+    }
+    const found: { key: string; at: string; n: number }[] = [];
+    for (const candidate of all) {
+      const match = backupPattern.exec(candidate);
+      if (match) found.push({ key: candidate, at: match[1] as string, n: match[2] === undefined ? 1 : Number(match[2]) });
+    }
+    found.sort((a, b) => (a.at === b.at ? b.n - a.n : a.at < b.at ? 1 : -1));
+    return found;
+  }
+
+  /** Löscht alle Sicherungen außer den neuesten `BACKUPS_KEPT`, nie die Schlüssel in `protect`. Ohne `removeItem` passiert nichts. */
+  function pruneBackups(protect: string): void {
+    const remove = storage.removeItem;
+    if (!remove) return;
+    for (const old of listBackups().slice(BACKUPS_KEPT)) {
+      if (old.key === protect) continue;
+      try {
+        remove.call(storage, old.key);
+      } catch {
+        // Eine Sicherung zu viel ist unschädlich.
+      }
+    }
+  }
+
+  /** Schreibt `text` unter einen freien Sicherungsschlüssel und liest ihn zurück, räumt danach auf. `null`, wenn das scheitert. */
+  function writeBackup(text: string): string | null {
+    const at = now().toISOString();
+    const base = `${key}:backup-${at}`;
+    // Nummer über der höchsten desselben Zeitpunkts, damit eine spätere Sicherung auch nach dem Aufräumen die höhere bleibt.
+    const highest = Math.max(0, ...listBackups().filter((entry) => entry.at === at).map((entry) => entry.n));
+    let backupKey = highest === 0 ? base : `${base}-${highest + 1}`;
+    try {
+      for (let n = highest + 2; storage.getItem(backupKey) !== null; n++) backupKey = `${base}-${n}`;
       storage.setItem(backupKey, text);
-      return storage.getItem(backupKey) === text ? backupKey : null;
+      if (storage.getItem(backupKey) !== text) return null;
     } catch {
       return null;
     }
+    pruneBackups(backupKey);
+    return backupKey;
   }
 
   return {
@@ -132,14 +193,8 @@ export function createProgressStore({ storage, now, key = STORAGE_KEY }: Progres
 
     restart() {
       if (state.status !== "error") return false;
-      if (state.raw !== null) {
-        try {
-          storage.setItem(`${key}:backup-${now().toISOString()}`, state.raw);
-        } catch {
-          // Ohne Sicherung des alten Textes bleibt der Fehlerzustand bestehen, damit nichts verloren geht.
-          return false;
-        }
-      }
+      // Ohne Sicherung des alten Textes bleibt der Fehlerzustand bestehen, damit nichts verloren geht.
+      if (state.raw !== null && writeBackup(state.raw) === null) return false;
       emit({ status: "empty" });
       return true;
     },
@@ -156,6 +211,20 @@ export function createProgressStore({ storage, now, key = STORAGE_KEY }: Progres
       if (!save(valid)) return { ok: false, reason: "save-failed" };
       emit({ status: "ready", progress: valid, saveFailed: false });
       return { ok: true, backupKey };
+    },
+
+    latestBackup() {
+      for (const entry of listBackups()) {
+        let text: string | null;
+        try {
+          text = storage.getItem(entry.key);
+        } catch {
+          return null;
+        }
+        const parsed = parseProgress(text);
+        if (parsed.status === "ok") return { key: entry.key, at: entry.at, progress: parsed.progress };
+      }
+      return null;
     },
   };
 }

@@ -30,6 +30,9 @@ const inBrowser = typeof window !== "undefined";
 const browserStorage: StorageLike = {
   getItem: (key) => window.localStorage.getItem(key),
   setItem: (key, value) => window.localStorage.setItem(key, value),
+  // Für die automatischen Sicherungen: auflisten, die drei neuesten behalten, ältere entfernen.
+  removeItem: (key) => window.localStorage.removeItem(key),
+  keys: () => Object.keys(window.localStorage),
 };
 
 export const appClock: Clock = createClock(inBrowser ? readDayOffset(window.location.search) : 0);

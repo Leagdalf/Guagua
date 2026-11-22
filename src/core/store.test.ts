@@ -280,3 +280,142 @@ describe("Speicher: Fortschritt ersetzen (Import)", () => {
     expect(store.getSnapshot().status).toBe("ready");
   });
 });
+
+describe("Speicher: drei neueste Sicherungen behalten, letzte zurückholen", () => {
+  function memory(withRemove = true, withKeys = true) {
+    const data = new Map<string, string>();
+    const storage: StorageLike = {
+      getItem: (key) => data.get(key) ?? null,
+      setItem: (key, value) => void data.set(key, value),
+    };
+    if (withRemove) storage.removeItem = (key) => void data.delete(key);
+    if (withKeys) storage.keys = () => [...data.keys()];
+    return { storage, data };
+  }
+  const backupKeys = (data: Map<string, string>) => [...data.keys()].filter((key) => key.includes(":backup-")).sort();
+  const named = (name: string): Progress => freshProgress(clock, name);
+
+  it("nach dem vierten Ersetzen bleiben nur die drei neuesten Sicherungen", () => {
+    const c = makeClock("2026-11-20");
+    const { storage, data } = memory();
+    data.set(STORAGE_KEY, serializeProgress(named("Start")));
+    const store = createProgressStore({ storage, now: c.now });
+    const written: string[] = [];
+    for (const name of ["A", "B", "C", "D"]) {
+      c.advance(1);
+      const result = store.replaceProgress(named(name));
+      if (!result.ok || result.backupKey === null) throw new Error("Sicherung");
+      written.push(result.backupKey);
+    }
+    expect(backupKeys(data)).toEqual(written.slice(1).sort());
+    expect(data.has(written[0] as string)).toBe(false);
+    // Die neueste Sicherung ist der Stand vor dem letzten Ersetzen.
+    expect(store.latestBackup()?.progress.profile.name).toBe("C");
+  });
+
+  it("gleicher Zeitpunkt: -10 ist neuer als -2, es bleiben die drei neuesten", () => {
+    const { storage, data } = memory();
+    data.set(STORAGE_KEY, serializeProgress(named("Start")));
+    const store = createProgressStore({ storage, now: clock.now });
+    for (let i = 1; i <= 12; i++) store.replaceProgress(named(`N${i}`));
+    expect(backupKeys(data)).toHaveLength(3);
+    // Die neueste Sicherung hält den Stand vor dem zwölften Ersetzen.
+    expect(store.latestBackup()?.progress.profile.name).toBe("N11");
+    expect(backupKeys(data).some((key) => key.endsWith("-12"))).toBe(true);
+    expect(backupKeys(data).some((key) => key.endsWith("-2"))).toBe(false);
+  });
+
+  it("fremde Schlüssel und Schlüssel ohne Zeitpunkt löscht der Speicher nie", () => {
+    const { storage, data } = memory();
+    data.set(STORAGE_KEY, serializeProgress(named("Start")));
+    data.set("andere-app", "x");
+    data.set(`${STORAGE_KEY}:backup-von-hand`, "y");
+    const store = createProgressStore({ storage, now: clock.now });
+    for (let i = 0; i < 6; i++) store.replaceProgress(named(`N${i}`));
+    expect(data.get("andere-app")).toBe("x");
+    expect(data.get(`${STORAGE_KEY}:backup-von-hand`)).toBe("y");
+  });
+
+  it("ohne removeItem löscht der Speicher nichts und stürzt nicht ab", () => {
+    const { storage, data } = memory(false, true);
+    data.set(STORAGE_KEY, serializeProgress(named("Start")));
+    const store = createProgressStore({ storage, now: clock.now });
+    for (let i = 0; i < 5; i++) expect(store.replaceProgress(named(`N${i}`)).ok).toBe(true);
+    expect(backupKeys(data)).toHaveLength(5);
+  });
+
+  it("ohne keys kennt der Speicher keine Sicherung zum Zurückholen, Ersetzen und Löschen laufen weiter", () => {
+    const { storage, data } = memory(true, false);
+    data.set(STORAGE_KEY, serializeProgress(named("Start")));
+    const store = createProgressStore({ storage, now: clock.now });
+    for (let i = 0; i < 5; i++) expect(store.replaceProgress(named(`N${i}`)).ok).toBe(true);
+    expect(store.latestBackup()).toBeNull();
+    expect(backupKeys(data)).toHaveLength(5);
+  });
+
+  it("wirft keys oder removeItem, bleibt alles heil", () => {
+    const { storage, data } = memory();
+    data.set(STORAGE_KEY, serializeProgress(named("Start")));
+    const store = createProgressStore({ storage, now: clock.now });
+    storage.removeItem = () => {
+      throw new Error("gesperrt");
+    };
+    for (let i = 0; i < 5; i++) expect(store.replaceProgress(named(`N${i}`)).ok).toBe(true);
+    storage.keys = () => {
+      throw new Error("gesperrt");
+    };
+    expect(store.latestBackup()).toBeNull();
+    expect(store.replaceProgress(named("Ende")).ok).toBe(true);
+  });
+
+  it("keine Sicherung: latestBackup ist null", () => {
+    const { storage } = memory();
+    expect(createProgressStore({ storage, now: clock.now }).latestBackup()).toBeNull();
+  });
+
+  it("latestBackup überspringt unlesbare Sicherungen und nimmt die neueste gültige", () => {
+    const c = makeClock("2026-11-20");
+    const { storage, data } = memory();
+    data.set(STORAGE_KEY, serializeProgress(named("Alt")));
+    const store = createProgressStore({ storage, now: c.now });
+    c.advance(1);
+    store.replaceProgress(named("Mitte"));
+    c.advance(1);
+    data.set(STORAGE_KEY, "{kaputt");
+    const broken = createProgressStore({ storage, now: c.now });
+    expect(broken.getSnapshot().status).toBe("error");
+    expect(broken.restart()).toBe(true); // sichert den kaputten Text als neueste Sicherung
+    expect(backupKeys(data).some((key) => data.get(key) === "{kaputt")).toBe(true);
+    expect(broken.latestBackup()?.progress.profile.name).toBe("Alt");
+  });
+
+  it("Zurückholen: replaceProgress mit der Sicherung sichert den aktuellen Stand und gilt danach", () => {
+    const c = makeClock("2026-11-20");
+    const { storage, data } = memory();
+    data.set(STORAGE_KEY, serializeProgress(named("Eins")));
+    const store = createProgressStore({ storage, now: c.now });
+    c.advance(1);
+    store.replaceProgress(named("Zwei"));
+    const backup = store.latestBackup();
+    if (!backup) throw new Error("Sicherung");
+    expect(backup.progress.profile.name).toBe("Eins");
+    expect(backup.at).toBe(c.now().toISOString());
+    c.advance(1);
+    expect(store.replaceProgress(backup.progress).ok).toBe(true);
+    const snapshot = store.getSnapshot();
+    expect(snapshot.status === "ready" && snapshot.progress.profile.name).toBe("Eins");
+    // Der Stand vor dem Zurückholen ist jetzt die neueste Sicherung.
+    expect(store.latestBackup()?.progress.profile.name).toBe("Zwei");
+  });
+
+  it("restart() überschreibt keine Sicherung vom selben Zeitpunkt", () => {
+    const { storage, data } = memory();
+    data.set(STORAGE_KEY, "{kaputt");
+    const store = createProgressStore({ storage, now: clock.now });
+    const first = `${STORAGE_KEY}:backup-${clock.now().toISOString()}`;
+    data.set(first, "vorhanden");
+    expect(store.restart()).toBe(true);
+    expect(data.get(first)).toBe("vorhanden");
+    expect(backupKeys(data).filter((key) => data.get(key) === "{kaputt")).toHaveLength(1);
+  });
+});

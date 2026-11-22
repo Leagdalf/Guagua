@@ -9,8 +9,8 @@ import type { Day, Progress } from "../../core/types";
 /** Version aus package.json. */
 export const APP_VERSION: string = pkg.version;
 
-/** Stand der Lerninhalte (CLAUDE.md, Abschnitt Stand). */
-export const CONTENT_DATE = "22.11.2026";
+/** Stand der Lerninhalte: Datum des Builds (`__BUILD_DATE__` aus vite.config.ts), als `23.11.2026`. */
+export const CONTENT_DATE: string = typeof __BUILD_DATE__ === "string" ? formatDay(__BUILD_DATE__) : "unbekannt";
 
 /** Satz aus docs/02-spezifikation.md, 2.7, wörtlich. */
 export const AI_NOTE = "Code und Lerninhalte sind mit KI-Unterstützung entstanden. Fehler gefunden? Bitte melden, dann wird die Karte korrigiert.";

@@ -1,28 +1,32 @@
 import { useId, useState } from "react";
-import type { ChangeEvent } from "react";
-import { buildExport, checkImport, exportFileName, summaryRows } from "../../core/backup";
+import { buildExport, exportFileName, formatDateTime, summarizeProgress } from "../../core/backup";
 import type { ImportSummary } from "../../core/backup";
-import type { ReplaceResult } from "../../core/store";
+import type { BackupInfo, ReplaceResult } from "../../core/store";
 import type { Clock } from "../../core/time";
 import type { Progress } from "../../core/types";
-import { PrimaryButton, SummaryList, TextArea, TextButton } from "../../ui";
+import { PrimaryButton, TextButton } from "../../ui";
 import {
+  AUTO_BACKUP_INFO,
   BACKUP_HINT,
   COPY_DONE,
   COPY_MANUAL,
-  FILE_TOO_BIG,
-  FILE_UNREADABLE,
-  MAX_IMPORT_BYTES,
+  NO_AUTO_BACKUP_TEXT,
   SHARE_ABORTED,
   SHARE_DONE,
   SHARE_FAILED,
+  backupLine,
   canShareFiles,
   downloadText,
   importedText,
   replaceFailureMessage,
+  restoredText,
   savedText,
 } from "./backupModel";
+import { ImportConfirm } from "./ImportConfirm";
+import { ImportPanel } from "./ImportPanel";
 import { SubPage } from "./SubPage";
+
+export { ImportConfirm } from "./ImportConfirm";
 
 export interface BackupPageProps {
   progress: Progress;
@@ -30,26 +34,29 @@ export interface BackupPageProps {
   now: Clock;
   /** Ersetzt den Fortschritt durch den geprüften Import (`progressStore.replaceProgress`). */
   onReplace: (next: Progress) => ReplaceResult;
+  /** Die letzte automatische Sicherung (`progressStore.latestBackup`) oder `null`. Wird nach jedem Ersetzen neu gelesen. */
+  getBackup: () => BackupInfo | null;
   onBack: () => void;
 }
 
 type Phase =
   | { kind: "main" }
-  | { kind: "confirm"; next: Progress; summary: ImportSummary }
-  | { kind: "done"; name: string };
+  | { kind: "confirm"; next: Progress; summary: ImportSummary; source: "import" | "backup"; at?: string }
+  | { kind: "done"; text: string };
 
 /**
  * Fortschritt sichern (Spezifikation 2.7). Export über das Teilen-Menü, als Datei oder in die Zwischenablage.
- * Import aus Datei oder eingefügtem Text: erst prüfen, dann zeigen, was kommt, dann ausdrücklich fragen.
- * Teilen, Zwischenablage und Dateiauswahl laufen direkt in der Klick-Behandlung.
+ * Import aus Datei oder eingefügtem Text und Zurückholen der letzten automatischen Sicherung: erst prüfen, dann den aktuellen
+ * und den neuen Stand nebeneinander zeigen, dann ausdrücklich fragen. Teilen, Zwischenablage und Dateiauswahl laufen direkt
+ * in der Klick-Behandlung.
  */
-export function BackupPage({ progress, now, onReplace, onBack }: BackupPageProps) {
+export function BackupPage({ progress, now, onReplace, getBackup, onBack }: BackupPageProps) {
   const [phase, setPhase] = useState<Phase>({ kind: "main" });
   const [canShare] = useState(canShareFiles);
+  const [backup, setBackup] = useState<BackupInfo | null>(getBackup);
   const [exportMessage, setExportMessage] = useState<string | null>(null);
   const [manualText, setManualText] = useState<string | null>(null);
-  const [pasted, setPasted] = useState("");
-  const [importError, setImportError] = useState<string | null>(null);
+  const [replaceError, setReplaceError] = useState<string | null>(null);
   const manualId = useId();
 
   const handleDownload = (): void => {
@@ -88,40 +95,30 @@ export function BackupPage({ progress, now, onReplace, onBack }: BackupPageProps
     }, showManual);
   };
 
-  const check = (text: string): void => {
-    const result = checkImport(text);
-    if (!result.ok) {
-      setImportError(result.message);
-      return;
-    }
-    setImportError(null);
-    setPhase({ kind: "confirm", next: result.progress, summary: result.summary });
+  const handleChecked = (next: Progress, summary: ImportSummary): void => {
+    setReplaceError(null);
+    setPhase({ kind: "confirm", next, summary, source: "import" });
   };
 
-  const handleFile = (event: ChangeEvent<HTMLInputElement>): void => {
-    const input = event.target;
-    const file = input.files?.[0];
-    if (!file) return;
-    if (file.size > MAX_IMPORT_BYTES) {
-      setImportError(FILE_TOO_BIG);
-      input.value = "";
-      return;
-    }
-    file.text().then(check, () => setImportError(FILE_UNREADABLE));
-    // Dieselbe Datei lässt sich danach erneut wählen.
-    input.value = "";
+  const handleAskRestore = (): void => {
+    if (!backup) return;
+    setReplaceError(null);
+    setPhase({ kind: "confirm", next: backup.progress, summary: summarizeProgress(backup.progress, null), source: "backup", at: backup.at });
   };
 
-  const handleImport = (): void => {
+  const handleConfirm = (): void => {
     if (phase.kind !== "confirm") return;
     const result = onReplace(phase.next);
     if (result.ok) {
-      setImportError(null);
-      setPhase({ kind: "done", name: phase.next.profile.name });
-      setPasted("");
+      setReplaceError(null);
+      setBackup(getBackup());
+      setPhase({
+        kind: "done",
+        text: phase.source === "backup" && phase.at ? restoredText(formatDateTime(phase.at)) : importedText(phase.next.profile.name),
+      });
       return;
     }
-    setImportError(replaceFailureMessage(result.reason));
+    setReplaceError(replaceFailureMessage(result.reason));
     setPhase({ kind: "main" });
   };
 
@@ -129,8 +126,9 @@ export function BackupPage({ progress, now, onReplace, onBack }: BackupPageProps
     return (
       <ImportConfirm
         summary={phase.summary}
-        currentName={progress.profile.name}
-        onConfirm={handleImport}
+        current={summarizeProgress(progress, null)}
+        kind={phase.source}
+        onConfirm={handleConfirm}
         onCancel={() => setPhase({ kind: "main" })}
       />
     );
@@ -140,7 +138,7 @@ export function BackupPage({ progress, now, onReplace, onBack }: BackupPageProps
     return (
       <SubPage title="Fortschritt sichern" onBack={onBack}>
         <p className="page-lead" role="status">
-          {importedText(phase.name)}
+          {phase.text}
         </p>
         <div className="more__actions">
           <TextButton onClick={onBack}>Fertig</TextButton>
@@ -148,6 +146,8 @@ export function BackupPage({ progress, now, onReplace, onBack }: BackupPageProps
       </SubPage>
     );
   }
+
+  const backupSummary = backup ? summarizeProgress(backup.progress, null) : null;
 
   return (
     <SubPage title="Fortschritt sichern" onBack={onBack}>
@@ -192,53 +192,30 @@ export function BackupPage({ progress, now, onReplace, onBack }: BackupPageProps
           Wiederherstellen
         </h2>
         <p className="sec__text">
-          Wähle eine Sicherungsdatei oder füge ihren Text ein. Die App prüft sie zuerst und zeigt dir, was sie enthält. Erst nach deiner
+          Wähle eine Sicherungsdatei oder füge ihren Text ein. Die App prüft sie zuerst und stellt sie neben deinen Stand. Erst nach deiner
           Bestätigung ändert sich etwas.
         </p>
-        <div className="more__actions">
-          <label className="text-btn file-pick">
-            Datei auswählen
-            <input type="file" className="vh" accept="application/json,.json" onChange={handleFile} />
-          </label>
-        </div>
-        <TextArea className="sec__text" label="Oder Text einfügen" rows={4} value={pasted} onChange={setPasted} placeholder="Text der Sicherung" />
-        <div className="more__actions">
-          <TextButton onClick={() => check(pasted)}>Text prüfen</TextButton>
-        </div>
-        {importError && (
-          <p className="more__msg more__msg--error" role="alert">
-            <strong>Nicht importiert.</strong> {importError}
-          </p>
+        <ImportPanel onChecked={handleChecked} externalError={replaceError} />
+      </section>
+
+      <section className="sec" aria-labelledby="backup-auto">
+        <h2 className="sec__title" id="backup-auto">
+          Automatische Sicherung
+        </h2>
+        <p className="sec__text">{AUTO_BACKUP_INFO}</p>
+        {backup && backupSummary ? (
+          <>
+            <p className="sec__text" id="backup-auto-line">
+              {backupLine(formatDateTime(backup.at), backupSummary.cardCount, backupSummary.unitsDone, backupSummary.unitsTotal)}
+            </p>
+            <div className="more__actions">
+              <TextButton onClick={handleAskRestore}>Letzte Sicherung zurückholen</TextButton>
+            </div>
+          </>
+        ) : (
+          <p className="sec__text">{NO_AUTO_BACKUP_TEXT}</p>
         )}
       </section>
-    </SubPage>
-  );
-}
-
-/** Rückfrage vor dem Import: zeigt, was importiert würde, und fragt ausdrücklich. */
-export function ImportConfirm({
-  summary,
-  currentName,
-  onConfirm,
-  onCancel,
-}: {
-  summary: ImportSummary;
-  currentName: string;
-  onConfirm: () => void;
-  onCancel: () => void;
-}) {
-  return (
-    <SubPage title="Stand importieren?" onBack={onCancel}>
-      <p className="page-lead">Das würde importiert:</p>
-      <SummaryList className="sec__text" items={summaryRows(summary)} />
-      <p className="sec__text">
-        Dein aktueller Stand von {currentName} wird ersetzt. Vorher legt die App auf diesem Gerät eine Sicherung davon an. Wenn die
-        Sicherung scheitert, wird nichts importiert.
-      </p>
-      <div className="more__actions">
-        <PrimaryButton onClick={onConfirm}>Jetzt importieren</PrimaryButton>
-        <TextButton onClick={onCancel}>Abbrechen</TextButton>
-      </div>
     </SubPage>
   );
 }

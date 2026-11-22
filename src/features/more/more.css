@@ -188,3 +188,20 @@
 .tips li + li {
   margin-top: var(--s2);
 }
+
+/* Rückfrage vor dem Import: zwei Stände nebeneinander */
+.compare thead th {
+  padding-bottom: var(--s2);
+  font-weight: 600;
+  color: var(--tinta);
+}
+
+.compare td {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Rückmeldung: Notizen behalten ihre Zeilenumbrüche */
+.feedback__text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
