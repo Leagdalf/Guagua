@@ -1,0 +1,115 @@
+/* Startseite und Übersicht einer Haltestelle. Nur Variablen aus src/styles. Das Raster der Startseite kommt aus src/ui (layout.css). */
+.home__note {
+  margin-top: var(--s3);
+  font-size: var(--fs-note);
+  color: var(--ceniza);
+}
+
+.home__extra {
+  margin-top: var(--s4);
+}
+
+/* Übersicht */
+.ov__kicker {
+  margin-top: var(--s4);
+}
+
+.ov__title {
+  margin-top: var(--s2);
+}
+
+.ov__sub {
+  margin-top: var(--s3);
+  color: var(--ceniza);
+}
+
+.ov__sec {
+  margin-top: var(--s10);
+}
+
+.ov__h3 {
+  margin-top: var(--s3);
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.ov__expl {
+  margin-top: var(--s2);
+}
+
+.ov__list {
+  margin: var(--s3) 0 0;
+  padding: 0;
+  list-style: none;
+  border-bottom: var(--hair) solid var(--raya);
+}
+
+.ov__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+  min-height: 64px;
+  padding: var(--s3) 0;
+  border-top: var(--hair) solid var(--raya);
+}
+
+.ov__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.ov__example {
+  display: block;
+  margin-top: 2px;
+  color: var(--ceniza);
+}
+
+.ov__de {
+  margin-top: 2px;
+  font-size: var(--fs-note);
+  color: var(--ceniza);
+}
+
+.ov__note {
+  margin-top: 2px;
+  font-size: var(--fs-small);
+  color: var(--ceniza);
+}
+
+.ov__speaker {
+  font-size: var(--fs-label);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ceniza);
+}
+
+.ov__row .audio-btn {
+  flex: none;
+}
+
+.ov__table {
+  width: 100%;
+  margin-top: var(--s3);
+  border-collapse: collapse;
+}
+
+.ov__table th,
+.ov__table td {
+  padding: var(--s2) var(--s3) var(--s2) 0;
+  border-top: var(--hair) solid var(--raya);
+  text-align: left;
+  vertical-align: baseline;
+  font-weight: 400;
+  font-size: var(--fs-note);
+}
+
+.ov__table th {
+  color: var(--ceniza);
+}
+
+.ov__table tr:last-child th,
+.ov__table tr:last-child td {
+  border-bottom: var(--hair) solid var(--raya);
+}

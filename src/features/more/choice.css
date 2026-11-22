@@ -1,0 +1,122 @@
+/* Auswahlzeilen (Stimme, Tempo, „Wie lief es?“). Farben und Maße nur über die Variablen aus src/styles. */
+.choice {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--s2);
+  border-bottom: var(--hair) solid var(--raya);
+}
+
+.choice__row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: var(--answer-h);
+  padding: 0;
+  border: 0;
+  border-top: var(--hair) solid var(--raya);
+  background: transparent;
+  color: var(--tinta);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.choice__mark {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--stop-size);
+  height: var(--stop-size);
+  border: 1.5px solid var(--ceniza);
+  border-radius: 50%;
+  color: var(--nieve);
+}
+
+.choice__mark .icon {
+  width: 62%;
+  height: 62%;
+  stroke-width: 2.4px;
+}
+
+.choice__row[aria-pressed="true"] .choice__mark {
+  border-color: var(--atlantico);
+  background: var(--atlantico);
+}
+
+.choice__row[aria-pressed="true"] .choice__text {
+  font-weight: 600;
+}
+
+.choice__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.choice__detail {
+  font-weight: 400;
+  color: var(--ceniza);
+}
+
+/* Seiten der Bereiche Mehr, Missionen und der Anleitung */
+.sec {
+  margin-top: var(--s10);
+}
+
+.sec__title {
+  font-size: var(--fs-label);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ceniza);
+}
+
+.sec__text {
+  margin-top: var(--s3);
+}
+
+.sec__muted {
+  margin-top: var(--s3);
+  font-size: var(--fs-note);
+  color: var(--ceniza);
+}
+
+.page-title {
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.page-lead {
+  margin-top: var(--s3);
+  color: var(--ceniza);
+}
+
+.voice-test {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s2) var(--s4);
+  margin-top: var(--s4);
+}
+
+.voice-test__hola {
+  font-size: var(--fs-es-text);
+}
+
+/* Erster Start */
+.onb__form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.onb__steps {
+  margin: var(--s6) 0 0;
+  padding-left: var(--s6);
+}
+
+.onb__steps li + li {
+  margin-top: var(--s2);
+}

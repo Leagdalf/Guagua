@@ -1,0 +1,89 @@
+/* Missionen: Haarlinien statt Karten. Nur Variablen aus src/styles. */
+.mi__title {
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.mi__lead {
+  margin-top: var(--s3);
+  color: var(--ceniza);
+}
+
+.mi__list {
+  margin: var(--s6) 0 0;
+  padding: 0;
+  list-style: none;
+  border-bottom: var(--hair) solid var(--raya);
+}
+
+.mi__item {
+  padding: var(--s5) 0;
+  border-top: var(--hair) solid var(--raya);
+  scroll-margin-top: var(--s4);
+}
+
+.mi__name {
+  margin-top: var(--s1);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.mi__item--locked .mi__name {
+  color: var(--ceniza);
+  font-weight: 400;
+}
+
+.mi__task {
+  margin-top: var(--s2);
+}
+
+.mi__take {
+  margin-top: var(--s4);
+  font-size: var(--fs-label);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ceniza);
+}
+
+.mi__say {
+  margin: var(--s1) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mi__phrase {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+  min-height: var(--tap);
+}
+
+.mi__phrase .audio-btn {
+  flex: none;
+}
+
+.mi__result {
+  margin-top: var(--s2);
+  color: var(--ceniza);
+}
+
+.mi__actions {
+  display: flex;
+  gap: var(--s6);
+  margin-top: var(--s2);
+}
+
+.mi__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s5);
+  margin-top: var(--s5);
+}
+
+.mi__form .text-btn {
+  align-self: flex-start;
+}
