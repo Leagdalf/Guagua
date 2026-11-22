@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createProgressStore } from "../../core/store";
 import type { StorageLike } from "../../core/store";
-import { allPhrases, phrasebook } from "../../core/content";
+import { allItems, allPhrases, phrasebook } from "../../core/content";
 import { FAVORITES_CATEGORY_ID, toggleFavoriteInStore, withFavorites } from "./favorites";
 
 function memory(): StorageLike & { data: Map<string, string> } {
@@ -53,6 +53,23 @@ describe("withFavorites", () => {
     expect(result[0]).toMatchObject({ id: FAVORITES_CATEGORY_ID, title_de: "Gemerkt" });
     expect(result[0]!.phrases.map((p) => p.id)).toEqual([early.id, late.id]);
     expect(result.slice(1)).toEqual(phrasebook.categories);
-    expect(result[1]!.title_de).toBe("Notfall und Gesundheit");
+    expect(result[1]!.title_de).toBe(phrasebook.categories[0]!.title_de);
+  });
+});
+
+describe("Merken einer Karte", () => {
+  it("legt die Karten-id in favorites, übersteht Neulesen und lässt sich wieder entfernen", () => {
+    const storage = memory();
+    const store = createProgressStore({ storage, now });
+    expect(store.createProfile("Anna")).toBe(true);
+    const card = allItems[3]!;
+
+    toggleFavoriteInStore(store, card.id);
+    const state = createProgressStore({ storage, now }).getSnapshot();
+    expect(state.status === "ready" && state.progress.favorites).toEqual([card.id]);
+
+    toggleFavoriteInStore(store, card.id);
+    const after = store.getSnapshot();
+    expect(after.status === "ready" && after.progress.favorites).toEqual([]);
   });
 });

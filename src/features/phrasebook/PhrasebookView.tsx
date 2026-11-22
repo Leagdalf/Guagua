@@ -1,9 +1,10 @@
 import { useCallback, useState } from "react";
 import { NoVoiceNotice, useVoices } from "../../audio";
-import type { Phrase } from "../../core/types";
+import { phrasebook } from "../../core/content";
 import { progressStore, useStoreState } from "../../state";
 import { SimplePage, TextField } from "../../ui";
 import { toggleFavoriteInStore } from "./favorites";
+import { JumpList } from "./JumpList";
 import { PhrasebookResults } from "./PhrasebookResults";
 import { ShowPortal } from "./ShowOverlay";
 import "./phrasebook.css";
@@ -15,9 +16,9 @@ const toggleFavorite = (id: string) => toggleFavoriteInStore(progressStore, id);
  * Braucht keine Props. Gehört in `AppShell`, das das einzige `main` liefert. Überschriften: h1 „Sprachführer“, h2 je Kategorie.
  * Ohne Profil (Speicher nicht bereit) gibt es keine Sterne; der Rest läuft.
  */
-export function PhrasebookView() {
-  const [query, setQuery] = useState("");
-  const [shown, setShown] = useState<Phrase | null>(null);
+export function PhrasebookView({ initialQuery = "" }: { initialQuery?: string } = {}) {
+  const [query, setQuery] = useState(initialQuery);
+  const [shown, setShown] = useState<{ es: string; de: string } | null>(null);
   const { hasVoice } = useVoices();
   const store = useStoreState();
   const close = useCallback(() => setShown(null), []);
@@ -36,6 +37,7 @@ export function PhrasebookView() {
           onChange={setQuery}
           enterKeyHint="search"
         />
+        {query.trim() === "" ? <JumpList categories={phrasebook.categories} /> : null}
         <PhrasebookResults
           query={query}
           hasVoice={hasVoice}

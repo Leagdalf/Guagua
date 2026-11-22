@@ -11,8 +11,37 @@
   margin-top: var(--s4);
 }
 
+/* Sprungliste: umbrechende Reihe von Textknöpfen, 8 px Abstand, jeder mindestens 44 px hoch. */
+.pb-jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  margin-top: var(--s4);
+}
+
+.pb-jump__btn {
+  min-width: var(--tap);
+  min-height: var(--tap);
+  text-align: left;
+}
+
 .pb-category {
   margin-top: var(--s10);
+}
+
+.pb-category > h2 {
+  overflow-wrap: anywhere;
+  scroll-margin-top: var(--s4);
+}
+
+.pb-example {
+  margin-top: var(--s2);
+}
+
+.pb-origin {
+  margin-top: 2px;
+  font-size: var(--fs-small);
+  color: var(--ceniza);
 }
 
 .pb-cat-note {
