@@ -1,0 +1,238 @@
+/* Lerneinheit: nur Farben, Schriften und Maße aus src/styles/tokens.css. Keine Schatten, keine Verläufe. */
+
+.sx-counter-end {
+  margin-left: auto;
+}
+
+.sx-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-top: var(--s10);
+  padding-bottom: var(--s6);
+}
+
+@media (min-width: 700px) {
+  .sx-body {
+    padding-top: calc(var(--s12) + var(--s10));
+  }
+}
+
+.sx-body > * {
+  max-width: 100%;
+}
+
+.sx-body .label {
+  margin: 0;
+}
+
+/* Spanisch groß (Lernkarte, Aufgabe) */
+.sx-prompt {
+  margin: var(--s4) 0 0;
+}
+
+.es.sx-prompt--long {
+  font-size: var(--fs-es-field);
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+/* Deutsche Frage in Aufgaben (Erinnern, Satzbau, Schreiben) */
+.sx-prompt-de {
+  margin: var(--s4) 0 0;
+  font-size: var(--fs-es-field);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.sx-translation {
+  margin: var(--s3) 0 0;
+}
+
+.sx-instruction,
+.sx-note {
+  margin: var(--s3) 0 0;
+  font-size: var(--fs-note);
+  color: var(--ceniza);
+}
+
+.sx-example {
+  margin: var(--s3) 0 0;
+}
+
+.sx-example--de {
+  font-size: var(--fs-note);
+  color: var(--ceniza);
+}
+
+.sx-audio {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s6);
+  margin-top: var(--s3);
+}
+
+.sx-answers {
+  align-self: stretch;
+  margin-top: calc(var(--s10) + var(--s1));
+}
+
+.sx-builder {
+  align-self: stretch;
+  margin-top: var(--s8);
+}
+
+.sx-field {
+  align-self: stretch;
+  margin-top: var(--s8);
+}
+
+.sx-pairs {
+  align-self: stretch;
+  margin-top: var(--s6);
+}
+
+.sx-body .feedback {
+  align-self: stretch;
+}
+
+.sx-line-note {
+  display: block;
+}
+
+/* Grammatik */
+.sx-explain {
+  margin: var(--s4) 0 0;
+}
+
+.sx-table {
+  align-self: stretch;
+  margin: var(--s6) 0 0;
+  padding: 0;
+  list-style: none;
+  border-bottom: var(--hair) solid var(--raya);
+}
+
+.sx-table__row {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.3fr) minmax(0, 1.2fr);
+  gap: var(--s3);
+  align-items: baseline;
+  min-height: var(--row-h);
+  padding: var(--s3) 0;
+  border-top: var(--hair) solid var(--raya);
+}
+
+.sx-table__label {
+  font-size: var(--fs-note);
+  color: var(--ceniza);
+}
+
+.sx-examples {
+  align-self: stretch;
+  margin: var(--s6) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sx-examples__row {
+  padding: var(--s3) 0;
+  border-top: var(--hair) solid var(--raya);
+}
+
+.sx-examples__row .sx-audio {
+  margin-top: var(--s1);
+}
+
+.sx-examples__de {
+  margin: var(--s1) 0 0;
+  font-size: var(--fs-note);
+  color: var(--ceniza);
+}
+
+/* Dialog */
+.sx-dialogue {
+  align-self: stretch;
+  margin: var(--s6) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sx-dialogue__line {
+  padding: var(--s4) 0;
+  border-top: var(--hair) solid var(--raya);
+  scroll-margin-bottom: calc(var(--btn-h) + var(--s12) + var(--s10));
+}
+
+.sx-dialogue__line--learner {
+  padding-left: var(--s6);
+}
+
+.sx-dialogue__speaker {
+  margin: 0;
+  font-size: var(--fs-note);
+  color: var(--ceniza);
+}
+
+.sx-dialogue__said {
+  margin: var(--s1) 0 0;
+}
+
+/* Mission */
+.sx-title {
+  margin: var(--s3) 0 0;
+  font-size: var(--fs-es-field);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.sx-say {
+  align-self: stretch;
+  margin: var(--s3) 0 0;
+  padding: 0;
+  list-style: none;
+  border-bottom: var(--hair) solid var(--raya);
+}
+
+.sx-say__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+  min-height: var(--row-h);
+  padding: var(--s2) 0;
+  border-top: var(--hair) solid var(--raya);
+}
+
+.sx-section {
+  margin-top: var(--s8);
+}
+
+.sx-section > .label {
+  display: block;
+}
+
+/* Zusammenfassung */
+.sx-mountain {
+  display: flex;
+  align-self: stretch;
+  justify-content: flex-end;
+  border-bottom: var(--base-line) solid var(--tinta);
+}
+
+.sx-mountain .mountain {
+  display: block;
+}
+
+.sx-headline {
+  margin: var(--s6) 0 0;
+  font-size: var(--fs-es-field);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.sx-summary {
+  align-self: stretch;
+  margin-top: var(--s6);
+}
