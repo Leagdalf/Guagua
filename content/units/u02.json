@@ -1,0 +1,290 @@
+{
+  "id": "u02",
+  "stop": 2,
+  "title_es": "En el café",
+  "title_de": "Getränke bestellen",
+  "can_do_de": "Ich kann ein Getränk bestellen und die Rechnung verlangen.",
+  "grammar": {
+    "topic_de": "Artikel und Geschlecht: un, una, el, la",
+    "explanation_de": "Spanische Substantive sind männlich oder weiblich. Faustregel: Wörter auf -o sind meist männlich (un zumo), Wörter auf -a meist weiblich (una cerveza). Bei allen anderen lernst du den Artikel mit: el café, el té, la leche. Bestellen geht ohne Verb: ‚Un café, por favor.' Höflicher klingt es mit quisiera, ‚ich hätte gern'.",
+    "table": [
+      {
+        "label_de": "männlich",
+        "es": "un café, el café",
+        "de": "ein Kaffee, der Kaffee"
+      },
+      {
+        "label_de": "weiblich",
+        "es": "una cerveza, la cerveza",
+        "de": "ein Bier, das Bier"
+      },
+      {
+        "label_de": "Mehrzahl",
+        "es": "dos cafés, dos cervezas",
+        "de": "zwei Kaffee, zwei Bier"
+      }
+    ],
+    "examples": [
+      {
+        "es": "Un cortado, por favor.",
+        "de": "Einen Cortado, bitte."
+      },
+      {
+        "es": "Quisiera una cerveza.",
+        "de": "Ich hätte gern ein Bier."
+      },
+      {
+        "es": "La cuenta, por favor.",
+        "de": "Die Rechnung, bitte."
+      }
+    ]
+  },
+  "items": [
+    {
+      "id": "u02-i01",
+      "es": "un café solo",
+      "de": "ein Espresso",
+      "kind": "phrase",
+      "note_de": "Kleiner schwarzer Kaffee."
+    },
+    {
+      "id": "u02-i02",
+      "es": "un cortado",
+      "de": "ein Espresso mit etwas Milch",
+      "kind": "word"
+    },
+    {
+      "id": "u02-i03",
+      "es": "un café con leche",
+      "de": "ein Milchkaffee",
+      "kind": "phrase"
+    },
+    {
+      "id": "u02-i04",
+      "es": "un barraquito",
+      "de": "ein Barraquito",
+      "kind": "word",
+      "note_de": "Schichtkaffee aus Teneriffa mit Kondensmilch, Likör, Zimt und Zitronenschale. Ohne Alkohol: sin licor."
+    },
+    {
+      "id": "u02-i05",
+      "es": "un agua sin gas",
+      "de": "ein stilles Wasser",
+      "kind": "phrase",
+      "note_de": "Mit Kohlensäure: con gas."
+    },
+    {
+      "id": "u02-i06",
+      "es": "un zumo de naranja",
+      "de": "ein Orangensaft",
+      "kind": "phrase"
+    },
+    {
+      "id": "u02-i07",
+      "es": "una cerveza",
+      "de": "ein Bier",
+      "kind": "word",
+      "note_de": "Una caña ist ein kleines Bier vom Fass."
+    },
+    {
+      "id": "u02-i08",
+      "es": "un té",
+      "de": "ein Tee",
+      "kind": "word"
+    },
+    {
+      "id": "u02-i09",
+      "es": "con hielo",
+      "de": "mit Eiswürfeln",
+      "kind": "phrase"
+    },
+    {
+      "id": "u02-i10",
+      "es": "sin azúcar",
+      "de": "ohne Zucker",
+      "kind": "phrase"
+    },
+    {
+      "id": "u02-i11",
+      "es": "quisiera …",
+      "de": "ich hätte gern …",
+      "kind": "frame",
+      "note_de": "Höflicher als quiero.",
+      "example": {
+        "es": "Quisiera un café con leche.",
+        "de": "Ich hätte gern einen Milchkaffee."
+      }
+    },
+    {
+      "id": "u02-i12",
+      "es": "para mí …",
+      "de": "für mich …",
+      "kind": "frame",
+      "example": {
+        "es": "Para mí, un cortado.",
+        "de": "Für mich einen Cortado."
+      }
+    },
+    {
+      "id": "u02-i13",
+      "es": "la cuenta, por favor",
+      "de": "die Rechnung, bitte",
+      "kind": "phrase"
+    },
+    {
+      "id": "u02-i14",
+      "es": "¿cuánto es?",
+      "de": "was macht das?",
+      "kind": "phrase"
+    },
+    {
+      "id": "u02-i15",
+      "es": "otra cerveza",
+      "de": "noch ein Bier",
+      "kind": "phrase",
+      "note_de": "Vor männlichen Wörtern otro: otro café."
+    }
+  ],
+  "dialogue": {
+    "setting_de": "In einem Café an der Strandpromenade",
+    "lines": [
+      {
+        "speaker": "Camarera",
+        "es": "¡Buenos días! ¿Qué van a tomar?",
+        "de": "Guten Morgen! Was möchten Sie trinken?",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "Buenos días. Un cortado y un zumo de naranja, por favor.",
+        "de": "Guten Morgen. Einen Cortado und einen Orangensaft, bitte.",
+        "learner": true
+      },
+      {
+        "speaker": "Camarera",
+        "es": "¿Algo más?",
+        "de": "Noch etwas?",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "No, gracias.",
+        "de": "Nein, danke.",
+        "learner": true
+      },
+      {
+        "speaker": "Camarera",
+        "es": "Aquí tienen. Un cortado y un zumo.",
+        "de": "Bitte schön. Ein Cortado und ein Saft.",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "Gracias. La cuenta, por favor.",
+        "de": "Danke. Die Rechnung, bitte.",
+        "learner": true
+      },
+      {
+        "speaker": "Camarera",
+        "es": "Son cuatro euros con cincuenta.",
+        "de": "Das macht vier Euro fünfzig.",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "Aquí tiene. ¡Hasta luego!",
+        "de": "Bitte schön. Bis später!",
+        "learner": true
+      }
+    ]
+  },
+  "cloze": [
+    {
+      "id": "u02-c01",
+      "es": "___ café con leche, por favor.",
+      "answer": "Un",
+      "options": [
+        "Un",
+        "Una"
+      ],
+      "de": "Einen Milchkaffee, bitte."
+    },
+    {
+      "id": "u02-c02",
+      "es": "Quisiera ___ cerveza.",
+      "answer": "una",
+      "options": [
+        "un",
+        "una"
+      ],
+      "de": "Ich hätte gern ein Bier."
+    },
+    {
+      "id": "u02-c03",
+      "es": "___ cuenta, por favor.",
+      "answer": "La",
+      "options": [
+        "El",
+        "La"
+      ],
+      "de": "Die Rechnung, bitte."
+    },
+    {
+      "id": "u02-c04",
+      "es": "Un agua ___ gas, por favor.",
+      "answer": "sin",
+      "options": [
+        "sin",
+        "con",
+        "de"
+      ],
+      "de": "Ein stilles Wasser, bitte."
+    }
+  ],
+  "build": [
+    {
+      "id": "u02-b01",
+      "tokens": [
+        "Quisiera",
+        "un",
+        "café",
+        "con",
+        "leche"
+      ],
+      "de": "Ich hätte gern einen Milchkaffee."
+    },
+    {
+      "id": "u02-b02",
+      "tokens": [
+        "La",
+        "cuenta,",
+        "por",
+        "favor"
+      ],
+      "de": "Die Rechnung, bitte."
+    },
+    {
+      "id": "u02-b03",
+      "tokens": [
+        "Para",
+        "mí,",
+        "un",
+        "zumo",
+        "de",
+        "naranja"
+      ],
+      "de": "Für mich einen Orangensaft."
+    }
+  ],
+  "mission": {
+    "id": "u02-m",
+    "title_de": "Bestellen ohne Englisch",
+    "task_de": "Bestelle dein Getränk heute komplett auf Spanisch und verlange am Ende die Rechnung.",
+    "say": [
+      "Un cortado, por favor.",
+      "La cuenta, por favor.",
+      "Gracias, hasta luego."
+    ]
+  },
+  "canarias_de": "Der Barraquito stammt aus Santa Cruz de Tenerife: Kondensmilch, Likör, Espresso und Milch in Schichten, dazu Zimt und Zitronenschale. Wer ‚un leche y leche' bestellt, bekommt einen Cortado mit Kondensmilch."
+}

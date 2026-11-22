@@ -1,0 +1,299 @@
+{
+  "id": "u07",
+  "stop": 7,
+  "title_es": "Yo y tú",
+  "title_de": "Ins Gespräch kommen",
+  "can_do_de": "Ich kann sagen, dass ich Spanisch lerne, um Wiederholung bitten und ein kurzes Gespräch führen.",
+  "grammar": {
+    "topic_de": "Regelmäßige Verben auf -ar: hablo, hablas, habla, hablamos",
+    "explanation_de": "Die meisten spanischen Verben enden auf -ar. Für die Gegenwart ersetzt du -ar durch eine Endung: -o für ich, -as für du, -a für er, sie und Sie, -amos für wir. So funktionieren hablar (sprechen), trabajar (arbeiten), estudiar (lernen), nadar (schwimmen) und viele andere.",
+    "table": [
+      {
+        "label_de": "ich",
+        "es": "(yo) hablo",
+        "de": "ich spreche"
+      },
+      {
+        "label_de": "du",
+        "es": "(tú) hablas",
+        "de": "du sprichst"
+      },
+      {
+        "label_de": "er, sie, Sie",
+        "es": "(él, ella, usted) habla",
+        "de": "er spricht, sie spricht, Sie sprechen"
+      },
+      {
+        "label_de": "wir",
+        "es": "(nosotros) hablamos",
+        "de": "wir sprechen"
+      }
+    ],
+    "examples": [
+      {
+        "es": "Hablo un poco de español.",
+        "de": "Ich spreche ein bisschen Spanisch."
+      },
+      {
+        "es": "¿Hablas inglés?",
+        "de": "Sprichst du Englisch?"
+      },
+      {
+        "es": "Trabajamos en Alemania.",
+        "de": "Wir arbeiten in Deutschland."
+      }
+    ]
+  },
+  "items": [
+    {
+      "id": "u07-i01",
+      "es": "hablo un poco de español",
+      "de": "ich spreche ein bisschen Spanisch",
+      "kind": "phrase"
+    },
+    {
+      "id": "u07-i02",
+      "es": "no entiendo",
+      "de": "ich verstehe nicht",
+      "kind": "phrase"
+    },
+    {
+      "id": "u07-i03",
+      "es": "¿puede repetir?",
+      "de": "können Sie das wiederholen?",
+      "kind": "phrase"
+    },
+    {
+      "id": "u07-i04",
+      "es": "más despacio, por favor",
+      "de": "langsamer, bitte",
+      "kind": "phrase"
+    },
+    {
+      "id": "u07-i05",
+      "es": "¿hablas inglés?",
+      "de": "sprichst du Englisch?",
+      "kind": "phrase"
+    },
+    {
+      "id": "u07-i06",
+      "es": "estoy de vacaciones",
+      "de": "ich bin im Urlaub",
+      "kind": "phrase"
+    },
+    {
+      "id": "u07-i07",
+      "es": "¿qué tal?",
+      "de": "wie geht's?",
+      "kind": "phrase"
+    },
+    {
+      "id": "u07-i08",
+      "es": "muy bien",
+      "de": "sehr gut",
+      "kind": "phrase"
+    },
+    {
+      "id": "u07-i09",
+      "es": "¿y tú?",
+      "de": "und du?",
+      "kind": "phrase"
+    },
+    {
+      "id": "u07-i10",
+      "es": "estudio español",
+      "de": "ich lerne Spanisch",
+      "kind": "phrase"
+    },
+    {
+      "id": "u07-i11",
+      "es": "trabajo en …",
+      "de": "ich arbeite in …",
+      "kind": "frame",
+      "example": {
+        "es": "Trabajo en Alemania.",
+        "de": "Ich arbeite in Deutschland."
+      }
+    },
+    {
+      "id": "u07-i12",
+      "es": "vivo en …",
+      "de": "ich wohne in …",
+      "kind": "frame",
+      "note_de": "Vivir endet auf -ir, die ich-Form endet trotzdem auf -o.",
+      "example": {
+        "es": "Vivo en Alemania.",
+        "de": "Ich wohne in Deutschland."
+      }
+    },
+    {
+      "id": "u07-i13",
+      "es": "¿cómo se dice …?",
+      "de": "wie sagt man …?",
+      "kind": "frame",
+      "example": {
+        "es": "¿Cómo se dice esto en español?",
+        "de": "Wie sagt man das auf Spanisch?"
+      }
+    },
+    {
+      "id": "u07-i14",
+      "es": "¿qué significa …?",
+      "de": "was bedeutet …?",
+      "kind": "frame",
+      "example": {
+        "es": "¿Qué significa guagua?",
+        "de": "Was bedeutet guagua?"
+      }
+    },
+    {
+      "id": "u07-i15",
+      "es": "un poco",
+      "de": "ein bisschen",
+      "kind": "word"
+    }
+  ],
+  "dialogue": {
+    "setting_de": "Gespräch mit der Nachbarin der Unterkunft",
+    "lines": [
+      {
+        "speaker": "Vecina",
+        "es": "¡Hola! ¿Qué tal?",
+        "de": "Hallo! Wie geht's?",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "Muy bien, gracias. ¿Y tú?",
+        "de": "Sehr gut, danke. Und dir?",
+        "learner": true
+      },
+      {
+        "speaker": "Vecina",
+        "es": "Bien, gracias. ¿Están de vacaciones?",
+        "de": "Gut, danke. Seid ihr im Urlaub?",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "Sí, estamos de vacaciones. Somos de Alemania.",
+        "de": "Ja, wir sind im Urlaub. Wir kommen aus Deutschland.",
+        "learner": true
+      },
+      {
+        "speaker": "Vecina",
+        "es": "¡Qué bien! Y hablas español.",
+        "de": "Wie schön! Und du sprichst Spanisch.",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "Hablo un poco. Estudio español todos los días.",
+        "de": "Ich spreche ein bisschen. Ich lerne jeden Tag Spanisch.",
+        "learner": true
+      },
+      {
+        "speaker": "Vecina",
+        "es": "Pues hablas muy bien.",
+        "de": "Du sprichst aber sehr gut.",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "Gracias. Más despacio, por favor.",
+        "de": "Danke. Langsamer, bitte.",
+        "learner": true
+      }
+    ]
+  },
+  "cloze": [
+    {
+      "id": "u07-c01",
+      "es": "Yo ___ un poco de español.",
+      "answer": "hablo",
+      "options": [
+        "hablo",
+        "hablas",
+        "habla"
+      ],
+      "de": "Ich spreche ein bisschen Spanisch."
+    },
+    {
+      "id": "u07-c02",
+      "es": "¿Tú ___ inglés?",
+      "answer": "hablas",
+      "options": [
+        "hablo",
+        "hablas",
+        "habla"
+      ],
+      "de": "Sprichst du Englisch?"
+    },
+    {
+      "id": "u07-c03",
+      "es": "Ella ___ en un hotel.",
+      "answer": "trabaja",
+      "options": [
+        "trabajo",
+        "trabajas",
+        "trabaja"
+      ],
+      "de": "Sie arbeitet in einem Hotel."
+    },
+    {
+      "id": "u07-c04",
+      "es": "Nosotros ___ español.",
+      "answer": "estudiamos",
+      "options": [
+        "estudio",
+        "estudia",
+        "estudiamos"
+      ],
+      "de": "Wir lernen Spanisch."
+    }
+  ],
+  "build": [
+    {
+      "id": "u07-b01",
+      "tokens": [
+        "Hablo",
+        "un",
+        "poco",
+        "de",
+        "español"
+      ],
+      "de": "Ich spreche ein bisschen Spanisch."
+    },
+    {
+      "id": "u07-b02",
+      "tokens": [
+        "Más",
+        "despacio,",
+        "por",
+        "favor"
+      ],
+      "de": "Langsamer, bitte."
+    },
+    {
+      "id": "u07-b03",
+      "tokens": [
+        "No",
+        "entiendo,",
+        "¿puede",
+        "repetir?"
+      ],
+      "de": "Ich verstehe nicht, können Sie das wiederholen?"
+    }
+  ],
+  "mission": {
+    "id": "u07-m",
+    "title_de": "Drei Sätze Gespräch",
+    "task_de": "Sag heute zu jemandem ‚Hablo un poco de español' und stelle eine Gegenfrage. Wenn du etwas nicht verstehst, bitte auf Spanisch um Wiederholung, statt ins Englische zu wechseln.",
+    "say": [
+      "Hablo un poco de español.",
+      "¿Qué tal?",
+      "Más despacio, por favor."
+    ]
+  },
+  "canarias_de": "Für ‚ihr' sagen Kanarier ustedes statt vosotros, mit der Verbform der dritten Person: ‚¿Están de vacaciones?' statt ‚¿Estáis de vacaciones?'. Die vosotros-Formen brauchst du auf den Inseln deshalb nicht."
+}

@@ -1,0 +1,29 @@
+{
+  "id": "guagua-a1-urlaub",
+  "title_de": "Guagua: Spanisch in zehn Haltestellen",
+  "level": "A1-Einstieg",
+  "language_ui": "de",
+  "language_target": "es",
+  "units": [
+    "u01",
+    "u02",
+    "u03",
+    "u04",
+    "u05",
+    "u06",
+    "u07",
+    "u08",
+    "u09",
+    "u10"
+  ],
+  "minutes_per_day": [
+    15,
+    20
+  ],
+  "plan": {
+    "first_stop_date": "2026-11-23",
+    "last_stop_date": "2026-12-02",
+    "final_review_date": "2026-12-03",
+    "note_de": "Empfehlung, keine Sperre: Eine Haltestelle öffnet, sobald die vorige abgeschlossen ist."
+  }
+}

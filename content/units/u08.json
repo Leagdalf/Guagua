@@ -1,0 +1,291 @@
+{
+  "id": "u08",
+  "stop": 8,
+  "title_es": "Me gusta",
+  "title_de": "Vorlieben, Strand und Wetter",
+  "can_do_de": "Ich kann sagen, was mir gefällt, und über das Wetter reden.",
+  "grammar": {
+    "topic_de": "gustar: me gusta, me gustan",
+    "explanation_de": "‚Me gusta el mar' heißt wörtlich ‚mir gefällt das Meer'. Das Verb richtet sich deshalb nach der Sache: bei einer Sache oder einer Tätigkeit me gusta, bei mehreren Sachen me gustan. Verneint wird mit no davor: no me gusta. Stärker ist me encanta. Über das Wetter spricht man mit hace: hace sol, hace calor, hace viento.",
+    "table": [
+      {
+        "label_de": "eine Sache",
+        "es": "me gusta el mar",
+        "de": "ich mag das Meer"
+      },
+      {
+        "label_de": "mehrere Sachen",
+        "es": "me gustan las papas",
+        "de": "ich mag die Kartoffeln"
+      },
+      {
+        "label_de": "Tätigkeit",
+        "es": "me gusta nadar",
+        "de": "ich schwimme gern"
+      },
+      {
+        "label_de": "Frage",
+        "es": "¿te gusta?",
+        "de": "gefällt es dir?"
+      }
+    ],
+    "examples": [
+      {
+        "es": "Me gusta Tenerife.",
+        "de": "Mir gefällt Teneriffa."
+      },
+      {
+        "es": "No me gusta el viento.",
+        "de": "Ich mag den Wind nicht."
+      },
+      {
+        "es": "Me encantan los barraquitos.",
+        "de": "Ich liebe Barraquitos."
+      }
+    ]
+  },
+  "items": [
+    {
+      "id": "u08-i01",
+      "es": "me gusta …",
+      "de": "ich mag … (eine Sache)",
+      "kind": "frame",
+      "example": {
+        "es": "Me gusta el mar.",
+        "de": "Ich mag das Meer."
+      }
+    },
+    {
+      "id": "u08-i02",
+      "es": "me gustan …",
+      "de": "ich mag … (mehrere Sachen)",
+      "kind": "frame",
+      "example": {
+        "es": "Me gustan las papas arrugadas.",
+        "de": "Ich mag Runzelkartoffeln."
+      }
+    },
+    {
+      "id": "u08-i03",
+      "es": "no me gusta",
+      "de": "das mag ich nicht",
+      "kind": "phrase"
+    },
+    {
+      "id": "u08-i04",
+      "es": "¿te gusta?",
+      "de": "gefällt es dir?",
+      "kind": "phrase"
+    },
+    {
+      "id": "u08-i05",
+      "es": "me encanta",
+      "de": "das finde ich toll",
+      "kind": "phrase"
+    },
+    {
+      "id": "u08-i06",
+      "es": "el mar",
+      "de": "das Meer",
+      "kind": "word"
+    },
+    {
+      "id": "u08-i07",
+      "es": "el sol",
+      "de": "die Sonne",
+      "kind": "word"
+    },
+    {
+      "id": "u08-i08",
+      "es": "nadar",
+      "de": "schwimmen",
+      "kind": "word"
+    },
+    {
+      "id": "u08-i09",
+      "es": "la arena",
+      "de": "der Sand",
+      "kind": "word"
+    },
+    {
+      "id": "u08-i10",
+      "es": "hace sol",
+      "de": "die Sonne scheint",
+      "kind": "phrase"
+    },
+    {
+      "id": "u08-i11",
+      "es": "hace calor",
+      "de": "es ist heiß",
+      "kind": "phrase"
+    },
+    {
+      "id": "u08-i12",
+      "es": "hace viento",
+      "de": "es ist windig",
+      "kind": "phrase"
+    },
+    {
+      "id": "u08-i13",
+      "es": "hace frío",
+      "de": "es ist kalt",
+      "kind": "phrase"
+    },
+    {
+      "id": "u08-i14",
+      "es": "la toalla",
+      "de": "das Handtuch",
+      "kind": "word"
+    },
+    {
+      "id": "u08-i15",
+      "es": "la crema solar",
+      "de": "die Sonnencreme",
+      "kind": "phrase"
+    },
+    {
+      "id": "u08-i16",
+      "es": "¡qué bonito!",
+      "de": "wie schön!",
+      "kind": "phrase"
+    }
+  ],
+  "dialogue": {
+    "setting_de": "Am Strand",
+    "lines": [
+      {
+        "speaker": "Tú",
+        "es": "¡Qué bonito! Me encanta esta playa.",
+        "de": "Wie schön! Ich finde diesen Strand toll.",
+        "learner": true
+      },
+      {
+        "speaker": "Vecino",
+        "es": "Sí, es muy bonita. ¿Te gusta nadar?",
+        "de": "Ja, er ist sehr schön. Schwimmst du gern?",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "Sí, me gusta mucho. Pero el agua está fría.",
+        "de": "Ja, sehr gern. Aber das Wasser ist kalt.",
+        "learner": true
+      },
+      {
+        "speaker": "Vecino",
+        "es": "Un poco. Pero hoy hace sol y no hace viento.",
+        "de": "Ein bisschen. Aber heute scheint die Sonne und es ist nicht windig.",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "Sí, hace calor. ¿Tienes crema solar?",
+        "de": "Ja, es ist heiß. Hast du Sonnencreme?",
+        "learner": true
+      },
+      {
+        "speaker": "Vecino",
+        "es": "Claro, aquí tienes.",
+        "de": "Klar, hier bitte.",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "¡Muchas gracias!",
+        "de": "Vielen Dank!",
+        "learner": true
+      }
+    ]
+  },
+  "cloze": [
+    {
+      "id": "u08-c01",
+      "es": "Me ___ el mar.",
+      "answer": "gusta",
+      "options": [
+        "gusta",
+        "gustan",
+        "gusto"
+      ],
+      "de": "Ich mag das Meer."
+    },
+    {
+      "id": "u08-c02",
+      "es": "Me ___ las papas arrugadas.",
+      "answer": "gustan",
+      "options": [
+        "gusta",
+        "gustan",
+        "gusto"
+      ],
+      "de": "Ich mag Runzelkartoffeln."
+    },
+    {
+      "id": "u08-c03",
+      "es": "Hoy ___ sol.",
+      "answer": "hace",
+      "options": [
+        "hace",
+        "es",
+        "está"
+      ],
+      "de": "Heute scheint die Sonne."
+    },
+    {
+      "id": "u08-c04",
+      "es": "No me ___ el viento.",
+      "answer": "gusta",
+      "options": [
+        "gusta",
+        "gustan",
+        "gustas"
+      ],
+      "de": "Ich mag den Wind nicht."
+    }
+  ],
+  "build": [
+    {
+      "id": "u08-b01",
+      "tokens": [
+        "Me",
+        "gusta",
+        "mucho",
+        "nadar"
+      ],
+      "de": "Ich schwimme sehr gern."
+    },
+    {
+      "id": "u08-b02",
+      "tokens": [
+        "Hoy",
+        "hace",
+        "sol",
+        "y",
+        "calor"
+      ],
+      "de": "Heute ist es sonnig und heiß."
+    },
+    {
+      "id": "u08-b03",
+      "tokens": [
+        "No",
+        "me",
+        "gusta",
+        "el",
+        "viento"
+      ],
+      "de": "Ich mag den Wind nicht."
+    }
+  ],
+  "mission": {
+    "id": "u08-m",
+    "title_de": "Drei Dinge, die dir gefallen",
+    "task_de": "Sag deiner Begleitung heute drei Dinge auf Spanisch, die dir gefallen, und eins, das dir nicht gefällt. Kommentiere außerdem einmal das Wetter gegenüber jemandem vor Ort.",
+    "say": [
+      "Me gusta el mar.",
+      "Me encanta el barraquito.",
+      "Hoy hace sol."
+    ]
+  },
+  "canarias_de": "Der Passatwind (los alisios) weht aus Nordosten. Er staut Wolken an der Nordseite Teneriffas, während der Süden trocken und sonnig bleibt."
+}

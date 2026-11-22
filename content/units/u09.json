@@ -1,0 +1,290 @@
+{
+  "id": "u09",
+  "stop": 9,
+  "title_es": "¿Cuándo?",
+  "title_de": "Zeiten und Pläne",
+  "can_do_de": "Ich kann nach Uhrzeiten fragen und sagen, was ich vorhabe.",
+  "grammar": {
+    "topic_de": "ir: voy, vas, va, vamos",
+    "explanation_de": "Ir heißt ‚gehen' oder ‚fahren' und ist unregelmäßig. Mit a und einem Ort sagst du, wohin: Voy a la playa. Aus a + el wird al: Voy al supermercado. Mit ir a und der Grundform eines Verbs sagst du, was du vorhast: Voy a nadar. Damit sprichst du über die Zukunft, ohne eine neue Zeitform zu lernen. Uhrzeiten: a las ocho heißt um acht, a la una um eins.",
+    "table": [
+      {
+        "label_de": "ich",
+        "es": "(yo) voy",
+        "de": "ich gehe"
+      },
+      {
+        "label_de": "du",
+        "es": "(tú) vas",
+        "de": "du gehst"
+      },
+      {
+        "label_de": "er, sie, Sie",
+        "es": "(él, ella, usted) va",
+        "de": "er geht, sie geht, Sie gehen"
+      },
+      {
+        "label_de": "wir",
+        "es": "(nosotros) vamos",
+        "de": "wir gehen"
+      }
+    ],
+    "examples": [
+      {
+        "es": "Voy al supermercado.",
+        "de": "Ich gehe zum Supermarkt."
+      },
+      {
+        "es": "Mañana vamos a La Gomera.",
+        "de": "Morgen fahren wir nach La Gomera."
+      },
+      {
+        "es": "Voy a tomar un café.",
+        "de": "Ich werde einen Kaffee trinken."
+      }
+    ]
+  },
+  "items": [
+    {
+      "id": "u09-i01",
+      "es": "hoy",
+      "de": "heute",
+      "kind": "word"
+    },
+    {
+      "id": "u09-i02",
+      "es": "mañana",
+      "de": "morgen",
+      "kind": "word",
+      "note_de": "La mañana mit Artikel heißt ‚der Morgen'."
+    },
+    {
+      "id": "u09-i03",
+      "es": "ahora",
+      "de": "jetzt",
+      "kind": "word"
+    },
+    {
+      "id": "u09-i04",
+      "es": "luego",
+      "de": "später / danach",
+      "kind": "word"
+    },
+    {
+      "id": "u09-i05",
+      "es": "¿a qué hora …?",
+      "de": "um wie viel Uhr …?",
+      "kind": "frame",
+      "example": {
+        "es": "¿A qué hora abre el supermercado?",
+        "de": "Um wie viel Uhr öffnet der Supermarkt?"
+      }
+    },
+    {
+      "id": "u09-i06",
+      "es": "a las ocho",
+      "de": "um acht Uhr",
+      "kind": "phrase",
+      "note_de": "Um eins: a la una."
+    },
+    {
+      "id": "u09-i07",
+      "es": "abierto",
+      "de": "geöffnet",
+      "kind": "word"
+    },
+    {
+      "id": "u09-i08",
+      "es": "cerrado",
+      "de": "geschlossen",
+      "kind": "word"
+    },
+    {
+      "id": "u09-i09",
+      "es": "por la mañana",
+      "de": "am Vormittag",
+      "kind": "phrase"
+    },
+    {
+      "id": "u09-i10",
+      "es": "por la tarde",
+      "de": "am Nachmittag",
+      "kind": "phrase"
+    },
+    {
+      "id": "u09-i11",
+      "es": "por la noche",
+      "de": "am Abend / in der Nacht",
+      "kind": "phrase"
+    },
+    {
+      "id": "u09-i12",
+      "es": "vamos a la playa",
+      "de": "wir gehen zum Strand",
+      "kind": "phrase",
+      "note_de": "Auch als Vorschlag: Gehen wir zum Strand!"
+    },
+    {
+      "id": "u09-i13",
+      "es": "voy a …",
+      "de": "ich werde … / ich gehe zu …",
+      "kind": "frame",
+      "example": {
+        "es": "Voy a nadar.",
+        "de": "Ich werde schwimmen."
+      }
+    },
+    {
+      "id": "u09-i14",
+      "es": "¿cuándo?",
+      "de": "wann?",
+      "kind": "word"
+    },
+    {
+      "id": "u09-i15",
+      "es": "el fin de semana",
+      "de": "das Wochenende",
+      "kind": "phrase"
+    }
+  ],
+  "dialogue": {
+    "setting_de": "An der Rezeption",
+    "lines": [
+      {
+        "speaker": "Tú",
+        "es": "Perdón, ¿a qué hora abre el restaurante?",
+        "de": "Entschuldigung, um wie viel Uhr öffnet das Restaurant?",
+        "learner": true
+      },
+      {
+        "speaker": "Recepcionista",
+        "es": "Hoy abre a las siete. Ahora está cerrado.",
+        "de": "Heute öffnet es um sieben. Jetzt ist es geschlossen.",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "Gracias. ¿Y mañana?",
+        "de": "Danke. Und morgen?",
+        "learner": true
+      },
+      {
+        "speaker": "Recepcionista",
+        "es": "Mañana abre a la una.",
+        "de": "Morgen öffnet es um eins.",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "Perfecto. Mañana por la mañana vamos a la playa y luego vamos a comer aquí.",
+        "de": "Perfekt. Morgen Vormittag gehen wir an den Strand und danach essen wir hier.",
+        "learner": true
+      },
+      {
+        "speaker": "Recepcionista",
+        "es": "¡Muy bien! ¿Reservo una mesa?",
+        "de": "Sehr gut! Soll ich einen Tisch reservieren?",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "Sí, por favor. Para dos, a las dos.",
+        "de": "Ja, bitte. Für zwei, um zwei.",
+        "learner": true
+      }
+    ]
+  },
+  "cloze": [
+    {
+      "id": "u09-c01",
+      "es": "Yo ___ a la playa.",
+      "answer": "voy",
+      "options": [
+        "voy",
+        "vas",
+        "va"
+      ],
+      "de": "Ich gehe zum Strand."
+    },
+    {
+      "id": "u09-c02",
+      "es": "¿Tú ___ al supermercado?",
+      "answer": "vas",
+      "options": [
+        "voy",
+        "vas",
+        "va"
+      ],
+      "de": "Gehst du zum Supermarkt?"
+    },
+    {
+      "id": "u09-c03",
+      "es": "Mañana ___ a nadar.",
+      "answer": "vamos",
+      "options": [
+        "vamos",
+        "voy",
+        "va"
+      ],
+      "de": "Morgen gehen wir schwimmen."
+    },
+    {
+      "id": "u09-c04",
+      "es": "El restaurante abre a ___ ocho.",
+      "answer": "las",
+      "options": [
+        "las",
+        "la",
+        "los"
+      ],
+      "de": "Das Restaurant öffnet um acht."
+    }
+  ],
+  "build": [
+    {
+      "id": "u09-b01",
+      "tokens": [
+        "¿A",
+        "qué",
+        "hora",
+        "abre",
+        "la",
+        "farmacia?"
+      ],
+      "de": "Um wie viel Uhr öffnet die Apotheke?"
+    },
+    {
+      "id": "u09-b02",
+      "tokens": [
+        "Mañana",
+        "vamos",
+        "a",
+        "la",
+        "playa"
+      ],
+      "de": "Morgen gehen wir zum Strand."
+    },
+    {
+      "id": "u09-b03",
+      "tokens": [
+        "Hoy",
+        "voy",
+        "a",
+        "estudiar",
+        "español"
+      ],
+      "de": "Heute werde ich Spanisch lernen."
+    }
+  ],
+  "mission": {
+    "id": "u09-m",
+    "title_de": "Uhrzeit erfragen und Plan machen",
+    "task_de": "Frag heute einmal nach einer Uhrzeit, zum Beispiel einer Öffnungszeit oder Abfahrt. Plane außerdem den morgigen Tag mit deiner Begleitung in zwei spanischen Sätzen.",
+    "say": [
+      "¿A qué hora abre?",
+      "¿A qué hora sale la guagua?",
+      "Mañana vamos a la playa."
+    ]
+  },
+  "canarias_de": "Auf den Kanaren ist es eine Stunde früher als auf dem spanischen Festland und in Deutschland. Spanische Radio- und Fernsehsender ergänzen ihre Zeitansagen deshalb mit ‚una hora menos en Canarias'."
+}

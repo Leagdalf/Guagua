@@ -1,0 +1,294 @@
+{
+  "id": "u01",
+  "stop": 1,
+  "title_es": "¡Hola!",
+  "title_de": "Begrüßen und vorstellen",
+  "can_do_de": "Ich kann grüßen, mich vorstellen und mich bedanken.",
+  "grammar": {
+    "topic_de": "ser in der Einzahl: soy, eres, es",
+    "explanation_de": "Ser heißt ‚sein'. Es sagt, wer jemand ist und woher jemand kommt. Die Wörter für ich und du (yo, tú) lässt man meistens weg, weil die Verbform schon zeigt, wer gemeint ist.",
+    "table": [
+      {
+        "label_de": "ich",
+        "es": "(yo) soy",
+        "de": "ich bin"
+      },
+      {
+        "label_de": "du",
+        "es": "(tú) eres",
+        "de": "du bist"
+      },
+      {
+        "label_de": "er, sie, Sie",
+        "es": "(él, ella, usted) es",
+        "de": "er ist, sie ist, Sie sind"
+      }
+    ],
+    "examples": [
+      {
+        "es": "Soy de Alemania.",
+        "de": "Ich komme aus Deutschland."
+      },
+      {
+        "es": "¿Eres de aquí?",
+        "de": "Bist du von hier?"
+      },
+      {
+        "es": "Es de Tenerife.",
+        "de": "Er oder sie kommt aus Teneriffa."
+      }
+    ]
+  },
+  "items": [
+    {
+      "id": "u01-i01",
+      "es": "hola",
+      "de": "hallo",
+      "kind": "word",
+      "note_de": "Das h ist stumm."
+    },
+    {
+      "id": "u01-i02",
+      "es": "buenos días",
+      "de": "guten Morgen",
+      "kind": "phrase",
+      "note_de": "Gilt bis zum Mittagessen, also etwa bis 14 Uhr."
+    },
+    {
+      "id": "u01-i03",
+      "es": "buenas tardes",
+      "de": "guten Tag (nachmittags)",
+      "kind": "phrase",
+      "note_de": "Vom Mittagessen bis es dunkel wird."
+    },
+    {
+      "id": "u01-i04",
+      "es": "buenas noches",
+      "de": "guten Abend / gute Nacht",
+      "kind": "phrase",
+      "note_de": "Zur Begrüßung am Abend und zum Abschied vor dem Schlafen."
+    },
+    {
+      "id": "u01-i05",
+      "es": "adiós",
+      "de": "auf Wiedersehen",
+      "kind": "word",
+      "note_de": "Klingt endgültiger als hasta luego."
+    },
+    {
+      "id": "u01-i06",
+      "es": "hasta luego",
+      "de": "bis später",
+      "kind": "phrase",
+      "note_de": "Der übliche Abschied in Laden und Café, auch wenn man sich nie wiedersieht."
+    },
+    {
+      "id": "u01-i07",
+      "es": "por favor",
+      "de": "bitte",
+      "kind": "phrase"
+    },
+    {
+      "id": "u01-i08",
+      "es": "gracias",
+      "de": "danke",
+      "kind": "word",
+      "note_de": "Stärker: muchas gracias."
+    },
+    {
+      "id": "u01-i09",
+      "es": "de nada",
+      "de": "gern geschehen",
+      "kind": "phrase",
+      "note_de": "Antwort auf gracias."
+    },
+    {
+      "id": "u01-i10",
+      "es": "perdón",
+      "de": "Entschuldigung",
+      "kind": "word",
+      "note_de": "Zum Ansprechen und zum Entschuldigen."
+    },
+    {
+      "id": "u01-i11",
+      "es": "sí",
+      "de": "ja",
+      "kind": "word",
+      "note_de": "Mit Akzent. Ohne Akzent heißt si ‚wenn'."
+    },
+    {
+      "id": "u01-i12",
+      "es": "no",
+      "de": "nein",
+      "kind": "word",
+      "note_de": "Steht auch vor dem Verb und verneint es: no entiendo."
+    },
+    {
+      "id": "u01-i13",
+      "es": "me llamo …",
+      "de": "ich heiße …",
+      "kind": "frame",
+      "example": {
+        "es": "Me llamo Ana.",
+        "de": "Ich heiße Ana."
+      }
+    },
+    {
+      "id": "u01-i14",
+      "es": "¿cómo te llamas?",
+      "de": "wie heißt du?",
+      "kind": "phrase"
+    },
+    {
+      "id": "u01-i15",
+      "es": "soy de Alemania",
+      "de": "ich komme aus Deutschland",
+      "kind": "phrase"
+    },
+    {
+      "id": "u01-i16",
+      "es": "encantada",
+      "de": "freut mich",
+      "kind": "word",
+      "note_de": "So sagt es eine Frau. Ein Mann sagt encantado."
+    }
+  ],
+  "dialogue": {
+    "setting_de": "An der Rezeption der Unterkunft",
+    "lines": [
+      {
+        "speaker": "Recepcionista",
+        "es": "¡Hola, buenas tardes!",
+        "de": "Hallo, guten Tag!",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "Buenas tardes. Me llamo {name}.",
+        "de": "Guten Tag. Ich heiße {name}.",
+        "learner": true
+      },
+      {
+        "speaker": "Recepcionista",
+        "es": "Encantado, {name}. ¿De dónde eres?",
+        "de": "Freut mich, {name}. Woher kommst du?",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "Soy de Alemania.",
+        "de": "Ich komme aus Deutschland.",
+        "learner": true
+      },
+      {
+        "speaker": "Recepcionista",
+        "es": "¡Bienvenida a Tenerife!",
+        "de": "Willkommen auf Teneriffa!",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "¡Muchas gracias! Hasta luego.",
+        "de": "Vielen Dank! Bis später.",
+        "learner": true
+      }
+    ]
+  },
+  "cloze": [
+    {
+      "id": "u01-c01",
+      "es": "Yo ___ de Alemania.",
+      "answer": "soy",
+      "options": [
+        "soy",
+        "eres",
+        "es"
+      ],
+      "de": "Ich komme aus Deutschland."
+    },
+    {
+      "id": "u01-c02",
+      "es": "¿Tú ___ de Tenerife?",
+      "answer": "eres",
+      "options": [
+        "soy",
+        "eres",
+        "es"
+      ],
+      "de": "Bist du aus Teneriffa?"
+    },
+    {
+      "id": "u01-c03",
+      "es": "Ella ___ de Colonia.",
+      "answer": "es",
+      "options": [
+        "soy",
+        "eres",
+        "es"
+      ],
+      "de": "Sie kommt aus Köln."
+    },
+    {
+      "id": "u01-c04",
+      "es": "Me ___ Ana.",
+      "answer": "llamo",
+      "options": [
+        "llamo",
+        "llamas",
+        "soy"
+      ],
+      "de": "Ich heiße Ana."
+    }
+  ],
+  "build": [
+    {
+      "id": "u01-b01",
+      "tokens": [
+        "Soy",
+        "de",
+        "Alemania"
+      ],
+      "de": "Ich komme aus Deutschland."
+    },
+    {
+      "id": "u01-b02",
+      "tokens": [
+        "¿Cómo",
+        "te",
+        "llamas?"
+      ],
+      "de": "Wie heißt du?"
+    },
+    {
+      "id": "u01-b03",
+      "tokens": [
+        "Muchas",
+        "gracias",
+        "y",
+        "hasta",
+        "luego"
+      ],
+      "de": "Vielen Dank und bis später."
+    }
+  ],
+  "mission": {
+    "id": "u01-m",
+    "title_de": "Dreimal grüßen",
+    "task_de": "Grüße heute drei Menschen auf Spanisch, passend zur Tageszeit. Verabschiede dich beim Gehen mit ‚Gracias, hasta luego'.",
+    "say": [
+      "Buenos días.",
+      "Buenas tardes.",
+      "Gracias, hasta luego."
+    ]
+  },
+  "canarias_de": "‚Hasta luego' ist der Standardabschied in Läden und Cafés, auch wenn man sich nie wiedersieht. ‚Buenos días' gilt in Spanien bis zum Mittagessen gegen 14 Uhr, erst danach sagt man ‚buenas tardes'.",
+  "tips_de": [
+    "Das h ist immer stumm: hola klingt wie ‚ola'.",
+    "ñ klingt wie ‚nj': mañana = ‚manjana'.",
+    "ll klingt wie ‚j': me llamo = ‚me jamo'.",
+    "j klingt wie das ‚ch' in ‚Bach', auf den Kanaren weicher, fast wie ein ‚h'.",
+    "z und c vor e oder i sprechen Kanarier wie ‚s': gracias = ‚grasias'. Die spanische Stimme des iPhones lispelt diese Laute meist wie auf dem Festland. Beides wird überall verstanden.",
+    "Fragen und Ausrufe bekommen vorn ein umgedrehtes Zeichen: ¿…? und ¡…!",
+    "Endet ein Wort auf Vokal, n oder s, wird die vorletzte Silbe betont, sonst die letzte. Ein Akzent (á, é, í, ó, ú) markiert die Ausnahmen."
+  ]
+}

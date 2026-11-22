@@ -1,0 +1,300 @@
+{
+  "id": "u06",
+  "stop": 6,
+  "title_es": "De compras",
+  "title_de": "Einkaufen",
+  "can_do_de": "Ich kann im Laden sagen, was und wie viel ich möchte, und bezahlen.",
+  "grammar": {
+    "topic_de": "querer: quiero, quieres, quiere",
+    "explanation_de": "Querer heißt ‚wollen' oder ‚möchten'. Im Laden ist ‚Quiero…' normal, mit por favor am Ende. Mengen stehen mit de: un kilo de tomates, una botella de agua. Die Mehrzahl bekommt nach Vokal ein -s (plátanos) und nach Konsonant ein -es (limones).",
+    "table": [
+      {
+        "label_de": "ich",
+        "es": "(yo) quiero",
+        "de": "ich möchte"
+      },
+      {
+        "label_de": "du",
+        "es": "(tú) quieres",
+        "de": "du möchtest"
+      },
+      {
+        "label_de": "er, sie, Sie",
+        "es": "(él, ella, usted) quiere",
+        "de": "er möchte, sie möchte, Sie möchten"
+      }
+    ],
+    "examples": [
+      {
+        "es": "Quiero medio kilo de plátanos.",
+        "de": "Ich möchte ein halbes Kilo Bananen."
+      },
+      {
+        "es": "¿Quieres fruta?",
+        "de": "Möchtest du Obst?"
+      },
+      {
+        "es": "¿Quiere una bolsa?",
+        "de": "Möchten Sie eine Tüte?"
+      }
+    ]
+  },
+  "items": [
+    {
+      "id": "u06-i01",
+      "es": "quiero …",
+      "de": "ich möchte …",
+      "kind": "frame",
+      "note_de": "Im Laden normal und nicht unhöflich.",
+      "example": {
+        "es": "Quiero un kilo de tomates.",
+        "de": "Ich möchte ein Kilo Tomaten."
+      }
+    },
+    {
+      "id": "u06-i02",
+      "es": "un kilo de …",
+      "de": "ein Kilo …",
+      "kind": "frame",
+      "example": {
+        "es": "Un kilo de plátanos, por favor.",
+        "de": "Ein Kilo Bananen, bitte."
+      }
+    },
+    {
+      "id": "u06-i03",
+      "es": "medio kilo",
+      "de": "ein halbes Kilo",
+      "kind": "phrase"
+    },
+    {
+      "id": "u06-i04",
+      "es": "una botella de agua",
+      "de": "eine Flasche Wasser",
+      "kind": "phrase"
+    },
+    {
+      "id": "u06-i05",
+      "es": "los plátanos",
+      "de": "die Bananen",
+      "kind": "word"
+    },
+    {
+      "id": "u06-i06",
+      "es": "los tomates",
+      "de": "die Tomaten",
+      "kind": "word"
+    },
+    {
+      "id": "u06-i07",
+      "es": "el aguacate",
+      "de": "die Avocado",
+      "kind": "word"
+    },
+    {
+      "id": "u06-i08",
+      "es": "la fruta",
+      "de": "das Obst",
+      "kind": "word"
+    },
+    {
+      "id": "u06-i09",
+      "es": "la verdura",
+      "de": "das Gemüse",
+      "kind": "word"
+    },
+    {
+      "id": "u06-i10",
+      "es": "los huevos",
+      "de": "die Eier",
+      "kind": "word"
+    },
+    {
+      "id": "u06-i11",
+      "es": "la leche",
+      "de": "die Milch",
+      "kind": "word"
+    },
+    {
+      "id": "u06-i12",
+      "es": "el pan",
+      "de": "das Brot",
+      "kind": "word"
+    },
+    {
+      "id": "u06-i13",
+      "es": "una bolsa",
+      "de": "eine Tüte",
+      "kind": "word"
+    },
+    {
+      "id": "u06-i14",
+      "es": "¿algo más?",
+      "de": "noch etwas?",
+      "kind": "phrase"
+    },
+    {
+      "id": "u06-i15",
+      "es": "nada más",
+      "de": "das ist alles",
+      "kind": "phrase"
+    },
+    {
+      "id": "u06-i16",
+      "es": "con tarjeta",
+      "de": "mit Karte",
+      "kind": "phrase",
+      "note_de": "Bar zahlen: en efectivo."
+    }
+  ],
+  "dialogue": {
+    "setting_de": "In einem Obst- und Gemüseladen",
+    "lines": [
+      {
+        "speaker": "Frutero",
+        "es": "¡Buenas! ¿Qué le pongo?",
+        "de": "Hallo! Was darf es sein?",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "Hola. Quiero medio kilo de plátanos, por favor.",
+        "de": "Hallo. Ich möchte ein halbes Kilo Bananen, bitte.",
+        "learner": true
+      },
+      {
+        "speaker": "Frutero",
+        "es": "¿Algo más?",
+        "de": "Noch etwas?",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "Sí, dos aguacates y un kilo de tomates.",
+        "de": "Ja, zwei Avocados und ein Kilo Tomaten.",
+        "learner": true
+      },
+      {
+        "speaker": "Frutero",
+        "es": "Muy bien. ¿Quiere una bolsa?",
+        "de": "Sehr gut. Möchten Sie eine Tüte?",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "No, gracias. Nada más. ¿Cuánto es?",
+        "de": "Nein, danke. Das ist alles. Was macht das?",
+        "learner": true
+      },
+      {
+        "speaker": "Frutero",
+        "es": "Son seis euros con veinte.",
+        "de": "Das macht sechs Euro zwanzig.",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "¿Puedo pagar con tarjeta?",
+        "de": "Kann ich mit Karte zahlen?",
+        "learner": true
+      },
+      {
+        "speaker": "Frutero",
+        "es": "Claro que sí.",
+        "de": "Aber sicher.",
+        "learner": false
+      }
+    ]
+  },
+  "cloze": [
+    {
+      "id": "u06-c01",
+      "es": "Yo ___ un kilo de tomates.",
+      "answer": "quiero",
+      "options": [
+        "quiero",
+        "quieres",
+        "quiere"
+      ],
+      "de": "Ich möchte ein Kilo Tomaten."
+    },
+    {
+      "id": "u06-c02",
+      "es": "¿Tú ___ fruta?",
+      "answer": "quieres",
+      "options": [
+        "quiero",
+        "quieres",
+        "quiere"
+      ],
+      "de": "Möchtest du Obst?"
+    },
+    {
+      "id": "u06-c03",
+      "es": "Quiero una botella ___ agua.",
+      "answer": "de",
+      "options": [
+        "de",
+        "con",
+        "para"
+      ],
+      "de": "Ich möchte eine Flasche Wasser."
+    },
+    {
+      "id": "u06-c04",
+      "es": "Dos ___, por favor.",
+      "answer": "aguacates",
+      "options": [
+        "aguacates",
+        "aguacate",
+        "aguacatos"
+      ],
+      "de": "Zwei Avocados, bitte."
+    }
+  ],
+  "build": [
+    {
+      "id": "u06-b01",
+      "tokens": [
+        "Quiero",
+        "medio",
+        "kilo",
+        "de",
+        "plátanos"
+      ],
+      "de": "Ich möchte ein halbes Kilo Bananen."
+    },
+    {
+      "id": "u06-b02",
+      "tokens": [
+        "Nada",
+        "más,",
+        "gracias"
+      ],
+      "de": "Das ist alles, danke."
+    },
+    {
+      "id": "u06-b03",
+      "tokens": [
+        "Una",
+        "botella",
+        "de",
+        "agua",
+        "sin",
+        "gas"
+      ],
+      "de": "Eine Flasche stilles Wasser."
+    }
+  ],
+  "mission": {
+    "id": "u06-m",
+    "title_de": "Einkauf auf Spanisch",
+    "task_de": "Kaufe heute Obst oder Gemüse auf Spanisch ein: Menge nennen, ‚nada más' sagen, bezahlen.",
+    "say": [
+      "Quiero medio kilo de plátanos, por favor.",
+      "Nada más, gracias.",
+      "¿Puedo pagar con tarjeta?"
+    ]
+  },
+  "canarias_de": "Die Banane von den Kanaren heißt plátano. Sie ist kleiner und süßer als die importierte Banane, die in Spanien banana genannt wird."
+}

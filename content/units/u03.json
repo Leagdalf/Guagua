@@ -1,0 +1,280 @@
+{
+  "id": "u03",
+  "stop": 3,
+  "title_es": "Los números",
+  "title_de": "Zahlen und Preise",
+  "can_do_de": "Ich kann bis 100 zählen, Preise verstehen und nach dem Preis fragen.",
+  "grammar": {
+    "topic_de": "Zahlen bauen",
+    "explanation_de": "0 bis 15 sind eigene Wörter. 16 bis 19 heißen dieci + Zahl (dieciséis), 21 bis 29 veinti + Zahl (veintidós). Ab 31 steht y zwischen Zehner und Einer: treinta y uno, cuarenta y cinco. Vor einem männlichen Substantiv wird uno zu un: un euro. Bei Preisen verbindet con Euro und Cent: tres euros con cincuenta.",
+    "table": [
+      {
+        "label_de": "10 bis 50",
+        "es": "diez, veinte, treinta, cuarenta, cincuenta",
+        "de": "10, 20, 30, 40, 50"
+      },
+      {
+        "label_de": "60 bis 100",
+        "es": "sesenta, setenta, ochenta, noventa, cien",
+        "de": "60, 70, 80, 90, 100"
+      },
+      {
+        "label_de": "11 bis 15",
+        "es": "once, doce, trece, catorce, quince",
+        "de": "11, 12, 13, 14, 15"
+      },
+      {
+        "label_de": "mit y",
+        "es": "treinta y uno, cuarenta y cinco",
+        "de": "31, 45"
+      }
+    ],
+    "examples": [
+      {
+        "es": "Son doce euros.",
+        "de": "Das macht zwölf Euro."
+      },
+      {
+        "es": "¿Cuánto cuesta el barraquito?",
+        "de": "Was kostet der Barraquito?"
+      },
+      {
+        "es": "Cuesta dos euros con cincuenta.",
+        "de": "Er kostet zwei Euro fünfzig."
+      }
+    ]
+  },
+  "items": [
+    {
+      "id": "u03-i01",
+      "es": "uno",
+      "de": "eins (1)",
+      "kind": "word",
+      "note_de": "Vor einem männlichen Substantiv un: un euro."
+    },
+    {
+      "id": "u03-i02",
+      "es": "dos",
+      "de": "zwei (2)",
+      "kind": "word"
+    },
+    {
+      "id": "u03-i03",
+      "es": "tres",
+      "de": "drei (3)",
+      "kind": "word"
+    },
+    {
+      "id": "u03-i04",
+      "es": "cuatro",
+      "de": "vier (4)",
+      "kind": "word"
+    },
+    {
+      "id": "u03-i05",
+      "es": "cinco",
+      "de": "fünf (5)",
+      "kind": "word"
+    },
+    {
+      "id": "u03-i06",
+      "es": "seis",
+      "de": "sechs (6)",
+      "kind": "word"
+    },
+    {
+      "id": "u03-i07",
+      "es": "siete",
+      "de": "sieben (7)",
+      "kind": "word"
+    },
+    {
+      "id": "u03-i08",
+      "es": "ocho",
+      "de": "acht (8)",
+      "kind": "word"
+    },
+    {
+      "id": "u03-i09",
+      "es": "nueve",
+      "de": "neun (9)",
+      "kind": "word"
+    },
+    {
+      "id": "u03-i10",
+      "es": "diez",
+      "de": "zehn (10)",
+      "kind": "word"
+    },
+    {
+      "id": "u03-i11",
+      "es": "veinte",
+      "de": "zwanzig (20)",
+      "kind": "word"
+    },
+    {
+      "id": "u03-i12",
+      "es": "cincuenta",
+      "de": "fünfzig (50)",
+      "kind": "word"
+    },
+    {
+      "id": "u03-i13",
+      "es": "cien",
+      "de": "hundert (100)",
+      "kind": "word"
+    },
+    {
+      "id": "u03-i14",
+      "es": "¿cuánto cuesta?",
+      "de": "was kostet das?",
+      "kind": "phrase"
+    },
+    {
+      "id": "u03-i15",
+      "es": "es muy caro",
+      "de": "das ist sehr teuer",
+      "kind": "phrase",
+      "note_de": "Günstig heißt barato."
+    }
+  ],
+  "dialogue": {
+    "setting_de": "An einem Marktstand",
+    "lines": [
+      {
+        "speaker": "Tú",
+        "es": "Hola. ¿Cuánto cuesta el mojo?",
+        "de": "Hallo. Was kostet die Mojo-Soße?",
+        "learner": true
+      },
+      {
+        "speaker": "Vendedor",
+        "es": "Cuatro euros. Dos por siete.",
+        "de": "Vier Euro. Zwei für sieben.",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "Dos, por favor.",
+        "de": "Zwei, bitte.",
+        "learner": true
+      },
+      {
+        "speaker": "Vendedor",
+        "es": "Son siete euros.",
+        "de": "Das macht sieben Euro.",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "Aquí tiene, diez.",
+        "de": "Bitte, zehn.",
+        "learner": true
+      },
+      {
+        "speaker": "Vendedor",
+        "es": "Y tres de vuelta. ¡Gracias!",
+        "de": "Und drei zurück. Danke!",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "Gracias. ¡Hasta luego!",
+        "de": "Danke. Bis später!",
+        "learner": true
+      }
+    ]
+  },
+  "cloze": [
+    {
+      "id": "u03-c01",
+      "es": "Dos y tres son ___.",
+      "answer": "cinco",
+      "options": [
+        "cinco",
+        "seis",
+        "cuatro"
+      ],
+      "de": "Zwei und drei sind fünf."
+    },
+    {
+      "id": "u03-c02",
+      "es": "El café cuesta ___ euro.",
+      "answer": "un",
+      "options": [
+        "un",
+        "uno",
+        "una"
+      ],
+      "de": "Der Kaffee kostet einen Euro."
+    },
+    {
+      "id": "u03-c03",
+      "es": "Diez y diez son ___.",
+      "answer": "veinte",
+      "options": [
+        "veinte",
+        "doce",
+        "cien"
+      ],
+      "de": "Zehn und zehn sind zwanzig."
+    },
+    {
+      "id": "u03-c04",
+      "es": "¿___ cuesta?",
+      "answer": "Cuánto",
+      "options": [
+        "Cuánto",
+        "Cómo",
+        "Dónde"
+      ],
+      "de": "Wie viel kostet das?"
+    }
+  ],
+  "build": [
+    {
+      "id": "u03-b01",
+      "tokens": [
+        "¿Cuánto",
+        "cuesta",
+        "el",
+        "café?"
+      ],
+      "de": "Was kostet der Kaffee?"
+    },
+    {
+      "id": "u03-b02",
+      "tokens": [
+        "Son",
+        "tres",
+        "euros",
+        "con",
+        "cincuenta"
+      ],
+      "de": "Das macht drei Euro fünfzig."
+    },
+    {
+      "id": "u03-b03",
+      "tokens": [
+        "Dos",
+        "cortados",
+        "y",
+        "un",
+        "agua,",
+        "por",
+        "favor"
+      ],
+      "de": "Zwei Cortados und ein Wasser, bitte."
+    }
+  ],
+  "mission": {
+    "id": "u03-m",
+    "title_de": "Preis erfragen",
+    "task_de": "Frag heute einmal nach einem Preis und wiederhole die Zahl, die du hörst, laut auf Spanisch. Lies außerdem die Summe einer Rechnung auf Spanisch vor.",
+    "say": [
+      "¿Cuánto cuesta?",
+      "¿Cuánto es?"
+    ]
+  },
+  "canarias_de": "Preise nennt man oft ohne das Wort euros: ‚Son tres con cincuenta.' Auf dem Kassenbon steht statt der Mehrwertsteuer IVA die kanarische Steuer IGIC."
+}

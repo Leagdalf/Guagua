@@ -1,0 +1,292 @@
+{
+  "id": "u10",
+  "stop": 10,
+  "title_es": "En ruta",
+  "title_de": "Unterwegs und in der Unterkunft",
+  "can_do_de": "Ich kann Fahrkarten kaufen, in der Unterkunft etwas klären und um Hilfe bitten.",
+  "grammar": {
+    "topic_de": "poder und necesitar: ¿Puedo…? ¿Puede…? Necesito…",
+    "explanation_de": "Poder heißt ‚können' oder ‚dürfen'. Danach steht das zweite Verb in der Grundform: ¿Puedo pagar con tarjeta? Mit ‚¿Puede…?' bittest du jemanden höflich um etwas: ¿Puede ayudarme? Necesitar (brauchen) ist ein regelmäßiges Verb auf -ar: Necesito un taxi.",
+    "table": [
+      {
+        "label_de": "ich",
+        "es": "(yo) puedo",
+        "de": "ich kann"
+      },
+      {
+        "label_de": "du",
+        "es": "(tú) puedes",
+        "de": "du kannst"
+      },
+      {
+        "label_de": "er, sie, Sie",
+        "es": "(él, ella, usted) puede",
+        "de": "er kann, sie kann, Sie können"
+      },
+      {
+        "label_de": "brauchen",
+        "es": "necesito, necesitas, necesita",
+        "de": "ich brauche, du brauchst, er oder sie braucht"
+      }
+    ],
+    "examples": [
+      {
+        "es": "¿Puedo pagar con tarjeta?",
+        "de": "Kann ich mit Karte zahlen?"
+      },
+      {
+        "es": "¿Puede ayudarme, por favor?",
+        "de": "Können Sie mir bitte helfen?"
+      },
+      {
+        "es": "Necesito una farmacia.",
+        "de": "Ich brauche eine Apotheke."
+      }
+    ]
+  },
+  "items": [
+    {
+      "id": "u10-i01",
+      "es": "la guagua",
+      "de": "der Bus",
+      "kind": "word",
+      "note_de": "Kanarisches Wort. Auf dem Festland: el autobús."
+    },
+    {
+      "id": "u10-i02",
+      "es": "el barco",
+      "de": "das Schiff / die Fähre",
+      "kind": "word",
+      "note_de": "Auch: el ferry."
+    },
+    {
+      "id": "u10-i03",
+      "es": "el billete",
+      "de": "die Fahrkarte",
+      "kind": "word"
+    },
+    {
+      "id": "u10-i04",
+      "es": "ida y vuelta",
+      "de": "hin und zurück",
+      "kind": "phrase",
+      "note_de": "Nur hin: solo ida."
+    },
+    {
+      "id": "u10-i05",
+      "es": "el aeropuerto",
+      "de": "der Flughafen",
+      "kind": "word"
+    },
+    {
+      "id": "u10-i06",
+      "es": "la habitación",
+      "de": "das Zimmer",
+      "kind": "word"
+    },
+    {
+      "id": "u10-i07",
+      "es": "la llave",
+      "de": "der Schlüssel",
+      "kind": "word"
+    },
+    {
+      "id": "u10-i08",
+      "es": "tengo una reserva",
+      "de": "ich habe eine Reservierung",
+      "kind": "phrase"
+    },
+    {
+      "id": "u10-i09",
+      "es": "necesito …",
+      "de": "ich brauche …",
+      "kind": "frame",
+      "example": {
+        "es": "Necesito un taxi.",
+        "de": "Ich brauche ein Taxi."
+      }
+    },
+    {
+      "id": "u10-i10",
+      "es": "¿puedo …?",
+      "de": "kann ich …?",
+      "kind": "frame",
+      "example": {
+        "es": "¿Puedo pagar con tarjeta?",
+        "de": "Kann ich mit Karte zahlen?"
+      }
+    },
+    {
+      "id": "u10-i11",
+      "es": "¿puede ayudarme?",
+      "de": "können Sie mir helfen?",
+      "kind": "phrase"
+    },
+    {
+      "id": "u10-i12",
+      "es": "no funciona",
+      "de": "es funktioniert nicht",
+      "kind": "phrase"
+    },
+    {
+      "id": "u10-i13",
+      "es": "la maleta",
+      "de": "der Koffer",
+      "kind": "word"
+    },
+    {
+      "id": "u10-i14",
+      "es": "la salida",
+      "de": "der Ausgang / die Abfahrt",
+      "kind": "word"
+    },
+    {
+      "id": "u10-i15",
+      "es": "¿a qué hora sale …?",
+      "de": "um wie viel Uhr fährt … ab?",
+      "kind": "frame",
+      "example": {
+        "es": "¿A qué hora sale la guagua?",
+        "de": "Um wie viel Uhr fährt der Bus ab?"
+      }
+    }
+  ],
+  "dialogue": {
+    "setting_de": "Am Fährschalter im Hafen",
+    "lines": [
+      {
+        "speaker": "Tú",
+        "es": "Buenos días. Dos billetes para La Gomera, por favor.",
+        "de": "Guten Morgen. Zwei Fahrkarten nach La Gomera, bitte.",
+        "learner": true
+      },
+      {
+        "speaker": "Empleada",
+        "es": "¿Ida y vuelta?",
+        "de": "Hin und zurück?",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "Sí, ida y vuelta. ¿A qué hora sale el barco?",
+        "de": "Ja, hin und zurück. Um wie viel Uhr fährt das Schiff ab?",
+        "learner": true
+      },
+      {
+        "speaker": "Empleada",
+        "es": "Sale a las nueve. ¿Llevan coche?",
+        "de": "Es fährt um neun. Haben Sie ein Auto dabei?",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "No, sin coche. ¿Puedo pagar con tarjeta?",
+        "de": "Nein, ohne Auto. Kann ich mit Karte zahlen?",
+        "learner": true
+      },
+      {
+        "speaker": "Empleada",
+        "es": "Claro. Aquí tienen los billetes. ¡Buen viaje!",
+        "de": "Natürlich. Hier sind die Fahrkarten. Gute Reise!",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "¡Muchas gracias!",
+        "de": "Vielen Dank!",
+        "learner": true
+      }
+    ]
+  },
+  "cloze": [
+    {
+      "id": "u10-c01",
+      "es": "¿___ pagar con tarjeta?",
+      "answer": "Puedo",
+      "options": [
+        "Puedo",
+        "Puede",
+        "Puedes"
+      ],
+      "de": "Kann ich mit Karte zahlen?"
+    },
+    {
+      "id": "u10-c02",
+      "es": "¿___ ayudarme, por favor?",
+      "answer": "Puede",
+      "options": [
+        "Puedo",
+        "Puede",
+        "Puedes"
+      ],
+      "de": "Können Sie mir bitte helfen?"
+    },
+    {
+      "id": "u10-c03",
+      "es": "Yo ___ un taxi.",
+      "answer": "necesito",
+      "options": [
+        "necesito",
+        "necesitas",
+        "necesita"
+      ],
+      "de": "Ich brauche ein Taxi."
+    },
+    {
+      "id": "u10-c04",
+      "es": "Tengo ___ reserva.",
+      "answer": "una",
+      "options": [
+        "una",
+        "un",
+        "uno"
+      ],
+      "de": "Ich habe eine Reservierung."
+    }
+  ],
+  "build": [
+    {
+      "id": "u10-b01",
+      "tokens": [
+        "Dos",
+        "billetes",
+        "de",
+        "ida",
+        "y",
+        "vuelta"
+      ],
+      "de": "Zwei Fahrkarten hin und zurück."
+    },
+    {
+      "id": "u10-b02",
+      "tokens": [
+        "¿Puede",
+        "ayudarme,",
+        "por",
+        "favor?"
+      ],
+      "de": "Können Sie mir bitte helfen?"
+    },
+    {
+      "id": "u10-b03",
+      "tokens": [
+        "La",
+        "llave",
+        "no",
+        "funciona"
+      ],
+      "de": "Der Schlüssel funktioniert nicht."
+    }
+  ],
+  "mission": {
+    "id": "u10-m",
+    "title_de": "Ein Anliegen auf Spanisch",
+    "task_de": "Erledige heute eine Sache komplett auf Spanisch: Fahrkarten kaufen, an der Rezeption etwas fragen oder um Hilfe bitten.",
+    "say": [
+      "Dos billetes, por favor.",
+      "Tengo una reserva.",
+      "¿Puede ayudarme?"
+    ]
+  },
+  "canarias_de": "Die Fähren nach La Gomera fahren im Hafen von Los Cristianos ab und brauchen etwa 50 Minuten bis San Sebastián de La Gomera."
+}

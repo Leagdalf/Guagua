@@ -1,0 +1,337 @@
+{
+  "categories": [
+    {
+      "id": "notfall",
+      "title_de": "Notfall und Gesundheit",
+      "phrases": [
+        {
+          "id": "pb-notfall-01",
+          "es": "Necesito ayuda.",
+          "de": "Ich brauche Hilfe."
+        },
+        {
+          "id": "pb-notfall-02",
+          "es": "Llame a una ambulancia, por favor.",
+          "de": "Rufen Sie bitte einen Krankenwagen."
+        },
+        {
+          "id": "pb-notfall-03",
+          "es": "Necesito un médico.",
+          "de": "Ich brauche einen Arzt."
+        },
+        {
+          "id": "pb-notfall-04",
+          "es": "¿Dónde está el hospital más cercano?",
+          "de": "Wo ist das nächste Krankenhaus?"
+        },
+        {
+          "id": "pb-notfall-05",
+          "es": "Me duele la cabeza.",
+          "de": "Ich habe Kopfschmerzen.",
+          "note_de": "Magenschmerzen: me duele el estómago."
+        },
+        {
+          "id": "pb-notfall-06",
+          "es": "He perdido mi móvil.",
+          "de": "Ich habe mein Handy verloren."
+        }
+      ],
+      "note_de": "Notruf in Spanien und der ganzen EU: 112."
+    },
+    {
+      "id": "unvertraeglich",
+      "title_de": "Unverträglichkeiten und Sonderwünsche",
+      "phrases": [
+        {
+          "id": "pb-unvertraeglich-01",
+          "es": "Soy alérgica a los frutos secos.",
+          "de": "Ich bin allergisch gegen Nüsse.",
+          "note_de": "Ein Mann sagt alérgico. Andere Zutaten: al gluten, a la leche, a la soja, al marisco."
+        },
+        {
+          "id": "pb-unvertraeglich-02",
+          "es": "No puedo comer gluten.",
+          "de": "Ich darf kein Gluten essen."
+        },
+        {
+          "id": "pb-unvertraeglich-03",
+          "es": "¿Este plato lleva leche?",
+          "de": "Enthält dieses Gericht Milch?"
+        },
+        {
+          "id": "pb-unvertraeglich-04",
+          "es": "¿Qué lleva este plato?",
+          "de": "Was ist in diesem Gericht drin?"
+        },
+        {
+          "id": "pb-unvertraeglich-05",
+          "es": "¿Tiene algo sin gluten?",
+          "de": "Haben Sie etwas ohne Gluten?"
+        },
+        {
+          "id": "pb-unvertraeglich-06",
+          "es": "Sin lactosa, por favor.",
+          "de": "Ohne Laktose, bitte."
+        },
+        {
+          "id": "pb-unvertraeglich-07",
+          "es": "Soy vegetariana.",
+          "de": "Ich bin Vegetarierin.",
+          "note_de": "Ein Mann sagt vegetariano."
+        },
+        {
+          "id": "pb-unvertraeglich-08",
+          "es": "¿Es picante?",
+          "de": "Ist das scharf?"
+        },
+        {
+          "id": "pb-unvertraeglich-09",
+          "es": "Sin cebolla, por favor.",
+          "de": "Ohne Zwiebeln, bitte."
+        },
+        {
+          "id": "pb-unvertraeglich-10",
+          "es": "¿Puede preguntar en la cocina?",
+          "de": "Können Sie in der Küche nachfragen?"
+        }
+      ]
+    },
+    {
+      "id": "restaurant",
+      "title_de": "Im Restaurant",
+      "phrases": [
+        {
+          "id": "pb-restaurant-01",
+          "es": "¿Tienen menú del día?",
+          "de": "Haben Sie ein Tagesmenü?"
+        },
+        {
+          "id": "pb-restaurant-02",
+          "es": "Una mesa en la terraza, por favor.",
+          "de": "Einen Tisch auf der Terrasse, bitte."
+        },
+        {
+          "id": "pb-restaurant-03",
+          "es": "¿Qué me recomienda?",
+          "de": "Was empfehlen Sie mir?"
+        },
+        {
+          "id": "pb-restaurant-04",
+          "es": "Para compartir.",
+          "de": "Zum Teilen."
+        },
+        {
+          "id": "pb-restaurant-05",
+          "es": "Otra agua, por favor.",
+          "de": "Noch ein Wasser, bitte."
+        },
+        {
+          "id": "pb-restaurant-06",
+          "es": "¿Podemos pagar por separado?",
+          "de": "Können wir getrennt zahlen?"
+        },
+        {
+          "id": "pb-restaurant-07",
+          "es": "Para llevar, por favor.",
+          "de": "Zum Mitnehmen, bitte."
+        },
+        {
+          "id": "pb-restaurant-08",
+          "es": "¡Buen provecho!",
+          "de": "Guten Appetit!"
+        },
+        {
+          "id": "pb-restaurant-09",
+          "es": "¡Salud!",
+          "de": "Prost!"
+        }
+      ]
+    },
+    {
+      "id": "unterkunft",
+      "title_de": "Unterkunft",
+      "phrases": [
+        {
+          "id": "pb-unterkunft-01",
+          "es": "Tengo una reserva a nombre de …",
+          "de": "Ich habe eine Reservierung auf den Namen …"
+        },
+        {
+          "id": "pb-unterkunft-02",
+          "es": "¿A qué hora es el desayuno?",
+          "de": "Um wie viel Uhr gibt es Frühstück?"
+        },
+        {
+          "id": "pb-unterkunft-03",
+          "es": "¿Cuál es la contraseña del wifi?",
+          "de": "Wie lautet das WLAN-Passwort?"
+        },
+        {
+          "id": "pb-unterkunft-04",
+          "es": "No hay agua caliente.",
+          "de": "Es gibt kein warmes Wasser."
+        },
+        {
+          "id": "pb-unterkunft-05",
+          "es": "¿A qué hora hay que dejar la habitación?",
+          "de": "Bis wann müssen wir das Zimmer räumen?"
+        },
+        {
+          "id": "pb-unterkunft-06",
+          "es": "¿Puede llamar un taxi, por favor?",
+          "de": "Können Sie bitte ein Taxi rufen?"
+        },
+        {
+          "id": "pb-unterkunft-07",
+          "es": "¿Podemos dejar las maletas aquí?",
+          "de": "Können wir die Koffer hier lassen?"
+        }
+      ]
+    },
+    {
+      "id": "unterwegs",
+      "title_de": "Unterwegs",
+      "phrases": [
+        {
+          "id": "pb-unterwegs-01",
+          "es": "¿Esta guagua va a Los Cristianos?",
+          "de": "Fährt dieser Bus nach Los Cristianos?"
+        },
+        {
+          "id": "pb-unterwegs-02",
+          "es": "¿Dónde tengo que bajarme?",
+          "de": "Wo muss ich aussteigen?"
+        },
+        {
+          "id": "pb-unterwegs-03",
+          "es": "¿Cuánto tarda?",
+          "de": "Wie lange dauert es?"
+        },
+        {
+          "id": "pb-unterwegs-04",
+          "es": "Pare aquí, por favor.",
+          "de": "Halten Sie bitte hier."
+        },
+        {
+          "id": "pb-unterwegs-05",
+          "es": "¿Dónde puedo aparcar?",
+          "de": "Wo kann ich parken?"
+        },
+        {
+          "id": "pb-unterwegs-06",
+          "es": "Lleno, por favor.",
+          "de": "Volltanken, bitte."
+        },
+        {
+          "id": "pb-unterwegs-07",
+          "es": "¿A qué hora sale el último barco?",
+          "de": "Wann fährt die letzte Fähre?"
+        }
+      ]
+    },
+    {
+      "id": "einkaufen",
+      "title_de": "Einkaufen",
+      "phrases": [
+        {
+          "id": "pb-einkaufen-01",
+          "es": "Solo estoy mirando, gracias.",
+          "de": "Ich schaue mich nur um, danke."
+        },
+        {
+          "id": "pb-einkaufen-02",
+          "es": "¿Tiene una talla más grande?",
+          "de": "Haben Sie das eine Nummer größer?",
+          "note_de": "Kleiner: más pequeña."
+        },
+        {
+          "id": "pb-einkaufen-03",
+          "es": "¿Puedo probármelo?",
+          "de": "Kann ich das anprobieren?"
+        },
+        {
+          "id": "pb-einkaufen-04",
+          "es": "Me lo llevo.",
+          "de": "Ich nehme es."
+        },
+        {
+          "id": "pb-einkaufen-05",
+          "es": "¿Me da el tique, por favor?",
+          "de": "Geben Sie mir bitte den Kassenbon?"
+        }
+      ]
+    },
+    {
+      "id": "strand",
+      "title_de": "Strand und Ausflug",
+      "phrases": [
+        {
+          "id": "pb-strand-01",
+          "es": "¿Se puede nadar aquí?",
+          "de": "Kann man hier schwimmen?"
+        },
+        {
+          "id": "pb-strand-02",
+          "es": "¿Hay medusas?",
+          "de": "Gibt es Quallen?"
+        },
+        {
+          "id": "pb-strand-03",
+          "es": "Dos hamacas y una sombrilla, por favor.",
+          "de": "Zwei Liegen und einen Sonnenschirm, bitte."
+        },
+        {
+          "id": "pb-strand-04",
+          "es": "¿Cuánto dura la ruta?",
+          "de": "Wie lange dauert die Wanderung?"
+        },
+        {
+          "id": "pb-strand-05",
+          "es": "¿Dónde empieza el sendero?",
+          "de": "Wo beginnt der Wanderweg?"
+        },
+        {
+          "id": "pb-strand-06",
+          "es": "¿Nos puede hacer una foto?",
+          "de": "Können Sie ein Foto von uns machen?"
+        }
+      ]
+    },
+    {
+      "id": "hoeflich",
+      "title_de": "Höflich bleiben",
+      "phrases": [
+        {
+          "id": "pb-hoeflich-01",
+          "es": "Lo siento.",
+          "de": "Es tut mir leid."
+        },
+        {
+          "id": "pb-hoeflich-02",
+          "es": "No pasa nada.",
+          "de": "Macht nichts."
+        },
+        {
+          "id": "pb-hoeflich-03",
+          "es": "Con permiso.",
+          "de": "Darf ich mal vorbei?"
+        },
+        {
+          "id": "pb-hoeflich-04",
+          "es": "Igualmente.",
+          "de": "Gleichfalls."
+        },
+        {
+          "id": "pb-hoeflich-05",
+          "es": "¡Que tenga un buen día!",
+          "de": "Einen schönen Tag noch!"
+        },
+        {
+          "id": "pb-hoeflich-06",
+          "es": "¡Qué amable!",
+          "de": "Wie nett!"
+        }
+      ]
+    }
+  ]
+}

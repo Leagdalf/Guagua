@@ -1,0 +1,281 @@
+{
+  "id": "u05",
+  "stop": 5,
+  "title_es": "¿Dónde está?",
+  "title_de": "Wege und Orte",
+  "can_do_de": "Ich kann nach dem Weg fragen und einfache Wegbeschreibungen verstehen.",
+  "grammar": {
+    "topic_de": "estar für Orte, hay für ‚es gibt'",
+    "explanation_de": "Für den Ort benutzt Spanisch estar und nicht ser: ¿Dónde está la playa? Mit hay fragst du, ob es etwas überhaupt gibt: ¿Hay una farmacia por aquí? Merkhilfe: ser sagt, was etwas ist, estar sagt, wo etwas ist.",
+    "table": [
+      {
+        "label_de": "ich",
+        "es": "(yo) estoy",
+        "de": "ich bin (an einem Ort)"
+      },
+      {
+        "label_de": "du",
+        "es": "(tú) estás",
+        "de": "du bist"
+      },
+      {
+        "label_de": "er, sie, es, Sie",
+        "es": "(él, ella, usted) está",
+        "de": "er ist, sie ist, es ist, Sie sind"
+      },
+      {
+        "label_de": "es gibt",
+        "es": "hay",
+        "de": "es gibt"
+      }
+    ],
+    "examples": [
+      {
+        "es": "Estoy en la playa.",
+        "de": "Ich bin am Strand."
+      },
+      {
+        "es": "El baño está allí.",
+        "de": "Die Toilette ist dort."
+      },
+      {
+        "es": "¿Hay un supermercado cerca?",
+        "de": "Gibt es einen Supermarkt in der Nähe?"
+      }
+    ]
+  },
+  "items": [
+    {
+      "id": "u05-i01",
+      "es": "¿dónde está …?",
+      "de": "wo ist …?",
+      "kind": "frame",
+      "example": {
+        "es": "¿Dónde está la playa?",
+        "de": "Wo ist der Strand?"
+      }
+    },
+    {
+      "id": "u05-i02",
+      "es": "la playa",
+      "de": "der Strand",
+      "kind": "word"
+    },
+    {
+      "id": "u05-i03",
+      "es": "el baño",
+      "de": "die Toilette",
+      "kind": "word"
+    },
+    {
+      "id": "u05-i04",
+      "es": "el supermercado",
+      "de": "der Supermarkt",
+      "kind": "word"
+    },
+    {
+      "id": "u05-i05",
+      "es": "la farmacia",
+      "de": "die Apotheke",
+      "kind": "word"
+    },
+    {
+      "id": "u05-i06",
+      "es": "la parada",
+      "de": "die Haltestelle",
+      "kind": "word"
+    },
+    {
+      "id": "u05-i07",
+      "es": "a la derecha",
+      "de": "rechts",
+      "kind": "phrase"
+    },
+    {
+      "id": "u05-i08",
+      "es": "a la izquierda",
+      "de": "links",
+      "kind": "phrase"
+    },
+    {
+      "id": "u05-i09",
+      "es": "todo recto",
+      "de": "geradeaus",
+      "kind": "phrase"
+    },
+    {
+      "id": "u05-i10",
+      "es": "cerca",
+      "de": "in der Nähe",
+      "kind": "word"
+    },
+    {
+      "id": "u05-i11",
+      "es": "lejos",
+      "de": "weit weg",
+      "kind": "word"
+    },
+    {
+      "id": "u05-i12",
+      "es": "aquí",
+      "de": "hier",
+      "kind": "word"
+    },
+    {
+      "id": "u05-i13",
+      "es": "allí",
+      "de": "dort",
+      "kind": "word"
+    },
+    {
+      "id": "u05-i14",
+      "es": "¿hay … por aquí?",
+      "de": "gibt es hier in der Nähe …?",
+      "kind": "frame",
+      "example": {
+        "es": "¿Hay una farmacia por aquí?",
+        "de": "Gibt es hier in der Nähe eine Apotheke?"
+      }
+    },
+    {
+      "id": "u05-i15",
+      "es": "la calle",
+      "de": "die Straße",
+      "kind": "word"
+    }
+  ],
+  "dialogue": {
+    "setting_de": "Auf der Straße",
+    "lines": [
+      {
+        "speaker": "Tú",
+        "es": "Perdón, ¿dónde está la farmacia?",
+        "de": "Entschuldigung, wo ist die Apotheke?",
+        "learner": true
+      },
+      {
+        "speaker": "Señora",
+        "es": "Está cerca. Todo recto y luego a la derecha.",
+        "de": "Sie ist in der Nähe. Geradeaus und dann rechts.",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "¿Todo recto y a la derecha?",
+        "de": "Geradeaus und rechts?",
+        "learner": true
+      },
+      {
+        "speaker": "Señora",
+        "es": "Eso es. Está a dos minutos.",
+        "de": "Genau. Zwei Minuten von hier.",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "Muchas gracias.",
+        "de": "Vielen Dank.",
+        "learner": true
+      },
+      {
+        "speaker": "Señora",
+        "es": "De nada. ¡Hasta luego!",
+        "de": "Gern geschehen. Bis später!",
+        "learner": false
+      }
+    ]
+  },
+  "cloze": [
+    {
+      "id": "u05-c01",
+      "es": "¿Dónde ___ el baño?",
+      "answer": "está",
+      "options": [
+        "está",
+        "es",
+        "hay"
+      ],
+      "de": "Wo ist die Toilette?"
+    },
+    {
+      "id": "u05-c02",
+      "es": "Yo ___ en la playa.",
+      "answer": "estoy",
+      "options": [
+        "estoy",
+        "soy",
+        "está"
+      ],
+      "de": "Ich bin am Strand."
+    },
+    {
+      "id": "u05-c03",
+      "es": "¿___ un supermercado por aquí?",
+      "answer": "Hay",
+      "options": [
+        "Hay",
+        "Está",
+        "Es"
+      ],
+      "de": "Gibt es hier einen Supermarkt?"
+    },
+    {
+      "id": "u05-c04",
+      "es": "La parada está a la ___.",
+      "answer": "izquierda",
+      "options": [
+        "izquierda",
+        "derecha",
+        "recto"
+      ],
+      "de": "Die Haltestelle ist links."
+    }
+  ],
+  "build": [
+    {
+      "id": "u05-b01",
+      "tokens": [
+        "Perdón,",
+        "¿dónde",
+        "está",
+        "la",
+        "playa?"
+      ],
+      "de": "Entschuldigung, wo ist der Strand?"
+    },
+    {
+      "id": "u05-b02",
+      "tokens": [
+        "Todo",
+        "recto",
+        "y",
+        "a",
+        "la",
+        "izquierda"
+      ],
+      "de": "Geradeaus und links."
+    },
+    {
+      "id": "u05-b03",
+      "tokens": [
+        "¿Hay",
+        "una",
+        "farmacia",
+        "por",
+        "aquí?"
+      ],
+      "de": "Gibt es hier in der Nähe eine Apotheke?"
+    }
+  ],
+  "mission": {
+    "id": "u05-m",
+    "title_de": "Nach dem Weg fragen",
+    "task_de": "Frag heute einen Menschen auf Spanisch nach dem Weg, auch wenn du ihn schon kennst. Wiederhole die Antwort laut, bevor du losgehst.",
+    "say": [
+      "Perdón, ¿dónde está la playa?",
+      "¿Está lejos?",
+      "Muchas gracias."
+    ]
+  },
+  "canarias_de": "Der Linienbus heißt auf den Kanaren guagua, die Haltestelle parada de guaguas. Auf dem spanischen Festland sagt man autobús."
+}

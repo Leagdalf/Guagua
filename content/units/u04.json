@@ -1,0 +1,299 @@
+{
+  "id": "u04",
+  "stop": 4,
+  "title_es": "En el restaurante",
+  "title_de": "Essen bestellen",
+  "can_do_de": "Ich kann nach einem Tisch fragen, Essen bestellen und sagen, dass es schmeckt.",
+  "grammar": {
+    "topic_de": "tener: tengo, tienes, tiene",
+    "explanation_de": "Tener heißt ‚haben'. Mit ‚¿Tiene…?' fragst du Kellner und Verkäufer in der höflichen usted-Form, ob es etwas gibt. Verneint wird mit no vor dem Verb: No tengo hambre.",
+    "table": [
+      {
+        "label_de": "ich",
+        "es": "(yo) tengo",
+        "de": "ich habe"
+      },
+      {
+        "label_de": "du",
+        "es": "(tú) tienes",
+        "de": "du hast"
+      },
+      {
+        "label_de": "er, sie, Sie",
+        "es": "(él, ella, usted) tiene",
+        "de": "er hat, sie hat, Sie haben"
+      }
+    ],
+    "examples": [
+      {
+        "es": "¿Tiene una mesa para dos?",
+        "de": "Haben Sie einen Tisch für zwei?"
+      },
+      {
+        "es": "Tengo hambre.",
+        "de": "Ich habe Hunger."
+      },
+      {
+        "es": "No tengo la carta.",
+        "de": "Ich habe die Karte nicht."
+      }
+    ]
+  },
+  "items": [
+    {
+      "id": "u04-i01",
+      "es": "una mesa para dos",
+      "de": "ein Tisch für zwei",
+      "kind": "phrase"
+    },
+    {
+      "id": "u04-i02",
+      "es": "la carta",
+      "de": "die Speisekarte",
+      "kind": "word"
+    },
+    {
+      "id": "u04-i03",
+      "es": "el menú del día",
+      "de": "das Tagesmenü",
+      "kind": "phrase",
+      "note_de": "Festes Mittagsangebot mit mehreren Gängen."
+    },
+    {
+      "id": "u04-i04",
+      "es": "de primero",
+      "de": "als ersten Gang",
+      "kind": "phrase"
+    },
+    {
+      "id": "u04-i05",
+      "es": "de segundo",
+      "de": "als Hauptgang",
+      "kind": "phrase"
+    },
+    {
+      "id": "u04-i06",
+      "es": "el postre",
+      "de": "der Nachtisch",
+      "kind": "word"
+    },
+    {
+      "id": "u04-i07",
+      "es": "papas arrugadas",
+      "de": "Runzelkartoffeln",
+      "kind": "phrase",
+      "note_de": "Kleine Kartoffeln, mit Schale in Salzwasser gekocht."
+    },
+    {
+      "id": "u04-i08",
+      "es": "el mojo",
+      "de": "die Mojo-Soße",
+      "kind": "word",
+      "note_de": "Mojo rojo ist rot und oft scharf, mojo verde ist grün und mild."
+    },
+    {
+      "id": "u04-i09",
+      "es": "el pescado",
+      "de": "der Fisch",
+      "kind": "word"
+    },
+    {
+      "id": "u04-i10",
+      "es": "la carne",
+      "de": "das Fleisch",
+      "kind": "word"
+    },
+    {
+      "id": "u04-i11",
+      "es": "el pollo",
+      "de": "das Hähnchen",
+      "kind": "word"
+    },
+    {
+      "id": "u04-i12",
+      "es": "la ensalada",
+      "de": "der Salat",
+      "kind": "word"
+    },
+    {
+      "id": "u04-i13",
+      "es": "el queso",
+      "de": "der Käse",
+      "kind": "word"
+    },
+    {
+      "id": "u04-i14",
+      "es": "¿tiene …?",
+      "de": "haben Sie …?",
+      "kind": "frame",
+      "example": {
+        "es": "¿Tiene pan sin gluten?",
+        "de": "Haben Sie glutenfreies Brot?"
+      }
+    },
+    {
+      "id": "u04-i15",
+      "es": "tengo hambre",
+      "de": "ich habe Hunger",
+      "kind": "phrase",
+      "note_de": "Durst: tengo sed."
+    },
+    {
+      "id": "u04-i16",
+      "es": "está muy rico",
+      "de": "das schmeckt sehr gut",
+      "kind": "phrase"
+    }
+  ],
+  "dialogue": {
+    "setting_de": "Abendessen in einem Fischrestaurant",
+    "lines": [
+      {
+        "speaker": "Tú",
+        "es": "Buenas noches. ¿Tiene una mesa para dos?",
+        "de": "Guten Abend. Haben Sie einen Tisch für zwei?",
+        "learner": true
+      },
+      {
+        "speaker": "Camarero",
+        "es": "Sí, claro. Aquí tienen la carta.",
+        "de": "Ja, natürlich. Hier ist die Karte.",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "Gracias. De primero, papas arrugadas con mojo.",
+        "de": "Danke. Als ersten Gang Runzelkartoffeln mit Mojo.",
+        "learner": true
+      },
+      {
+        "speaker": "Camarero",
+        "es": "¿Y de segundo?",
+        "de": "Und als Hauptgang?",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "Pescado del día con ensalada.",
+        "de": "Fisch des Tages mit Salat.",
+        "learner": true
+      },
+      {
+        "speaker": "Camarero",
+        "es": "Muy bien. ¿Y para beber?",
+        "de": "Sehr gut. Und zu trinken?",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "Un agua sin gas, por favor.",
+        "de": "Ein stilles Wasser, bitte.",
+        "learner": true
+      },
+      {
+        "speaker": "Camarero",
+        "es": "¿Qué tal todo?",
+        "de": "Schmeckt alles?",
+        "learner": false
+      },
+      {
+        "speaker": "Tú",
+        "es": "Está muy rico, gracias.",
+        "de": "Es schmeckt sehr gut, danke.",
+        "learner": true
+      }
+    ]
+  },
+  "cloze": [
+    {
+      "id": "u04-c01",
+      "es": "Yo ___ hambre.",
+      "answer": "tengo",
+      "options": [
+        "tengo",
+        "tienes",
+        "tiene"
+      ],
+      "de": "Ich habe Hunger."
+    },
+    {
+      "id": "u04-c02",
+      "es": "¿___ usted una mesa para dos?",
+      "answer": "Tiene",
+      "options": [
+        "Tiene",
+        "Tengo",
+        "Tienes"
+      ],
+      "de": "Haben Sie einen Tisch für zwei?"
+    },
+    {
+      "id": "u04-c03",
+      "es": "¿Tú ___ la carta?",
+      "answer": "tienes",
+      "options": [
+        "tengo",
+        "tienes",
+        "tiene"
+      ],
+      "de": "Hast du die Karte?"
+    },
+    {
+      "id": "u04-c04",
+      "es": "El restaurante ___ pescado fresco.",
+      "answer": "tiene",
+      "options": [
+        "tengo",
+        "tienes",
+        "tiene"
+      ],
+      "de": "Das Restaurant hat frischen Fisch."
+    }
+  ],
+  "build": [
+    {
+      "id": "u04-b01",
+      "tokens": [
+        "¿Tiene",
+        "una",
+        "mesa",
+        "para",
+        "dos?"
+      ],
+      "de": "Haben Sie einen Tisch für zwei?"
+    },
+    {
+      "id": "u04-b02",
+      "tokens": [
+        "De",
+        "segundo,",
+        "pescado",
+        "con",
+        "ensalada"
+      ],
+      "de": "Als Hauptgang Fisch mit Salat."
+    },
+    {
+      "id": "u04-b03",
+      "tokens": [
+        "Papas",
+        "arrugadas",
+        "con",
+        "mojo",
+        "verde"
+      ],
+      "de": "Runzelkartoffeln mit grünem Mojo."
+    }
+  ],
+  "mission": {
+    "id": "u04-m",
+    "title_de": "Ein Gericht auf Spanisch",
+    "task_de": "Frag heute im Restaurant auf Spanisch nach einem Tisch, bestelle mindestens ein Gericht auf Spanisch und sag dem Kellner, dass es schmeckt.",
+    "say": [
+      "¿Tiene una mesa para dos?",
+      "De segundo, pescado, por favor.",
+      "Está muy rico."
+    ]
+  },
+  "canarias_de": "Kartoffeln heißen auf den Kanaren papas, nicht patatas. Papas arrugadas kochen in sehr salzigem Wasser, bis die Schale runzlig wird, und kommen mit Mojo auf den Tisch."
+}
