@@ -178,6 +178,15 @@ Jede Lerneinheit beginnt mit einer Übersicht dessen, was heute kommt. Sie greif
 - Wiederholen steht nur in der Liste, wenn es heute aussteht. Schon erledigte Schritte der Haltestelle sind abgehakt.
 - Der Hauptknopf heißt „Beginnen“ oder, wenn die Haltestelle schon läuft, „Weiter bei Schritt 3“. Erst dieses Tippen baut die erste Aufgabe und spricht sie. So startet auch der erste Ton der Einheit in einem Tippen, und die Stimmenliste des Geräts hatte Zeit zu laden.
 
+Die Angabe rechts in einer Fahrplanzeile steht in einer Zeile und ist rechtsbündig. Nur lange Angaben wie ein Grammatikthema dürfen umbrechen, dann bekommt die Angabe bis zu zwei Drittel der Zeilenbreite.
+
+## Rollenspiel, Schreiben, Zeigen
+
+- Rollenspiel im Dialog: Die Zeilen der anderen Person erscheinen wie beim Anhören. Bei einer eigenen Zeile steht nur die deutsche Vorgabe in ceniza und der Hauptknopf „Aufdecken“. Danach erscheint die spanische Lösung mit Marker und wird gesprochen, darunter stehen zwei Antwortzeilen: „Saß“ und „Noch mal“. „Noch mal“ verdeckt die Zeile wieder, höchstens einmal je Zeile.
+- Schreiben: oben die deutsche Frage (24 px, iPad 32 px), darunter das Eingabefeld für Spanisch. Darüber oder darunter eine Reihe Textknöpfe für die Zeichen á é í ó ú ñ ü ¿ ¡, jeder mindestens 44 px breit und hoch, die das Zeichen an der Schreibmarke einfügen. Der Hauptknopf heißt „Prüfen“ und ist gesperrt, solange das Feld leer ist. Stimmt bis auf einen Akzent alles, lautet die Rückmeldung „Richtig. Achte auf den Akzent: está.“
+- Zeigen im Sprachführer: Vollbild auf página über der ganzen App, auch über der unteren Leiste. Der Satz steht so groß, wie er in vier Zeilen passt (mindestens 48 px, iPad 72 px), zentriert in der Höhe, darunter klein in ceniza die Übersetzung. Unten zwei Textknöpfe „Langsam vorlesen“ und „Schließen“, kein Hauptknopf.
+- Sterne im Sprachführer: Der Stern ist ein Strichsymbol rechts in der Zeile, gemerkt gefüllt in plátano mit Kontur in tinta, mit dem Namen „Merken“ oder „Nicht mehr merken“.
+
 ## Paare, Satzbau, Eingabe, Zusammenfassung
 
 - Paare: zwei Spalten nebeneinander, links die vier spanischen Zeilen, rechts die vier deutschen. Jede Zeile ist wie eine Antwortzeile gebaut (Haarlinien, 56 px, iPad 68 px), aber ohne Auswahlkreis. Gewählt: Marker hinter dem Text, auch beim deutschen. Gefunden: Text in ceniza mit Haken in drago, nicht mehr wählbar. Falsches Paar: Beide Zeilen zeigen das Kreuz in mojo, bis die nächste Zeile angetippt wird.
@@ -224,6 +233,9 @@ Weitere Fälle:
 | Wiederholen fällig, Haltestelle läuft schon | Heute · Haltestelle 2 | En el café | Erst 16 Karten wiederholen, dann weiter bei Schritt 3 von 6. | Mit Wiederholen beginnen |
 | Nichts fällig, Haltestelle läuft schon | Heute · Haltestelle 2 | En el café | Weiter bei Schritt 3 von 6: Grammatik. | Haltestelle fortsetzen |
 | Nur Wiederholen, alle Haltestellen geschafft | Heute | Wiederholen (Deutsch, Figtree 600) | 12 Karten sind fällig. | Mit Wiederholen beginnen |
+| Endstation offen, nichts fällig | Heute · Endstation | Repaso final (Spanisch, mit Marker) | 30 gemischte Aufgaben über alle Karten. | Endstation beginnen |
+| Endstation offen, Wiederholen fällig | Heute · Endstation | Repaso final | Erst 12 Karten wiederholen, dann 30 gemischte Aufgaben. | Mit Wiederholen beginnen |
+| Endstation geschafft | Heute | Linie geschafft (Deutsch, Figtree 600) | 26 von 30 richtig an der Endstation. | Deine Linie ansehen |
 
 Die Schritte heißen: 1 Wiederholen, 2 Neue Karten, 3 Grammatik, 4 Dialog, 5 Abschlussrunde, 6 Mission.
 
