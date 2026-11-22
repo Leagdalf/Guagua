@@ -1,4 +1,4 @@
-﻿import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { getNeedRefresh, registerServiceWorker, reloadForUpdate, subscribeUpdate } from "./register";
 
 export interface UpdateState {

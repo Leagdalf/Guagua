@@ -29,11 +29,17 @@ export interface RoundState {
   readonly unitId?: string;
   /** Reine Übung (freie Runde): Antworten ändern kein Fach und geben keine Punkte, setzen nur `lastSeen` auf heute. */
   readonly practice?: boolean;
+  /**
+   * Runde der Endstation. Dann merkt sich der Fortschritt in `finalRun` jede erste Antwort (Karte und richtig oder falsch),
+   * damit ein Neuladen nichts doppelt wertet.
+   */
+  readonly finalStation?: boolean;
 }
 
 export interface RoundOptions {
   unitId?: string;
   practice?: boolean;
+  finalStation?: boolean;
 }
 
 export function createRound(tasks: readonly RoundTask[], options: RoundOptions = {}): RoundState {
@@ -46,6 +52,7 @@ export function createRound(tasks: readonly RoundTask[], options: RoundOptions =
     wrong: 0,
     ...(options.unitId !== undefined ? { unitId: options.unitId } : {}),
     ...(options.practice ? { practice: true } : {}),
+    ...(options.finalStation ? { finalStation: true } : {}),
   };
 }
 
@@ -89,6 +96,7 @@ export function answerInRound(progress: Progress, round: RoundState, correct: bo
       if (task.itemId !== null) nextProgress = recordCardAnswer(progress, task.itemId, correct, today(now));
       else if (correct) nextProgress = addPoints(progress, POINTS.correctAnswer);
       if (round.unitId !== undefined) nextProgress = markAnswered(nextProgress, round.unitId, task.id);
+      if (round.finalStation && task.itemId !== null) nextProgress = markStationAnswered(nextProgress, task.itemId, correct);
     }
   }
 
@@ -108,8 +116,16 @@ export function answerInRound(progress: Progress, round: RoundState, correct: bo
       wrong: round.wrong + (first && !correct ? 1 : 0),
       ...(round.unitId !== undefined ? { unitId: round.unitId } : {}),
       ...(round.practice ? { practice: true } : {}),
+      ...(round.finalStation ? { finalStation: true } : {}),
     },
   };
+}
+
+/** Merkt die Karte in `finalRun.answered` und zählt eine richtige erste Antwort. Nur bei laufender Endstation. */
+function markStationAnswered(progress: Progress, itemId: string, correct: boolean): Progress {
+  const run = progress.finalRun;
+  if (!run || run.answered.includes(itemId)) return progress;
+  return { ...progress, finalRun: { ...run, answered: [...run.answered, itemId], right: run.right + (correct ? 1 : 0) } };
 }
 
 /** Merkt die Aufgabe in `units[unitId].answered`. Nur bei einer laufenden Haltestelle. */

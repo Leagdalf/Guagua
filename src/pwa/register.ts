@@ -1,4 +1,4 @@
-﻿/** Wie oft die App im Hintergrund nach einer neuen Version fragt, solange sie offen bleibt. */
+/** Wie oft die App im Hintergrund nach einer neuen Version fragt, solange sie offen bleibt. */
 const CHECK_INTERVAL_MS = 60 * 60 * 1000;
 
 let needRefresh = false;

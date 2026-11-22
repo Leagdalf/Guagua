@@ -14,6 +14,8 @@ export type BlockAction =
   | { type: "session"; request: SessionRequest }
   /** Hauptknopf führt zu den Missionen. */
   | { type: "missions" }
+  /** Hauptknopf öffnet „Deine Linie“ (Endstation geschafft). */
+  | { type: "final-line" }
   /** Hauptknopf startet „10 Karten extra“. */
   | { type: "extra" };
 
@@ -79,7 +81,17 @@ export function todayBlock(plan: TodayPlan, hasExtraCards = true): TodayBlock {
         action: session,
       };
     }
-    // Keine Haltestelle im Angebot: nur Wiederholen.
+    // Keine Haltestelle im Angebot: die Endstation, sonst nur Wiederholen.
+    if (plan.finalStationOpen) {
+      return {
+        label: "Heute · Endstation",
+        title: "Repaso final",
+        titleLang: "es",
+        text: [plan.reviewPending ? `Erst ${cards(plan.reviewCount)} wiederholen, dann 30 gemischte Aufgaben.` : "30 gemischte Aufgaben über alle Karten."],
+        button: plan.reviewPending ? "Mit Wiederholen beginnen" : "Endstation beginnen",
+        action: { type: "session", request: { kind: "final" } },
+      };
+    }
     const due = plan.dueCount === 1 ? "1 Karte ist fällig." : `${plan.dueCount} Karten sind fällig.`;
     const cap = plan.dueCount > plan.reviewCount && plan.reviewCount > 0 ? ` Heute kommen ${plan.reviewCount} dran.` : "";
     return {
@@ -89,6 +101,18 @@ export function todayBlock(plan: TodayPlan, hasExtraCards = true): TodayBlock {
       text: [due + cap],
       button: "Mit Wiederholen beginnen",
       action: { type: "session", request: { kind: "day", unitId: null } },
+    };
+  }
+
+  // Endstation geschafft: Die Mission, falls noch offen, steht in der angehefteten Zeile.
+  if (plan.finalResult) {
+    return {
+      label: "Heute",
+      title: "Linie geschafft",
+      titleLang: "de",
+      text: [`${plan.finalResult.right} von ${plan.finalResult.total} richtig an der Endstation.`],
+      button: "Deine Linie ansehen",
+      action: { type: "final-line" },
     };
   }
 
@@ -111,7 +135,7 @@ export function todayBlock(plan: TodayPlan, hasExtraCards = true): TodayBlock {
   const next = plan.nextUnitId ? getUnit(plan.nextUnitId) : undefined;
   const text: TextPart[] = next
     ? [`Morgen: Haltestelle ${next.stop}, `, { es: next.title_es }]
-    : [plan.finalStationOpen ? "Alle zehn Haltestellen sind geschafft. Die Endstation folgt." : "Alle zehn Haltestellen sind geschafft."];
+    : ["Alle zehn Haltestellen sind geschafft."];
   return {
     label: "Heute",
     title: "Für heute fertig",

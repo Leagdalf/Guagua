@@ -245,8 +245,9 @@ export function dayCounter(progress: Progress, day: Day): number {
 
 /**
  * Der Block „Heute“.
- * work: die Wiederholrunde steht aus (`reviewPending`) und/oder eine Haltestelle ist offen oder läuft. `unitId` ist die Haltestelle (oder `null`).
- *   Mit `unitId` null und `reviewPending`: nur Wiederholen (alle Haltestellen geschafft, aber Karten fällig).
+ * work: die Wiederholrunde steht aus (`reviewPending`) und/oder eine Haltestelle ist offen oder läuft und/oder die Endstation ist offen.
+ *   `unitId` ist die Haltestelle (oder `null`). Mit `unitId` null und `reviewPending`: nur Wiederholen (alle Haltestellen
+ *   geschafft, Endstation geschafft, aber Karten fällig); mit `finalStationOpen` steht die Endstation an.
  * missionOnly: nichts steht aus, die Haltestelle des Tages ist erledigt, aber eine Mission ist offen.
  * allDone: alles erledigt. `nextUnitId` für „Morgen: Haltestelle n“, `finalStationOpen` wenn die Endstation wartet.
  * Hat heute schon eine Haltestelle abgeschlossen, bietet der Block keine weitere an. Über die Linie lässt sie sich trotzdem öffnen.
@@ -270,7 +271,10 @@ export interface TodayPlan {
   openMissionId: string | null;
   /** Nächste noch nicht abgeschlossene, entsperrte Haltestelle. */
   nextUnitId: string | null;
+  /** Die Endstation ist offen (nach Haltestelle 10, noch nicht geschafft). Sie ist Arbeit: `kind` ist dann „work“. */
   finalStationOpen: boolean;
+  /** Ergebnis der Endstation, sobald sie geschafft ist. */
+  finalResult: { right: number; total: number } | null;
 }
 
 export function todayPlan(progress: Progress, day: Day): TodayPlan {
@@ -285,7 +289,8 @@ export function todayPlan(progress: Progress, day: Day): TodayPlan {
   const openMissionId = openMissionIds(progress)[0] ?? null;
 
   const pending = reviewPending(progress, day);
-  const kind: TodayPlan["kind"] = pending || offered ? "work" : openMissionId ? "missionOnly" : "allDone";
+  const finalOpen = finalStationState(progress) === "open";
+  const kind: TodayPlan["kind"] = pending || offered || finalOpen ? "work" : openMissionId ? "missionOnly" : "allDone";
   return {
     kind,
     dueCount: due,
@@ -297,6 +302,7 @@ export function todayPlan(progress: Progress, day: Day): TodayPlan {
     newCardCount: offered ? (getUnit(offered.unitId)?.items.length ?? 0) : 0,
     openMissionId,
     nextUnitId: candidate ? candidate.unitId : null,
-    finalStationOpen: finalStationState(progress) === "open",
+    finalStationOpen: finalOpen,
+    finalResult: progress.finalReview ? { right: progress.finalReview.right, total: progress.finalReview.total } : null,
   };
 }

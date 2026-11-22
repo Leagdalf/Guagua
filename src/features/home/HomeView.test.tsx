@@ -1,9 +1,9 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { extraRoundIds } from "../../core/cards";
-import { completeMission, completeStep, startUnit } from "../../core/units";
+import { completeMission, completeStep, finishReviewRound, startUnit } from "../../core/units";
 import { HomeView } from "./HomeView";
-import { afterUnit1, newClock, newProgress } from "./testProgress";
+import { afterUnit1, completeUnit, newClock, newProgress } from "./testProgress";
 
 const noop = () => {};
 
@@ -129,6 +129,52 @@ describe("HomeView (Server-Render)", () => {
     const html = render(progress, clock.current());
     expect(html).toContain("Repaso final");
     expect(html).not.toContain("Die Endstation ist offen");
+  });
+
+  describe("Endstation", () => {
+    function allDone() {
+      const clock = newClock();
+      let p = newProgress(clock);
+      for (const id of ["u01", "u02", "u03", "u04", "u05", "u06", "u07", "u08", "u09", "u10"]) p = completeUnit(p, id, clock.now);
+      return { clock, progress: finishReviewRound(p, clock.current()) };
+    }
+
+    it("offen: im Block „Heute“ zu beginnen und in der Linie antippbar; der Satz „Die Endstation folgt“ entfällt", () => {
+      const { clock, progress } = allDone();
+      const html = render(progress, clock.current());
+      expect(html).toContain("Heute · Endstation");
+      expect(html).toContain("30 gemischte Aufgaben über alle Karten.");
+      expect(html).toContain("Endstation beginnen");
+      expect(html).not.toMatch(/Endstation folgt|noch nicht in der App/);
+      const items = html.split('<li class="stop ');
+      const last = items[items.length - 1] ?? "";
+      expect(last).toContain("stop--terminus");
+      expect(last).toContain('<button type="button" class="stop__body"');
+      expect(last).toContain("heute");
+    });
+
+    it("geschafft: „Linie geschafft“ mit dem Ergebnis, „Deine Linie ansehen“, die Linie zeigt „abgeschlossen“", () => {
+      const { clock, progress } = allDone();
+      const done = { ...progress, finalReview: { at: clock.now().toISOString(), right: 26, total: 30 } };
+      const html = render(done, clock.current());
+      expect(html).toContain('<h1 class="today__title today__title--de">Linie geschafft</h1>');
+      expect(html).toContain("26 von 30 richtig an der Endstation.");
+      expect(html).toContain("Deine Linie ansehen");
+      const items = html.split('<li class="stop ');
+      const last = items[items.length - 1] ?? "";
+      expect(last).toContain("stop--done");
+      expect(last).toContain('<button type="button" class="stop__body"');
+      expect(last).toContain("abgeschlossen");
+    });
+
+    it("vor Haltestelle 10 ist die Endstation in der Linie gesperrt und kein Knopf", () => {
+      const { clock, progress } = afterUnit1();
+      const html = render(progress, clock.current());
+      const items = html.split('<li class="stop ');
+      const last = (items[items.length - 1] ?? "").split("</li>")[0] ?? "";
+      expect(last).toContain("stop--locked");
+      expect(last).not.toContain("<button");
+    });
   });
 
   it("jede spanische Zeile trägt lang=es", () => {

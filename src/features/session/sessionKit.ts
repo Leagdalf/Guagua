@@ -1,5 +1,6 @@
 // Hilfen für die Tests der Lerneinheit: eine Sitzung treiben wie eine Lernende. Nicht Teil der App.
 
+import { getUnit } from "../../core/content";
 import { createRng } from "../../core/random";
 import type { Rng } from "../../core/random";
 import { isRepeat } from "../../core/round";
@@ -123,11 +124,14 @@ export interface Bot {
   stopWhen?: (run: Run) => boolean;
   /** Erste Antworten in der Wiederholrunde, die falsch sein sollen (Anzahl). */
   wrongInReview?: number;
+  /** Erste Antworten in der Endstation, die falsch sein sollen (Anzahl). */
+  wrongInStation?: number;
 }
 
-/** Spielt die Sitzung durch wie eine Lernende, die alles richtig macht (außer den verlangten Fehlern). `true`: Zusammenfassung erreicht. */
+/** Spielt die Sitzung durch wie eine Lernende, die alles richtig macht (außer den verlangten Fehlern). `true`: Zusammenfassung oder „Deine Linie“ erreicht. */
 export function play(run: Run, bot: Bot = {}): boolean {
   let wrongLeft = bot.wrongInReview ?? 0;
+  let stationWrongLeft = bot.wrongInStation ?? 0;
   for (let guard = 0; guard < 3000; guard++) {
     if (bot.stopWhen?.(run)) return false;
     const screen = run.state.screen;
@@ -139,9 +143,17 @@ export function play(run: Run, bot: Bot = {}): boolean {
         break;
       case "grammar":
       case "mission":
-      case "dialogue":
         run.send({ type: "next" });
         break;
+      case "dialogue": {
+        // Rollenspiel: eigene Zeile aufdecken und bestätigen, sonst weiter.
+        const line = screen.phase === "role" && run.state.unitId !== null ? getUnit(run.state.unitId)?.dialogue.lines[screen.shown - 1] : undefined;
+        if (line?.learner) run.send({ type: screen.uncovered ? "sat" : "uncover" });
+        else run.send({ type: "next" });
+        break;
+      }
+      case "line":
+        return true;
       case "cards": {
         if (screen.stage === "look") {
           run.send({ type: "next" });
@@ -166,6 +178,9 @@ export function play(run: Run, bot: Bot = {}): boolean {
           if (screen.role === "review" && wrongLeft > 0 && screen.round && !isRepeat(screen.round)) {
             wrongLeft--;
             index = (task.correctIndex + 1) % task.options.length;
+          } else if (screen.role === "station" && stationWrongLeft > 0 && screen.round && !isRepeat(screen.round)) {
+            stationWrongLeft--;
+            index = (task.correctIndex + 1) % task.options.length;
           }
           run.send({ type: "choose", index });
         } else if (task.kind === "build") {
@@ -176,6 +191,9 @@ export function play(run: Run, bot: Bot = {}): boolean {
             run.send({ type: "place", index });
           }
           run.send({ type: "check" });
+        } else if (screen.role === "station" && stationWrongLeft > 0 && screen.round && !isRepeat(screen.round)) {
+          stationWrongLeft--;
+          run.send({ type: "submitText", text: "zzz" });
         } else {
           run.send({ type: "submitText", text: task.solution });
         }

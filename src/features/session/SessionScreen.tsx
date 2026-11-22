@@ -22,12 +22,13 @@ import {
   SentenceBuilder,
   SummaryList,
   TextButton,
-  TextField,
   UnitHeader,
 } from "../../ui";
 import type { PairItem, PairState, StopState } from "../../ui";
 import { counterOf, mountainBefore, mountainStops, stepNumberOf, summaryFacts, summaryText } from "./machine";
 import type { CardsScreen, DialogueScreen, PlanScreen, SessionEvent, SessionState, TaskScreen } from "./machine";
+import { FinalLineBody } from "./FinalLine";
+import { WriteField } from "./WriteField";
 import "./session.css";
 
 // Die Ansicht zeigt nur an. Alles Tippen geht als Ereignis an die Maschine (`onEvent`), alles Sprechen über `onSpeak`.
@@ -47,7 +48,7 @@ export interface SessionScreenProps {
   onExit: () => void;
 }
 
-const ROLE_LABEL = { review: "Wiederholen", extra: "Extra", final: "Abschlussrunde", cloze: "Grammatik" } as const;
+const ROLE_LABEL = { review: "Wiederholen", extra: "Extra", final: "Abschlussrunde", cloze: "Grammatik", station: "Endstation" } as const;
 
 const QUESTION_LABEL = {
   recognize: "Was heißt das?",
@@ -118,10 +119,22 @@ function renderScreen(props: SessionScreenProps, fill: (text: string) => string,
       return mission(props, fill);
     case "summary":
       return summary(props);
+    case "line":
+      return {
+        body: <FinalLineBody progress={props.progress} day={props.day} />,
+        footer: <PrimaryButton onClick={props.onExit}>Zur Linie</PrimaryButton>,
+      };
   }
 }
 
 // ---------- Fahrplan ----------
+
+/** Ab dieser Länge der Angabe rechts darf die Zeile umbrechen („16 Karten“, „19 Aufgaben“ nie). */
+export const LONG_PLAN_DETAIL = 20;
+
+export function isLongDetail(detail: string): boolean {
+  return detail.length > LONG_PLAN_DETAIL;
+}
 
 function plan(props: SessionScreenProps, screen: PlanScreen): View {
   return {
@@ -145,7 +158,7 @@ function plan(props: SessionScreenProps, screen: PlanScreen): View {
                 {row.name}
                 <span className="vh">{row.done ? ", erledigt" : ", offen"}</span>
               </span>
-              <span className="sx-plan__detail">{row.detail}</span>
+              <span className={isLongDetail(row.detail) ? "sx-plan__detail sx-plan__detail--long" : "sx-plan__detail"}>{row.detail}</span>
             </li>
           ))}
         </ul>
@@ -288,24 +301,30 @@ function taskView(props: SessionScreenProps, screen: TaskScreen, text: string, s
         Prüfen
       </PrimaryButton>
     );
-  } else if (task.kind === "write") {
-    footer = (
-      <PrimaryButton disabled={text.trim() === ""} onClick={() => props.onEvent({ type: "submitText", text })}>
-        Prüfen
-      </PrimaryButton>
-    );
   }
+
+  // Schreiben: „Prüfen“ sitzt unter dem Feld statt in der festen Leiste unten. So bleibt der Knopf über der Tastatur sichtbar.
+  const submit = (): void => {
+    if (text.trim() !== "") props.onEvent({ type: "submitText", text });
+  };
 
   return {
     body: (
-      <div className="sx-body enter" key={screen.seq}>
+      <div className={task.kind === "write" ? "sx-body sx-body--write enter" : "sx-body enter"} key={screen.seq}>
         <Label as="h1">{label}</Label>
         {task.kind === "choice" && <ChoiceBody props={props} screen={screen} task={task} />}
         {task.kind === "build" && <BuildBody props={props} screen={screen} task={task} />}
         {task.kind === "write" && (
           <>
             <p className="sx-prompt-de">{task.prompt}</p>
-            <TextField className="sx-field" label="Spanisch" spanish value={text} onChange={setText} disabled={answered} />
+            <WriteField value={text} onChange={setText} onSubmit={submit} disabled={answered} />
+            {!answered && (
+              <div className="sx-write-action">
+                <PrimaryButton disabled={text.trim() === ""} onClick={submit}>
+                  Prüfen
+                </PrimaryButton>
+              </div>
+            )}
           </>
         )}
         {answer && <AnswerFeedback props={props} task={task} answer={answer} />}
@@ -443,22 +462,44 @@ function dialogue(props: SessionScreenProps, screen: DialogueScreen, fill: (text
   const unit = props.state.unitId === null ? undefined : getUnit(props.state.unitId);
   if (!unit) return { body: null, footer: null };
   const lines = unit.dialogue.lines;
+  const role = screen.phase === "role";
   const last = screen.shown >= lines.length;
+  const currentIndex = screen.shown - 1;
+  const current = lines[currentIndex];
+  // Im Rollenspiel bleibt eine eigene Zeile verdeckt, bis sie die aktuelle ist und aufgedeckt wurde.
+  const hidden = (i: number): boolean => role && i === currentIndex && current?.learner === true && !screen.uncovered;
+
+  let footer: ReactNode;
+  if (!role) {
+    footer = <PrimaryButton onClick={() => props.onEvent({ type: "next" })}>{last ? "Rollenspiel beginnen" : "Weiter"}</PrimaryButton>;
+  } else if (current?.learner) {
+    footer = screen.uncovered ? null : <PrimaryButton onClick={() => props.onEvent({ type: "uncover" })}>Aufdecken</PrimaryButton>;
+  } else {
+    footer = <PrimaryButton onClick={() => props.onEvent({ type: "next" })}>{last ? "Zur Abschlussrunde" : "Weiter"}</PrimaryButton>;
+  }
+
   return {
     body: (
-      <div className="sx-body" key="dialogue">
-        <Label as="h1">Dialog · anhören</Label>
+      <div className="sx-body" key={`dialogue-${screen.phase}`}>
+        <Label as="h1">{role ? "Dialog · Rollenspiel" : "Dialog · anhören"}</Label>
         <p className="sx-note">{fill(unit.dialogue.setting_de)}</p>
+        {role && <p className="sx-note">Sprich deine Zeilen laut. Tippe dann auf „Aufdecken“ und vergleiche.</p>}
         <ol className="sx-dialogue">
           {lines.slice(0, screen.shown).map((line, i) => {
             const newest = i === screen.shown - 1;
             const revealed = screen.revealed.includes(i);
+            const className = line.learner ? "sx-dialogue__line sx-dialogue__line--learner enter" : "sx-dialogue__line enter";
+            if (hidden(i)) {
+              // Nur die deutsche Vorgabe. Das Spanische steht nirgends, auch nicht für Screenreader.
+              return (
+                <li key={`${i}-${screen.again.includes(i) ? "again" : "first"}`} className={className} ref={scrollIntoViewWhenNew}>
+                  <p className="sx-dialogue__cue">{fill(line.de)}</p>
+                </li>
+              );
+            }
+            const showAnswer = role && line.learner;
             return (
-              <li
-                key={i}
-                className={line.learner ? "sx-dialogue__line sx-dialogue__line--learner enter" : "sx-dialogue__line enter"}
-                ref={newest ? scrollIntoViewWhenNew : undefined}
-              >
+              <li key={i} className={className} ref={newest ? scrollIntoViewWhenNew : undefined}>
                 <Es as="p" className="sx-dialogue__speaker">
                   {line.speaker}
                 </Es>
@@ -467,19 +508,25 @@ function dialogue(props: SessionScreenProps, screen: DialogueScreen, fill: (text
                 </Es>
                 <div className="sx-audio">
                   <AudioButton onClick={() => props.onSpeak(fill(line.es))} disabled={!props.hasVoice} describedBy={`sx-line-${i}`} />
-                  {revealed ? (
+                  {showAnswer || revealed ? (
                     <span>{fill(line.de)}</span>
                   ) : (
                     <TextButton onClick={() => props.onEvent({ type: "reveal", line: i })}>Übersetzung zeigen</TextButton>
                   )}
                 </div>
+                {role && newest && line.learner && (
+                  <AnswerList className="sx-answers sx-role-answers" label="Wie lief es?">
+                    <AnswerRow onClick={() => props.onEvent({ type: "sat" })}>Saß</AnswerRow>
+                    {!screen.again.includes(i) && <AnswerRow onClick={() => props.onEvent({ type: "again" })}>Noch mal</AnswerRow>}
+                  </AnswerList>
+                )}
               </li>
             );
           })}
         </ol>
       </div>
     ),
-    footer: <PrimaryButton onClick={() => props.onEvent({ type: "next" })}>{last ? "Zur Abschlussrunde" : "Weiter"}</PrimaryButton>,
+    footer,
   };
 }
 

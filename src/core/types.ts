@@ -206,4 +206,10 @@ export interface Progress {
   /** ids aus dem Sprachführer. */
   favorites: string[];
   finalReview?: { at: string; right: number; total: number };
+  /**
+   * Endstation, solange sie läuft: die 30 gewählten Karten (`ids`, in der Reihenfolge der Runde), die schon beantworteten
+   * (`answered`, erste Antworten) und wie viele davon richtig waren. Damit wertet ein Neuladen mitten in der Endstation
+   * nichts doppelt und die Auswahl bleibt gleich, auch wenn sich Fächer ändern. Entfällt mit `finalReview`.
+   */
+  finalRun?: { ids: string[]; answered: string[]; right: number };
 }

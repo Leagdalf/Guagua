@@ -41,8 +41,8 @@ export const REVIEW_TASK_BY_BOX: Record<Box, TaskType> = {
   5: "write",
 };
 
-/** Solange „Schreiben“ nicht gebaut ist, springt „Erinnern“ ein (MVP-Schnitt in docs/05-arbeitspakete.md). */
-export const WRITE_TASK_ENABLED = false;
+/** „Schreiben“ ist gebaut: Wörter und Wendungen ab Fach 3 kommen als Schreibaufgabe, Satzmuster bleiben bei „Erinnern“. */
+export const WRITE_TASK_ENABLED = true;
 
 /** Punkte je Ereignis, ohne Abzug (5.3). */
 export const POINTS = { correctAnswer: 10, dialogueDone: 20, missionDone: 50, unitDone: 100 } as const;

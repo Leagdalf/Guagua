@@ -2,7 +2,17 @@ import { describe, expect, it } from "vitest";
 import { dueCardIds } from "./cards";
 import { POINTS } from "./config";
 import { allItems, units } from "./content";
-import { buildClozeRound, buildExtraRound, buildFinalRound, buildFinalStationRound, buildNewCards, buildReviewRound, finishFinalReview } from "./flow";
+import {
+  buildClozeRound,
+  buildExtraRound,
+  buildFinalRound,
+  buildFinalStationRound,
+  buildNewCards,
+  buildReviewRound,
+  finalStationTaskCount,
+  finishFinalReview,
+  startFinalStation,
+} from "./flow";
 import { parseProgress, serializeProgress } from "./progress";
 import { createRng } from "./random";
 import { answerInRound, isRoundDone } from "./round";
@@ -401,6 +411,67 @@ describe("Endstation", () => {
     p = finishFinalReview(p, 25, 30, clock.now);
     expect(finalStationState(p)).toBe("done");
     expect(p.finalReview).toMatchObject({ right: 25, total: 30 });
+  });
+
+  function atStation() {
+    const clock = makeClock();
+    let p = freshProgress(clock);
+    for (const unit of units) {
+      p = playUnit(p, unit.id, clock);
+      clock.advance(1);
+    }
+    return { clock, p };
+  }
+
+  it("startFinalStation wählt die 30 Karten einmal und merkt sie; ein zweiter Aufruf ändert nichts", () => {
+    const { p } = atStation();
+    const started = startFinalStation(p, createRng(1));
+    expect(started.finalRun).toMatchObject({ answered: [], right: 0 });
+    expect(started.finalRun?.ids).toHaveLength(30);
+    expect(startFinalStation(started, createRng(2))).toBe(started);
+    expect(finalStationTaskCount(p)).toBe(30);
+    expect(finalStationTaskCount(started)).toBe(30);
+  });
+
+  it("die Runde der Endstation trägt jede erste Antwort in finalRun ein; eine Wiedervorlage zählt nicht", () => {
+    const { clock, p } = atStation();
+    let progress = startFinalStation(p, createRng(1));
+    let round = buildFinalStationRound(progress, createRng(2), env);
+    expect(round.finalStation).toBe(true);
+    ({ progress, round } = answerInRound(progress, round, false, clock.now));
+    ({ progress, round } = answerInRound(progress, round, true, clock.now));
+    expect(progress.finalRun?.answered).toHaveLength(2);
+    expect(progress.finalRun?.right).toBe(1);
+    // Neu aufgebaut: die zwei beantworteten fehlen, `total` zählt nur den Rest.
+    const again = buildFinalStationRound(progress, createRng(3), env);
+    expect(again.total).toBe(28);
+    expect(again.queue.map((task) => task.itemId)).not.toContain(progress.finalRun!.answered[0]);
+  });
+
+  it("finishFinalReview speichert das Ergebnis und entfernt finalRun; die Endstation gilt als geschafft", () => {
+    const { clock, p } = atStation();
+    const started = startFinalStation(p, createRng(1));
+    const done = finishFinalReview(started, 20, 30, clock.now);
+    expect(done.finalRun).toBeUndefined();
+    expect(done.finalReview).toMatchObject({ right: 20, total: 30 });
+    expect(startFinalStation(done, createRng(1))).toBe(done);
+    expect(todayPlan(done, "2030-01-01").finalResult).toEqual({ right: 20, total: 30 });
+    expect(todayPlan(done, "2030-01-01").finalStationOpen).toBe(false);
+    expect(todayPlan(p, "2030-01-01")).toMatchObject({ finalStationOpen: true, kind: "work", finalResult: null });
+  });
+
+  it("validateProgress prüft finalRun: Typen, `right` höchstens so groß wie `answered`", () => {
+    const { p } = atStation();
+    const started = startFinalStation(p, createRng(1));
+    expect(parseProgress(serializeProgress(started)).status).toBe("ok");
+    const bad = (finalRun: unknown) => parseProgress(JSON.stringify({ ...started, finalRun })).status;
+    expect(bad({ ids: ["a"], answered: [], right: 0 })).toBe("ok");
+    expect(bad({ ids: ["a"], answered: ["a"], right: 2 })).toBe("error");
+    expect(bad({ ids: "a", answered: [], right: 0 })).toBe("error");
+    expect(bad({ ids: [1], answered: [], right: 0 })).toBe("error");
+    expect(bad({ ids: [], answered: [3], right: 0 })).toBe("error");
+    expect(bad({ ids: [], answered: [], right: -1 })).toBe("error");
+    expect(bad("x")).toBe("error");
   });
 });
 

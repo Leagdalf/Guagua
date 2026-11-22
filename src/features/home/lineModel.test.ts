@@ -10,7 +10,7 @@ describe("Linie", () => {
     expect(m.stops).toHaveLength(11);
     expect(m.stops.map((s) => s.state)).toEqual(["open", ...Array(9).fill("locked"), "locked"]);
     expect(m.summary).toBe("0 von 10 abgeschlossen");
-    expect(m.finalNote).toBeNull();
+    expect(m.stops[10]).toMatchObject({ selectable: false });
   });
 
   it("nach Haltestelle 1: erster Punkt abgeschlossen, zweiter offen", () => {
@@ -47,7 +47,7 @@ describe("Linie", () => {
     // Heute ist schon eine geschafft, die offene Haltestelle 2 lässt sich trotzdem beginnen.
     expect(stopTap(m.stops, "u02")).toEqual({ type: "session", unitId: "u02" });
     expect(stopTap(m.stops, "u03")).toEqual({ type: "none" });
-    expect(stopTap(m.stops, FINAL_STOP_ID)).toEqual({ type: "none" });
+    expect(stopTap(m.stops, FINAL_STOP_ID)).toEqual({ type: "none" }); // gesperrt bis Haltestelle 10
     const started = { ...progress, units: { ...progress.units, u02: { step: 3 as const, startedAt: clock.now().toISOString() } } };
     expect(stopTap(lineModel(started, "u02").stops, "u02")).toEqual({ type: "session", unitId: "u02" });
   });
@@ -66,15 +66,26 @@ describe("Linie", () => {
     expect(lineModel(started).stops[1]?.state).toBe("running");
   });
 
-  it("Endstation nach Haltestelle 10: gesperrt gezeichnet, aber mit Satz, dass sie folgt", () => {
+  it("Endstation: gesperrt vor Haltestelle 10, danach offen und antippbar, mit gewählten Karten „läuft“, geschafft „abgeschlossen“", () => {
     const clock = newClock();
     let p = newProgress(clock);
-    for (const id of ["u01", "u02", "u03", "u04", "u05", "u06", "u07", "u08", "u09", "u10"]) p = completeUnit(p, id, clock.now);
+    for (const id of ["u01", "u02", "u03", "u04", "u05", "u06", "u07", "u08", "u09"]) p = completeUnit(p, id, clock.now);
+    expect(lineModel(p).stops[10]).toMatchObject({ id: FINAL_STOP_ID, terminus: true, state: "locked", selectable: false });
+    p = completeUnit(p, "u10", clock.now);
     const m = lineModel(p);
-    const final = m.stops[10];
-    expect(final).toMatchObject({ id: FINAL_STOP_ID, terminus: true, state: "locked" });
-    expect(m.finalNote).toContain("folgt");
+    expect(m.stops[10]).toMatchObject({ id: FINAL_STOP_ID, terminus: true, state: "open", selectable: true });
     expect(m.summary).toBe("10 von 10 abgeschlossen");
+    expect(stopTap(m.stops, FINAL_STOP_ID)).toEqual({ type: "final" });
+
+    const running = { ...p, finalRun: { ids: ["u01-i01"], answered: [], right: 0 } };
+    expect(lineModel(running).stops[10]?.state).toBe("running");
+    expect(stopTap(lineModel(running).stops, FINAL_STOP_ID)).toEqual({ type: "final" });
+
+    const done = { ...p, finalReview: { at: "2026-12-03T10:00:00.000Z", right: 26, total: 30 } };
+    const doneModel = lineModel(done);
+    expect(doneModel.stops[10]).toMatchObject({ state: "done", selectable: true });
+    expect(stopTap(doneModel.stops, FINAL_STOP_ID)).toEqual({ type: "final-line" });
+    expect(doneModel.mountain).toEqual(Array(10).fill("done"));
   });
 });
 

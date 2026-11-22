@@ -276,11 +276,13 @@ describe("Ton im selben Tippen", () => {
       expect(run.send({ type: "next" })).toEqual({ text: lines[i]!.es });
       expect(run.state.screen).toMatchObject({ kind: "dialogue", shown: i + 1 });
     }
-    // Nach der letzten Zeile geht es zur Abschlussrunde (Dialog gibt 20 Punkte).
+    // Nach dem Anhören beginnt das Rollenspiel (kein Punkt, Schritt 4 läuft weiter), erst danach die Abschlussrunde.
     const before = run.progress.stats.points;
-    expect(run.send({ type: "next" })).toBeNull();
-    expect(run.progress.stats.points).toBe(before + 20);
-    expect(run.task.role).toBe("final");
+    const first = run.send({ type: "next" });
+    expect(run.state.screen).toMatchObject({ kind: "dialogue", phase: "role", shown: 1 });
+    expect(first).toEqual(lines[0]!.learner ? null : { text: lines[0]!.es });
+    expect(run.progress.stats.points).toBe(before);
+    expect(run.progress.units[U01]?.step).toBe(4);
   });
 
   it("Dialog: die Übersetzung deckt sich erst beim Antippen auf, nur für sichtbare Zeilen", () => {

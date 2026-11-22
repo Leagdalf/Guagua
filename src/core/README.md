@@ -21,7 +21,7 @@ Nicht in diesem Ordner anfassen: `types.ts`, `content.ts`, `config.ts` (AP0).
 - `addPoints(p, points)`, `reviewedCardsOn(p, day)`, `markStreakDay(p, day)`, `updateStreakAfterReview(p, day)`
 - `currentStreak(p, today): number` (0, wenn die Serie gerissen ist)
 - `recordActivity(p, lastInputMs: number | null, nowMs, day): Progress` (bei jeder Eingabe rufen, `nowMs` als neues `lastInputMs` merken, `null` nach Hintergrund oder Pause; zählt höchstens 60 s je Abstand)
-- `totalActiveMs(p): number`
+- `totalActiveMs(p): number`, `activeDays(p): number` (Tage mit aktiver Lernzeit)
 
 ## cards.ts (Karteikasten)
 - `newCard(today)`, `gradeCard(card, correct, today): CardProgress`
@@ -42,7 +42,7 @@ Nicht in diesem Ordner anfassen: `types.ts`, `content.ts`, `config.ts` (AP0).
 
 ## round.ts (Runde mit Wiedervorlage)
 - `createRound(tasks, options?: { unitId?; practice? }): RoundState`
-- `RoundState`: `queue` (offene Aufgaben, aktuelle zuerst, mit Wiedervorlagen), `attempts` (Antworten je Aufgaben-id), `total` (Aufgaben beim Start ohne Wiedervorlagen), `completed` (davon erstmals beantwortet), `right`, `wrong` (erste Antworten), `unitId?` (Runde gehört zur Abschlussrunde dieser Haltestelle), `practice?` (reine Übung)
+- `RoundState`: `queue` (offene Aufgaben, aktuelle zuerst, mit Wiedervorlagen), `attempts` (Antworten je Aufgaben-id), `total` (Aufgaben beim Start ohne Wiedervorlagen), `completed` (davon erstmals beantwortet), `right`, `wrong` (erste Antworten), `unitId?` (Runde gehört zur Abschlussrunde dieser Haltestelle), `practice?` (reine Übung), `finalStation?` (Runde der Endstation: die erste Antwort trägt die Karte in `finalRun.answered` ein und zählt `finalRun.right`)
 - `currentTask(round): RoundTask | null`, `isRoundDone(round)`, `isRepeat(round)`
 - `answerInRound(p, round, correct, now: Clock): { progress; round; requeued }` (nur die erste Antwort ändert Fach und Punkte; falsch: Wiedervorlage nach frühestens 3 anderen, höchstens 2-mal). Hat die Runde `unitId`, trägt die erste Antwort die Aufgaben-id in `units[unitId].answered` ein. Hat sie `practice`, ändert die erste Antwort nur `lastSeen` (siehe `recordPracticeAnswer`).
 
@@ -52,7 +52,7 @@ Nicht in diesem Ordner anfassen: `types.ts`, `content.ts`, `config.ts` (AP0).
 - Schritt 3: `buildClozeRound(unitId, rng): ChoiceTask[]`
 - Schritt 5: `buildFinalRound(p, unitId, rng, env): RoundState` (jede Karte „recognize“ plus Satzbau; Signatur neu: `p` vorn). Aufgaben, die in `units[unitId].answered` stehen, fehlen; `total` und der Zähler gelten dann nur für den Rest. Das Feld entfällt mit dem Abschluss der Haltestelle (`completeStep` 5), ein Neuladen mitten in Schritt 5 wertet nichts doppelt.
 - Freie Runde: `buildExtraRound(p, day, rng, env, count = 10): RoundState` (reine Übung: `practice`, ändert kein Fach, gibt keine Punkte, setzt `lastSeen` auf heute und zählt so für die Serie; Fälliges bleibt fällig)
-- Endstation: `buildFinalStationRound(p, rng, env): RoundState`, `finishFinalReview(p, right, total, now)`
+- Endstation: `startFinalStation(p, rng): Progress` (wählt die 30 Karten einmal, zuerst Fach 1 bis 3, und merkt sie in `finalRun`; läuft sie schon oder ist sie geschafft, unverändert; rufen, wenn die Wiederholrunde davor durch ist), `buildFinalStationRound(p, rng, env): RoundState` (nimmt `finalRun.ids`, Karten in `finalRun.answered` fehlen, `total` zählt nur den Rest; Runde trägt `finalStation`), `finishFinalReview(p, right, total, now)` (speichert `finalReview` und entfernt `finalRun`), `pickFinalStationIds(p, rng)`, `finalStationTaskCount(p)`
 
 ## units.ts (Haltestellen, Schritte, Missionen, Startseite)
 - `StopState = "locked" | "open" | "running" | "done"`; `stopState(p, unitId)`, `stopStates(p): { unitId; stop; state; step }[]`, `isUnitDone(p, unitId)`, `finalStationState(p): "locked" | "open" | "done"`
@@ -64,7 +64,7 @@ Nicht in diesem Ordner anfassen: `types.ts`, `content.ts`, `config.ts` (AP0).
 - `MissionState = "locked" | "open" | "done" | "skipped"`; `missionState(p, missionId)`, `missionStates(p)`, `openMissionIds(p)` (neueste zuerst)
 - `completeMission(p, missionId, now, { feeling?, note? })` (50 Punkte genau einmal, auch nach Überspringen), `skipMission(p, missionId, now)`
 - `dueCount(p, day)`, `dayCounter(p, day)` (Kalendertage seit dem Anlegen des Profils, der erste Tag ist 1, keine Obergrenze)
-- `todayPlan(p, day): TodayPlan` mit `kind: "work" | "missionOnly" | "allDone"`, `dueCount` (alle fälligen), `reviewPending`, `reviewCount` (≤ 40, 0 wenn die Runde nicht aussteht), `unitId`, `unitState`, `unitStep` (Schritt nach der Wiederholrunde, nie 1; `null` bei nicht begonnener Haltestelle), `newCardCount`, `openMissionId`, `nextUnitId`, `finalStationOpen`
+- `todayPlan(p, day): TodayPlan` mit `kind: "work" | "missionOnly" | "allDone"`, `dueCount` (alle fälligen), `reviewPending`, `reviewCount` (≤ 40, 0 wenn die Runde nicht aussteht), `unitId`, `unitState`, `unitStep` (Schritt nach der Wiederholrunde, nie 1; `null` bei nicht begonnener Haltestelle), `newCardCount`, `openMissionId`, `nextUnitId`, `finalStationOpen` (dann ist `kind` „work“), `finalResult` (`{ right, total }` nach der Endstation, sonst `null`)
   - Keine Haltestelle offen (alle geschafft oder heute schon eine abgeschlossen): `unitId`, `unitState`, `unitStep` sind `null`. `kind` ist `"work"` nur, wenn `reviewPending` (Fall „Nur Wiederholen, alle Haltestellen geschafft“, erkennbar an `unitId === null` und `nextUnitId === null`), sonst `"missionOnly"` oder `"allDone"`.
   - Nach einer beendeten Wiederholrunde zählen übrig gebliebene fällige Karten nicht als Arbeit (`reviewPending` ist falsch, `dueCount` bleibt).
   - Fälle des Design-Dokuments: offen = `unitState "open"`, läuft = `"running"` mit `unitStep`, Wiederholen davor = `reviewPending`.
@@ -72,7 +72,7 @@ Nicht in diesem Ordner anfassen: `types.ts`, `content.ts`, `config.ts` (AP0).
 ## progress.ts
 - `createProgress(name, now): Progress | null`, `normalizeName(name): string | null`
 - `updateProfile(p, { name?, voiceURI?, rate?, calm? })`, `toggleFavorite(p, id)`
-- `validateProgress(value): Progress | null` (weist leeren oder zu langen Namen, `finalReview.right > total` und falsche Typen von `units[].answered` und `stats.lastReviewDay` zurück)
+- `validateProgress(value): Progress | null` (weist leeren oder zu langen Namen, `finalReview.right > total`, falsche Typen von `units[].answered` und `stats.lastReviewDay` und ein ungültiges `finalRun` (Typen, `right` größer als `answered.length`) zurück)
 - `parseProgress(raw: string | null): { status: "empty" } | { status: "ok"; progress } | { status: "error"; reason: "unreadable" | "foreign-schema" | "invalid"; raw }`
 - `serializeProgress(p): string`
 
@@ -84,7 +84,13 @@ Nicht in diesem Ordner anfassen: `types.ts`, `content.ts`, `config.ts` (AP0).
 - Bei Zustand `error` schreibt der Speicher nichts, bis `restart()` gerufen wird (der alte Text wird unter `<Schlüssel>:backup-<Zeitpunkt>` gesichert).
 
 ## Offene Punkte
-- Die Endstation (noch ohne Oberfläche) wertet nach einem Neuladen doppelt: `buildFinalStationRound` kennt keinen Merker beantworteter Aufgaben. Das löst das Paket, das die Endstation baut.
+- Keine. Die Endstation wertet nach einem Neuladen nichts doppelt (`Progress.finalRun`). `WRITE_TASK_ENABLED` ist wahr: Wörter und Wendungen ab Fach 3 kommen als „Schreiben“, Satzmuster als „Erinnern“.
 
 ## testkit.ts
 - Nur für Tests: `makeClock(day)`, `freshProgress(clock, name)`.
+
+## backup.ts (Fortschritt sichern) und `store.replaceProgress`
+- `buildExport(p, now: Clock): string` (JSON mit `format: "guagua-sicherung"`, `schema`, `exportedAt`, `progress`), `exportFileName(now)` (`guagua-sicherung-JJJJ-MM-TT.json`, ohne Namen)
+- `checkImport(text): { ok: true; progress; summary } | { ok: false; reason: "empty" | "unreadable" | "foreign" | "schema" | "invalid"; message }`: prüft mit `validateProgress`, ändert nichts. Ein roher Fortschritt ohne Hülle gilt als „foreign“.
+- `summarizeProgress(p, exportedAt)`, `summaryRows(summary)`, `formatDay(day)` (`22.11.2026`)
+- `store.replaceProgress(next): { ok: true; backupKey: string | null } | { ok: false; reason: "invalid" | "backup-failed" | "save-failed" }`: prüft `validateProgress`, schreibt zuerst den alten Stand (oder bei „error“ den unlesbaren Text) unter `<Schlüssel>:backup-<Zeitpunkt>` und liest ihn zurück, erst dann den neuen Stand. Scheitert eine Stufe, bleiben Zustand und gespeicherter Text unverändert. Bei gleichem Zeitpunkt hängt der Schlüssel `-2`, `-3` an, eine Sicherung wird nie überschrieben. Sicherungen werden nie gelöscht.

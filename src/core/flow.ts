@@ -3,7 +3,7 @@
 
 import { extraRoundIds, reviewRoundIds } from "./cards";
 import { EXTRA_ROUND_CARDS, FINAL_REVIEW, REVIEW_ROUND } from "./config";
-import { allItems } from "./content";
+import { allItems, getItem } from "./content";
 import { shuffle } from "./random";
 import type { Rng } from "./random";
 import { createRound } from "./round";
@@ -54,18 +54,43 @@ export function buildFinalRound(progress: Progress, unitId: string, rng: Rng, en
   return createRound(tasks, { unitId });
 }
 
-/**
- * Endstation (2.8): 30 Aufgaben über alle angelegten Karten, zuerst Fach 1 bis 3, der Rest zufällig.
- * Aufgabentyp nach Fach. Die Antworten ändern die Fächer. Das Ergebnis speichert `finishFinalReview`.
- */
-export function buildFinalStationRound(progress: Progress, rng: Rng, env: TaskEnv): RoundState {
+/** Die Karten der Endstation (2.8): zuerst Fach 1 bis 3 (gemischt), danach der Rest (gemischt), höchstens 30. */
+export function pickFinalStationIds(progress: Progress, rng: Rng): string[] {
   const ids = allItems.map((item) => item.id).filter((id) => progress.cards[id] !== undefined);
   const low = shuffle(ids.filter((id) => (progress.cards[id]?.box ?? 5) <= FINAL_REVIEW.firstUpToBox), rng);
   const high = shuffle(ids.filter((id) => (progress.cards[id]?.box ?? 5) > FINAL_REVIEW.firstUpToBox), rng);
-  return createRound(tasksForCards(progress, [...low, ...high].slice(0, FINAL_REVIEW.taskCount), rng, env));
+  return [...low, ...high].slice(0, FINAL_REVIEW.taskCount);
 }
 
-/** Ergebnis der Endstation speichern (Endstation abgeschlossen). */
+/** Zahl der Aufgaben der Endstation: die der laufenden, sonst die, die eine neue bekäme. */
+export function finalStationTaskCount(progress: Progress): number {
+  if (progress.finalRun) return progress.finalRun.ids.length;
+  return Math.min(FINAL_REVIEW.taskCount, allItems.filter((item) => progress.cards[item.id] !== undefined).length);
+}
+
+/**
+ * Beginnt die Endstation: wählt die Karten einmal und merkt sie in `finalRun`. Läuft sie schon oder ist sie geschafft,
+ * bleibt alles unverändert. Rufen, wenn die Wiederholrunde davor durch ist (sie ändert Fächer, und die Auswahl hängt davon ab).
+ */
+export function startFinalStation(progress: Progress, rng: Rng): Progress {
+  if (progress.finalRun || progress.finalReview) return progress;
+  return { ...progress, finalRun: { ids: pickFinalStationIds(progress, rng), answered: [], right: 0 } };
+}
+
+/**
+ * Endstation (2.8): 30 Aufgaben über alle angelegten Karten, zuerst Fach 1 bis 3, der Rest zufällig.
+ * Aufgabentyp nach Fach. Die Antworten ändern die Fächer. Hat `startFinalStation` die Karten schon gewählt, gilt diese Auswahl,
+ * und Karten, die in `finalRun.answered` stehen, fehlen (`total` zählt nur den Rest). Das Ergebnis speichert `finishFinalReview`.
+ */
+export function buildFinalStationRound(progress: Progress, rng: Rng, env: TaskEnv): RoundState {
+  const run = progress.finalRun;
+  const answered = new Set(run?.answered ?? []);
+  const ids = (run ? run.ids : pickFinalStationIds(progress, rng)).filter((id) => !answered.has(id) && getItem(id) !== undefined);
+  return createRound(tasksForCards(progress, ids, rng, env), { finalStation: true });
+}
+
+/** Ergebnis der Endstation speichern (Endstation abgeschlossen). `finalRun` entfällt. */
 export function finishFinalReview(progress: Progress, right: number, total: number, now: Clock): Progress {
-  return { ...progress, finalReview: { at: now().toISOString(), right, total } };
+  const { finalRun: _run, ...rest } = progress;
+  return { ...rest, finalReview: { at: now().toISOString(), right, total } };
 }

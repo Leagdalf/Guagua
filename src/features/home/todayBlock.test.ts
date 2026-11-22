@@ -38,15 +38,12 @@ describe("Block „Heute“: erste Tabelle im Design-Dokument", () => {
     expect(JSON.stringify(b)).not.toContain("Dreimal grüßen");
   });
 
-  it("nur Mission offen, keine nächste Haltestelle: der Satz mit „Morgen“ entfällt", () => {
+  it("nur Mission offen, keine nächste Haltestelle: die Endstation steht im Block, die Mission nur in der angehefteten Zeile", () => {
     const clock = newClock();
-    let p = newProgress(clock);
-    for (const id of ["u01", "u02", "u03", "u04", "u05", "u06", "u07", "u08", "u09", "u10"]) p = completeUnit(p, id, clock.now);
-    p = finishReviewRound(p, clock.current());
+    const p = finishReviewRound(allUnitsDone(clock), clock.current());
     const b = blockOf(p, clock.current());
-    expect(b.title).toBe("Für heute fertig");
-    expect(plainText(b.text)).toBe("Draußen wartet deine Mission.");
-    expect(b.button).toBe("Mission ansehen");
+    expect(b.title).toBe("Repaso final");
+    expect(JSON.stringify(b)).not.toMatch(/Mission|Morgen/);
   });
 
   it("alles erledigt ohne Karten aus abgeschlossenen Haltestellen: kein Knopf „10 Karten extra“", () => {
@@ -106,10 +103,11 @@ describe("Block „Heute“: zweite Tabelle im Design-Dokument", () => {
     expect(b.action).toEqual({ type: "session", request: { kind: "day", unitId: "u02" } });
   });
 
-  it("nur Wiederholen, alle Haltestellen geschafft", () => {
+  it("nur Wiederholen, alle Haltestellen und die Endstation geschafft", () => {
     const clock = newClock();
     let p = newProgress(clock);
     for (const id of ["u01", "u02", "u03", "u04", "u05", "u06", "u07", "u08", "u09", "u10"]) p = completeUnit(p, id, clock.now);
+    p = { ...p, finalReview: { at: clock.now().toISOString(), right: 26, total: 30 } };
     clock.advance(1);
     const plan = todayPlan(p, clock.current());
     expect(plan.unitId).toBeNull();
@@ -123,14 +121,66 @@ describe("Block „Heute“: zweite Tabelle im Design-Dokument", () => {
     expect(b.action).toEqual({ type: "session", request: { kind: "day", unitId: null } });
   });
 
-  it("alles geschafft und nichts mehr zu tun: kein Verweis auf eine nächste Haltestelle, Endstation folgt", () => {
+  it("alles geschafft, Endstation offen: kein Verweis auf eine nächste Haltestelle, der Satz „Die Endstation folgt“ entfällt", () => {
     const clock = newClock();
-    let p = newProgress(clock);
-    for (const id of ["u01", "u02", "u03", "u04", "u05", "u06", "u07", "u08", "u09", "u10"]) p = completeUnit(p, id, clock.now);
+    let p = allUnitsDone(clock);
     for (let n = 1; n <= 10; n++) p = completeMission(p, `u${String(n).padStart(2, "0")}-m`, clock.now);
     p = finishReviewRound(p, clock.current());
     const b = blockOf(p, clock.current());
-    expect(b.title).toBe("Für heute fertig");
-    expect(plainText(b.text)).toBe("Alle zehn Haltestellen sind geschafft. Die Endstation folgt.");
+    expect(JSON.stringify(b)).not.toMatch(/folgt|Morgen/);
+  });
+});
+
+function allUnitsDone(clock: ReturnType<typeof newClock>) {
+  let p = newProgress(clock);
+  for (const id of ["u01", "u02", "u03", "u04", "u05", "u06", "u07", "u08", "u09", "u10"]) p = completeUnit(p, id, clock.now);
+  return p;
+}
+
+describe("Block „Heute“: die Endstation (drei Zeilen der zweiten Tabelle)", () => {
+  it("Endstation offen, nichts fällig", () => {
+    const clock = newClock();
+    const b = blockOf(finishReviewRound(allUnitsDone(clock), clock.current()), clock.current());
+    expect(b.label).toBe("Heute · Endstation");
+    expect(b.title).toBe("Repaso final");
+    expect(b.titleLang).toBe("es");
+    expect(plainText(b.text)).toBe("30 gemischte Aufgaben über alle Karten.");
+    expect(b.button).toBe("Endstation beginnen");
+    expect(b.action).toEqual({ type: "session", request: { kind: "final" } });
+  });
+
+  it("Endstation offen, Wiederholen fällig", () => {
+    const clock = newClock();
+    const p = allUnitsDone(clock);
+    clock.advance(1);
+    const plan = todayPlan(p, clock.current());
+    expect(plan.reviewPending).toBe(true);
+    const b = todayBlock(plan);
+    expect(b.label).toBe("Heute · Endstation");
+    expect(b.title).toBe("Repaso final");
+    expect(plainText(b.text)).toBe(`Erst ${plan.reviewCount} Karten wiederholen, dann 30 gemischte Aufgaben.`);
+    expect(b.button).toBe("Mit Wiederholen beginnen");
+    expect(b.action).toEqual({ type: "session", request: { kind: "final" } });
+  });
+
+  it("Endstation geschafft", () => {
+    const clock = newClock();
+    const p = finishReviewRound({ ...allUnitsDone(clock), finalReview: { at: clock.now().toISOString(), right: 26, total: 30 } }, clock.current());
+    const b = blockOf(p, clock.current());
+    expect(b.label).toBe("Heute");
+    expect(b.title).toBe("Linie geschafft");
+    expect(b.titleLang).toBe("de");
+    expect(plainText(b.text)).toBe("26 von 30 richtig an der Endstation.");
+    expect(b.button).toBe("Deine Linie ansehen");
+    expect(b.action).toEqual({ type: "final-line" });
+  });
+
+  it("vor Haltestelle 10 steht die Endstation nirgends im Block", () => {
+    const clock = newClock();
+    let p = newProgress(clock);
+    for (const id of ["u01", "u02", "u03", "u04", "u05", "u06", "u07", "u08", "u09"]) p = completeUnit(p, id, clock.now);
+    const plan = todayPlan(p, clock.current());
+    expect(plan.finalStationOpen).toBe(false);
+    expect(JSON.stringify(todayBlock(plan))).not.toMatch(/Endstation|Repaso/);
   });
 });

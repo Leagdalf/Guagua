@@ -1,4 +1,4 @@
-﻿import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { dueCardIds, extraRoundIds, gradeCard, isRoundTimeUp, newCard, reviewRoundIds } from "./cards";
 import { BOX_INTERVAL_DAYS, REVIEW_ROUND } from "./config";
 import { allItems, units } from "./content";

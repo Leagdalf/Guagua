@@ -4,7 +4,8 @@ import { extraRoundIds } from "../../core/cards";
 import { units } from "../../core/content";
 import type { Day, Progress } from "../../core/types";
 import { dayCounter, todayPlan } from "../../core/units";
-import { ActionBar, Es, HomeHeader, HomePage, Line, MissionRow, PrimaryButton, TextButton, Today } from "../../ui";
+import { ActionBar, Es, HomeHeader, HomePage, Line, MissionRow, PrimaryButton, SimplePage, TextButton, Today } from "../../ui";
+import { FinalLineBody } from "../session/FinalLine";
 import type { SessionRequest } from "../session/types";
 import { formatDateDe } from "./dateText";
 import { lineModel, stopTap } from "./lineModel";
@@ -45,6 +46,23 @@ function toTop(): void {
  */
 export function HomeView({ progress, day, onStartSession, onOpenMissions }: HomeViewProps) {
   const [overview, setOverview] = useState<string | null>(null);
+  const [finalLine, setFinalLine] = useState(false);
+
+  if (finalLine) {
+    return (
+      <SimplePage>
+        <TextButton
+          onClick={() => {
+            setFinalLine(false);
+            toTop();
+          }}
+        >
+          Zurück zur Linie
+        </TextButton>
+        <FinalLineBody progress={progress} day={day} />
+      </SimplePage>
+    );
+  }
 
   if (overview) {
     return (
@@ -69,7 +87,10 @@ export function HomeView({ progress, day, onStartSession, onOpenMissions }: Home
   const run = (action: BlockAction): void => {
     if (action.type === "session") onStartSession(action.request);
     else if (action.type === "extra") onStartSession({ kind: "extra" });
-    else onOpenMissions(null);
+    else if (action.type === "final-line") {
+      setFinalLine(true);
+      toTop();
+    } else onOpenMissions(null);
   };
 
   return (
@@ -106,10 +127,14 @@ export function HomeView({ progress, day, onStartSession, onOpenMissions }: Home
                 toTop();
               } else if (tap.type === "session") {
                 onStartSession({ kind: "day", unitId: tap.unitId });
+              } else if (tap.type === "final") {
+                onStartSession({ kind: "final" });
+              } else if (tap.type === "final-line") {
+                setFinalLine(true);
+                toTop();
               }
             }}
           />
-          {line.finalNote && <p className="home__note">{line.finalNote}</p>}
           {hasExtraCards && block.action?.type !== "extra" && (
             <div className="home__extra">
               <TextButton onClick={() => onStartSession({ kind: "extra" })}>10 Karten extra</TextButton>

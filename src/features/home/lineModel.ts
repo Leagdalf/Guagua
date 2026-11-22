@@ -16,8 +16,6 @@ export interface LineModel {
   mountain: StopState[];
   /** „1 von 10 abgeschlossen“ */
   summary: string;
-  /** Satz zur Endstation, solange sie offen, aber nicht Teil der App ist. */
-  finalNote: string | null;
 }
 
 /**
@@ -29,12 +27,17 @@ export type StopTap =
   | { type: "overview"; unitId: string }
   /** Offen oder laufend: die Lerneinheit, auch wenn heute schon eine geschafft ist. */
   | { type: "session"; unitId: string }
+  /** Endstation offen oder laufend: die Endstation beginnen. */
+  | { type: "final" }
+  /** Endstation geschafft: die Ansicht „Deine Linie“. */
+  | { type: "final-line" }
   | { type: "none" };
 
-/** Was Tippen auf einen Punkt der Linie bewirkt. Gesperrte Haltestellen und die Endstation bewirken nichts. */
+/** Was Tippen auf einen Punkt der Linie bewirkt. Gesperrte Haltestellen und die gesperrte Endstation bewirken nichts. */
 export function stopTap(stops: readonly LineStop[], id: string): StopTap {
   const stop = stops.find((candidate) => candidate.id === id);
-  if (!stop || stop.terminus || stop.state === "locked") return { type: "none" };
+  if (!stop || stop.state === "locked") return { type: "none" };
+  if (stop.terminus) return stop.state === "done" ? { type: "final-line" } : { type: "final" };
   return stop.state === "done" ? { type: "overview", unitId: id } : { type: "session", unitId: id };
 }
 
@@ -55,15 +58,17 @@ export function lineModel(progress: Progress, offeredUnitId: string | null = nul
     ];
   });
 
-  // Die Endstation gehört nicht zum MVP. Sie zeigt nie „heute“ und kein Marker: offen heißt hier gesperrt gezeichnet
-  // plus ein Satz, dass sie folgt.
+  // Die Endstation: gesperrt vor Haltestelle 10, offen („heute“, mit Marker), läuft (30 Karten gewählt), abgeschlossen.
+  // Offen und laufend lassen sich antippen und beginnen, abgeschlossen öffnet „Deine Linie“.
   const final = finalStationState(progress);
+  const finalState: StopState = final === "done" ? "done" : final === "open" ? (progress.finalRun ? "running" : "open") : "locked";
   stops.push({
     id: FINAL_STOP_ID,
     name: "Repaso final",
     topic: "Endstation · 30 gemischte Aufgaben",
-    state: final === "done" ? "done" : "locked",
+    state: finalState,
     terminus: true,
+    selectable: final !== "locked",
   });
 
   const done = states.filter((info) => info.state === "done").length;
@@ -71,6 +76,5 @@ export function lineModel(progress: Progress, offeredUnitId: string | null = nul
     stops,
     mountain: states.map((info) => info.state),
     summary: `${done} von ${units.length} abgeschlossen`,
-    finalNote: final === "open" ? "Die Endstation ist offen, aber noch nicht in der App. Sie folgt." : null,
   };
 }

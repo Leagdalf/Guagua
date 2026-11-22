@@ -146,6 +146,20 @@ export function validateProgress(value: unknown): Progress | null {
   ) {
     return null;
   }
+  const run = value.finalRun;
+  if (
+    run !== undefined &&
+    !(
+      isRecord(run) &&
+      Array.isArray(run.ids) &&
+      run.ids.every((id) => typeof id === "string") &&
+      Array.isArray(run.answered) &&
+      run.answered.every((id) => typeof id === "string") &&
+      inRange(run.right, 0, run.answered.length)
+    )
+  ) {
+    return null;
+  }
   return value as unknown as Progress;
 }
 

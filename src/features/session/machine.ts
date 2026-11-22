@@ -15,7 +15,17 @@
 import { extraRoundIds, isRoundTimeUp } from "../../core/cards";
 import { EXTRA_ROUND_CARDS } from "../../core/config";
 import { getUnit } from "../../core/content";
-import { buildClozeRound, buildExtraRound, buildFinalRound, buildNewCards, buildReviewRound } from "../../core/flow";
+import {
+  buildClozeRound,
+  buildExtraRound,
+  buildFinalRound,
+  buildFinalStationRound,
+  buildNewCards,
+  buildReviewRound,
+  finalStationTaskCount,
+  finishFinalReview,
+  startFinalStation,
+} from "../../core/flow";
 import { answerInRound, currentTask, isRepeat, isRoundDone } from "../../core/round";
 import type { RoundState } from "../../core/round";
 import { currentStreak, recordActivity } from "../../core/stats";
@@ -25,7 +35,7 @@ import { today } from "../../core/time";
 import type { Clock } from "../../core/time";
 import type { Rng } from "../../core/random";
 import type { Day, Item, Progress, Step } from "../../core/types";
-import { completeStep, finishReviewRound, sessionPlan, startUnit, stopState, stopStates } from "../../core/units";
+import { completeStep, finalStationState, finishReviewRound, sessionPlan, startUnit, stopState, stopStates } from "../../core/units";
 import type { StopState } from "../../core/units";
 import type { SessionRequest } from "./types";
 
@@ -44,7 +54,7 @@ export interface SpeakRequest {
   slow?: boolean;
 }
 
-export type TaskRole = "review" | "extra" | "final" | "cloze";
+export type TaskRole = "review" | "extra" | "final" | "cloze" | "station";
 
 export interface PairsRun {
   /** Gewählte Zeile, wartet auf die Gegenseite. */
@@ -114,12 +124,28 @@ export interface TaskScreen {
   answer: Feedback | null;
 }
 
+/**
+ * Schritt 4 in zwei Teilen: erst „Anhören“ (`listen`), dann das Rollenspiel (`role`).
+ * Das Rollenspiel ändert weder Karten noch Punkte. Die 20 Punkte kommen einmal mit dem Abschluss des Schritts (`completeStep`).
+ */
 export interface DialogueScreen {
   kind: "dialogue";
-  /** Zahl der sichtbaren Zeilen. */
+  phase: "listen" | "role";
+  /** Zahl der sichtbaren Zeilen. Im Rollenspiel ist die letzte sichtbare Zeile die, die gerade dran ist. */
   shown: number;
   /** Zeilen, deren Übersetzung aufgedeckt ist. */
   revealed: readonly number[];
+  /** Rollenspiel: Die Lösung der eigenen Zeile, die gerade dran ist, ist aufgedeckt. */
+  uncovered: boolean;
+  /** Rollenspiel: Zeilen, bei denen „Noch mal“ schon gewählt wurde (höchstens einmal je Zeile). */
+  again: readonly number[];
+  /** Rollenspiel: Zeilen, die mit „Saß“ bestätigt sind. */
+  sat: readonly number[];
+}
+
+/** Endstation geschafft: die Ansicht „Deine Linie“ (Karten je Fach, Missionen, aktive Tage, Lernzeit, Ergebnis, Berg). */
+export interface LineScreen {
+  kind: "line";
 }
 
 export interface MissionScreen {
@@ -133,7 +159,7 @@ export interface SummaryScreen {
   summary: SummaryKind;
 }
 
-export type Screen = PlanScreen | CardsScreen | GrammarScreen | TaskScreen | DialogueScreen | MissionScreen | SummaryScreen;
+export type Screen = PlanScreen | CardsScreen | GrammarScreen | TaskScreen | DialogueScreen | MissionScreen | SummaryScreen | LineScreen;
 
 export interface SessionTally {
   /** Wiederholte Karten (Wiederholen und freie Runde). */
@@ -167,11 +193,17 @@ export type SessionEvent =
   | { type: "place"; index: number }
   | { type: "unplace"; index: number }
   | { type: "check" }
-  /** Schreiben (nicht im MVP ausgegeben, die Maschine kann es schon). */
+  /** Schreiben: getippte Antwort prüfen (Knopf „Prüfen“ oder Eingabetaste). */
   | { type: "submitText"; text: string }
   | { type: "pair"; side: "left" | "right"; id: string }
   /** Übersetzung einer Dialogzeile aufdecken. */
   | { type: "reveal"; line: number }
+  /** Rollenspiel: „Aufdecken“, die Lösung der eigenen Zeile erscheint und wird gesprochen. */
+  | { type: "uncover" }
+  /** Rollenspiel: „Saß“, weiter zur nächsten Zeile. */
+  | { type: "sat" }
+  /** Rollenspiel: „Noch mal“, die Zeile wird wieder verdeckt (höchstens einmal je Zeile). */
+  | { type: "again" }
   /** App im Hintergrund: die Lernzeit pausiert. */
   | { type: "background" };
 
@@ -202,6 +234,10 @@ function summaryScreen(summary: SummaryKind): SummaryScreen {
   return { kind: "summary", summary };
 }
 
+function listenScreen(): DialogueScreen {
+  return { kind: "dialogue", phase: "listen", shown: 0, revealed: [], uncovered: false, again: [], sat: [] };
+}
+
 function emptyPairs(): PairsRun {
   return { selected: null, found: [], wrong: null };
 }
@@ -212,10 +248,16 @@ function finalTaskCount(unitId: string): number {
   return unit ? unit.items.length + unit.build.length : 0;
 }
 
-function taskScreenOf(role: TaskRole, round: RoundState, state: SessionState, previous?: TaskScreen): TaskScreen {
+function taskScreenOf(role: TaskRole, round: RoundState, state: SessionState, previous?: TaskScreen, stationOffset = 0): TaskScreen {
   const task = currentTask(round);
   if (!task) throw new Error("Runde ohne Aufgabe");
-  const offset = previous?.offset ?? (role === "final" && state.unitId !== null ? Math.max(finalTaskCount(state.unitId) - round.total, 0) : 0);
+  const offset =
+    previous?.offset ??
+    (role === "station"
+      ? stationOffset
+      : role === "final" && state.unitId !== null
+        ? Math.max(finalTaskCount(state.unitId) - round.total, 0)
+        : 0);
   return {
     kind: "task",
     role,
@@ -287,6 +329,25 @@ function planScreenOf(progress: Progress, request: SessionRequest, day: Day, now
     };
   }
 
+  if (request.kind === "final") {
+    const review = sessionPlan(progress, null, day);
+    const total = finalStationTaskCount(progress);
+    const running = progress.finalRun !== undefined;
+    const rows: PlanRow[] = [];
+    if (review.review) rows.push({ step: 1, name: STEP_NAMES[1], detail: cards(review.reviewCount), done: false });
+    rows.push({ step: null, name: "Endstation", detail: `${total} Aufgaben`, done: false });
+    return {
+      unitId: null,
+      screen: {
+        kind: "plan",
+        label: "Heute · Endstation",
+        title: { text: "Repaso final", spanish: true },
+        rows,
+        button: running && !review.review ? `Weiter bei Aufgabe ${(progress.finalRun?.answered.length ?? 0) + 1}` : "Beginnen",
+      },
+    };
+  }
+
   // Die Haltestelle so rechnen, als wäre sie begonnen (ein gespeicherter Schritt 1 gilt dann als erledigt), ohne zu speichern.
   const wasRunning = request.unitId !== null && stopState(progress, request.unitId) === "running";
   const planned = request.unitId !== null ? startUnit(progress, request.unitId, now) : progress;
@@ -337,8 +398,10 @@ function planScreenOf(progress: Progress, request: SessionRequest, day: Day, now
  * Der Fahrplan zeigt, was im Fortschritt steht. Der zurückgegebene Fortschritt ist der übergebene, ändert sich aber das
  * Anlegen einmal, muss der Aufrufer ihn speichern (`startSession` in `sessionDriver.ts` tut das).
  */
-export function createSession(progress: Progress, request: SessionRequest, ctx: SessionContext): SessionResult {
+export function createSession(progress: Progress, asked: SessionRequest, ctx: SessionContext): SessionResult {
   const day = today(ctx.now);
+  // Die Endstation gibt es nur, solange sie offen ist. Sonst bleibt eine Sitzung nur zum Wiederholen.
+  const request: SessionRequest = asked.kind === "final" && finalStationState(progress) !== "open" ? { kind: "day", unitId: null } : asked;
   const { unitId, screen } = planScreenOf(progress, request, day, ctx.now);
   const state: SessionState = {
     request,
@@ -363,8 +426,9 @@ function begin(s: SessionState, progress: Progress, ctx: SessionContext): Sessio
     return { state: { ...s, screen }, progress, speak: speakForTask(screen.task) };
   }
 
-  const p = request.unitId !== null ? startUnit(progress, request.unitId, ctx.now) : progress;
-  const plan = sessionPlan(p, request.unitId, day);
+  const requestedUnit = request.kind === "day" ? request.unitId : null;
+  const p = requestedUnit !== null ? startUnit(progress, requestedUnit, ctx.now) : progress;
+  const plan = sessionPlan(p, requestedUnit, day);
   const state: SessionState = { ...s, unitId: plan.unitId };
   if (plan.review) {
     const round = buildReviewRound(p, day, ctx.rng, envOf(ctx));
@@ -386,6 +450,7 @@ function afterReview(state: SessionState, progress: Progress, ctx: SessionContex
 
 /** Nach dem Wiederholen (oder ohne): bei der Haltestelle am gespeicherten Schritt weiter, sonst Zusammenfassung. */
 function proceed(state: SessionState, progress: Progress, ctx: SessionContext): SessionResult {
+  if (state.request.kind === "final") return enterStation(state, progress, ctx);
   if (state.unitId === null) {
     return { state: { ...state, screen: summaryScreen(state.request.kind === "extra" ? "extra" : "review") }, progress, speak: null };
   }
@@ -414,7 +479,7 @@ function enterStep(state: SessionState, progress: Progress, step: Step, ctx: Ses
     case 4: {
       const first = unit.dialogue.lines[0];
       if (!first) return enterStep(state, completeStep(progress, unitId, 4, ctx.now), 5, ctx);
-      return { state: { ...state, screen: { kind: "dialogue", shown: 1, revealed: [] } }, progress, speak: { text: first.es } };
+      return { state: { ...state, screen: { ...listenScreen(), shown: 1 } }, progress, speak: { text: first.es } };
     }
     case 5: {
       const round = buildFinalRound(progress, unitId, ctx.rng, envOf(ctx));
@@ -433,6 +498,28 @@ function finishFinal(state: SessionState, progress: Progress, ctx: SessionContex
   const p = unitId === null ? progress : completeStep(progress, unitId, 5, ctx.now);
   const tally = round ? addRound(state.tally, round, false) : state.tally;
   return { state: { ...state, tally, screen: { kind: "mission" } }, progress: p, speak: null };
+}
+
+/**
+ * Endstation beginnen oder nach einem Neuladen fortsetzen: Die Karten werden einmal gewählt und gespeichert (`finalRun`),
+ * schon beantwortete fehlen in der Runde. Der Zähler zählt sie mit.
+ */
+function enterStation(state: SessionState, progress: Progress, ctx: SessionContext): SessionResult {
+  const p = startFinalStation(progress, ctx.rng);
+  const round = buildFinalStationRound(p, ctx.rng, envOf(ctx));
+  if (isRoundDone(round)) return finishStation(state, p, ctx, null);
+  const screen = taskScreenOf("station", round, state, undefined, Math.max(finalStationTaskCount(p) - round.total, 0));
+  return { state: { ...state, screen }, progress: p, speak: speakForTask(screen.task) };
+}
+
+/** Endstation durch: Ergebnis speichern (`finalReview`), dann „Deine Linie“. */
+function finishStation(state: SessionState, progress: Progress, ctx: SessionContext, round: RoundState | null): SessionResult {
+  const run = progress.finalRun;
+  const right = run ? run.right : (round?.right ?? 0);
+  const total = run ? run.ids.length : (round?.total ?? 0);
+  const p = progress.finalReview ? progress : finishFinalReview(progress, right, total, ctx.now);
+  const tally = round ? addRound(state.tally, round, false) : state.tally;
+  return { state: { ...state, tally, screen: { kind: "line" } }, progress: p, speak: null };
 }
 
 function addRound(tally: SessionTally, round: RoundState, countsAsReview: boolean): SessionTally {
@@ -473,6 +560,7 @@ export function reduce(state: SessionState, event: SessionEvent, progress: Progr
     case "mission":
       return event.type === "next" ? { state: { ...s, screen: summaryScreen("unit") }, progress: p, speak: null } : ignore;
     case "summary":
+    case "line":
       return ignore;
   }
 }
@@ -607,6 +695,8 @@ function advanceTask(s: SessionState, screen: TaskScreen, p: Progress, ctx: Sess
         progress: p,
         speak: null,
       };
+    case "station":
+      return finishStation(s, p, ctx, round);
     default:
       return finishFinal(s, p, ctx, round);
   }
@@ -617,14 +707,63 @@ function advanceTask(s: SessionState, screen: TaskScreen, p: Progress, ctx: Sess
 function onDialogue(s: SessionState, screen: DialogueScreen, event: SessionEvent, p: Progress, ctx: SessionContext): SessionResult | null {
   const unit = unitOf(s);
   if (!unit) return null;
+  const lines = unit.dialogue.lines;
+  const unitId = s.unitId;
+  if (unitId === null) return null;
+
   if (event.type === "reveal") {
-    if (event.line < 0 || event.line >= screen.shown || screen.revealed.includes(event.line)) return null;
+    // Die Zeilen der Lernenden bleiben im Rollenspiel verdeckt: Ihre Übersetzung gibt es nur beim Anhören.
+    const target = lines[event.line];
+    if (!target || event.line < 0 || event.line >= screen.shown || screen.revealed.includes(event.line)) return null;
+    if (screen.phase === "role" && target.learner) return null;
     return { state: { ...s, screen: { ...screen, revealed: [...screen.revealed, event.line] } }, progress: p, speak: null };
   }
-  if (event.type !== "next" || s.unitId === null) return null;
-  const line = unit.dialogue.lines[screen.shown];
-  if (line) return { state: { ...s, screen: { ...screen, shown: screen.shown + 1 } }, progress: p, speak: { text: line.es } };
-  return enterStep(s, completeStep(p, s.unitId, 4, ctx.now), 5, ctx);
+
+  if (screen.phase === "listen") {
+    if (event.type !== "next") return null;
+    const line = lines[screen.shown];
+    if (line) return { state: { ...s, screen: { ...screen, shown: screen.shown + 1 } }, progress: p, speak: { text: line.es } };
+    // Alles gehört: das Rollenspiel beginnt. Ohne eigene Zeile gibt es nichts zu spielen.
+    const first = lines[0];
+    if (!first || !lines.some((line) => line.learner)) return enterStep(s, completeStep(p, unitId, 4, ctx.now), 5, ctx);
+    const role: DialogueScreen = { ...listenScreen(), phase: "role", shown: 1 };
+    return { state: { ...s, screen: role }, progress: p, speak: first.learner ? null : { text: first.es } };
+  }
+
+  // Rollenspiel: Die Zeile, die gerade dran ist, ist die letzte sichtbare.
+  const index = screen.shown - 1;
+  const current = lines[index];
+  if (!current) return null;
+  if (current.learner) {
+    if (event.type === "uncover" && !screen.uncovered) {
+      return { state: { ...s, screen: { ...screen, uncovered: true } }, progress: p, speak: { text: current.es } };
+    }
+    if (!screen.uncovered) return null;
+    if (event.type === "again" && !screen.again.includes(index)) {
+      return { state: { ...s, screen: { ...screen, uncovered: false, again: [...screen.again, index] } }, progress: p, speak: null };
+    }
+    if (event.type === "sat") return nextRoleLine(s, { ...screen, sat: [...screen.sat, index] }, lines, p, ctx);
+    return null;
+  }
+  return event.type === "next" ? nextRoleLine(s, screen, lines, p, ctx) : null;
+}
+
+/** Rollenspiel: zur nächsten Zeile. Eine Zeile der anderen Person wird im selben Tippen gesprochen. Nach der letzten Zeile ist Schritt 4 fertig. */
+function nextRoleLine(
+  s: SessionState,
+  screen: DialogueScreen,
+  lines: readonly { es: string; learner: boolean }[],
+  p: Progress,
+  ctx: SessionContext,
+): SessionResult | null {
+  if (s.unitId === null) return null;
+  const next = lines[screen.shown];
+  if (!next) return enterStep(s, completeStep(p, s.unitId, 4, ctx.now), 5, ctx);
+  return {
+    state: { ...s, screen: { ...screen, shown: screen.shown + 1, uncovered: false } },
+    progress: p,
+    speak: next.learner ? null : { text: next.es },
+  };
 }
 
 // ---------- Anzeige-Hilfen ----------
@@ -635,6 +774,7 @@ export function stepNumberOf(state: SessionState): number | null {
   const screen = state.screen;
   switch (screen.kind) {
     case "plan":
+    case "line":
       return null;
     case "cards":
       return 2;
@@ -646,6 +786,7 @@ export function stepNumberOf(state: SessionState): number | null {
     case "summary":
       return 6;
     case "task":
+      if (state.request.kind === "final") return null;
       return screen.role === "review" ? 1 : screen.role === "cloze" ? 3 : 5;
   }
 }

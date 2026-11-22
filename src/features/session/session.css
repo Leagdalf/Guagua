@@ -270,13 +270,22 @@
 }
 
 .sx-plan__row {
-  display: grid;
-  grid-template-columns: 20px minmax(0, 1fr) minmax(0, auto);
+  display: flex;
   align-items: center;
   column-gap: var(--s4);
   min-height: 48px;
   padding: var(--s2) 0;
   border-top: var(--hair) solid var(--raya);
+}
+
+/* Der Name bricht nie um. Die Angabe rechts steht in einer Zeile und rechtsbündig (docs/04-design.md, „Fahrplan der Einheit“). */
+.sx-plan__name {
+  flex: none;
+  white-space: nowrap;
+}
+
+.sx-plan__box {
+  flex: none;
 }
 
 .sx-plan__box {
@@ -300,8 +309,76 @@
 }
 
 .sx-plan__detail {
-  max-width: 60%;
+  flex: none;
+  margin-left: auto;
   font-size: var(--fs-note);
   color: var(--ceniza);
   text-align: right;
+  white-space: nowrap;
+}
+
+/* Nur lange Angaben (Grammatikthema, Ort des Dialogs) dürfen umbrechen, mit bis zu zwei Dritteln der Zeilenbreite. */
+.sx-plan__detail--long {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 66.6667%;
+  white-space: normal;
+}
+
+/* Rollenspiel */
+.sx-dialogue__cue {
+  margin: 0;
+  color: var(--ceniza);
+}
+
+.sx-role-answers {
+  margin-top: var(--s4);
+}
+
+/* Schreiben: Feld, Zeichenknöpfe und „Prüfen“ stehen zusammen weit oben, damit die Tastatur sie nicht verdeckt.
+   Die Seite misst ihre Höhe über 100dvh (base.css), die Ansicht setzt kein festes Maß für die Tastatur. */
+.sx-body--write {
+  padding-top: var(--s8);
+}
+
+@media (min-width: 700px) {
+  .sx-body--write {
+    padding-top: var(--s12);
+  }
+}
+
+.sx-write {
+  align-self: stretch;
+  margin-top: var(--s6);
+}
+
+.sx-chars {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s1);
+  margin-top: var(--s2);
+}
+
+.sx-char {
+  min-width: var(--tap);
+  min-height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--atlantico);
+  font-size: var(--fs-es-field);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.sx-char:disabled {
+  color: var(--ceniza);
+  cursor: default;
+}
+
+.sx-write-action {
+  align-self: stretch;
+  margin-top: var(--s4);
+  /* Der Knopf bleibt beim Scrollen über der Tastatur erreichbar, solange das Feld Fokus hat. */
+  scroll-margin-bottom: var(--s6);
 }

@@ -10,10 +10,16 @@ import { isUnitDone, missionState, stopState } from "../../core/units";
 import { mountainBefore, mountainStops, summaryText } from "./machine";
 import type { PlanScreen, SessionState, SummaryFacts } from "./machine";
 import { SAVE_FAILED_TEXT, SaveFailedNotice } from "./SaveFailedNotice";
-import { SessionScreen } from "./SessionScreen";
+import { isLongDetail, SessionScreen } from "./SessionScreen";
 import { MemoryStorage, newDay1, play, playUnit1, Run, U01 } from "./sessionKit";
 import { sendEvent, startSession } from "./sessionDriver";
 
+// Vitest leert CSS-Importe (auch mit ?raw). Die Quelle lesen wie src/styles/styles.test.ts, ohne Node-Typen.
+const sessionCss = (
+  globalThis as unknown as { process: { getBuiltinModule(name: string): { readFileSync(path: string, enc: "utf8"): string }; cwd(): string } }
+).process
+  .getBuiltinModule("node:fs")
+  .readFileSync(`${(globalThis as unknown as { process: { cwd(): string } }).process.cwd().replace(/\\/g, "/")}/src/features/session/session.css`, "utf8");
 const unit01 = getUnit(U01)!;
 
 function plan(run: Run): PlanScreen {
@@ -223,6 +229,46 @@ describe("Fahrplan der Einheit", () => {
     expect(page).toContain("19 Aufgaben");
     expect(page).toContain("Schließen");
     expect(page).not.toContain("Schritt 3 von 6");
+  });
+});
+
+// ---------- Angabe rechts in einer Zeile ----------
+
+describe("Fahrplan: Angabe rechts in einer Zeile, rechtsbündig, nur lange Angaben brechen um", () => {
+  const rule = (selector: string): string => {
+    const match = new RegExp(`${selector.replace(".", "\\.")}\\s*\\{([^}]*)\\}`).exec(sessionCss);
+    if (!match) throw new Error(`Regel ${selector} fehlt`);
+    return match[1] ?? "";
+  };
+
+  it("kurze Angaben („16 Karten“, „15 Karten“, „18 Aufgaben“) tragen keine Umbruchklasse, lange schon", () => {
+    expect(isLongDetail("16 Karten")).toBe(false);
+    expect(isLongDetail("15 Karten")).toBe(false);
+    expect(isLongDetail("18 Aufgaben")).toBe(false);
+    expect(isLongDetail("Dreimal grüßen")).toBe(false);
+    expect(isLongDetail("ser in der Einzahl: soy, eres, es")).toBe(true);
+    expect(isLongDetail("An der Rezeption der Unterkunft")).toBe(true);
+
+    const { clock, progress } = newDay1();
+    const run = new Run(progress, { kind: "day", unitId: U01 }, clock, true, 1, false);
+    const page = html(run.state, run.progress);
+    expect(page).toContain('<span class="sx-plan__detail">16 Karten</span>');
+    expect(page).toContain('<span class="sx-plan__detail">19 Aufgaben</span>');
+    expect(page).toContain('<span class="sx-plan__detail sx-plan__detail--long">An der Rezeption der Unterkunft</span>');
+    expect(page).toContain('<span class="sx-plan__detail sx-plan__detail--long">ser in der Einzahl: soy, eres, es</span>');
+  });
+
+  it("die Regeln: Angabe ohne Umbruch, rechtsbündig; die lange darf umbrechen, höchstens zwei Drittel; der Name bricht nie um", () => {
+    const base = rule(".sx-plan__detail");
+    expect(base).toMatch(/white-space:\s*nowrap/);
+    expect(base).toMatch(/text-align:\s*right/);
+    expect(base).toMatch(/margin-left:\s*auto/);
+    expect(base).not.toMatch(/max-width/);
+    const long = rule(".sx-plan__detail--long");
+    expect(long).toMatch(/white-space:\s*normal/);
+    expect(long).toMatch(/max-width:\s*66\.66/);
+    expect(rule(".sx-plan__name")).toMatch(/white-space:\s*nowrap/);
+    expect(rule(".sx-plan__row")).toMatch(/display:\s*flex/);
   });
 });
 

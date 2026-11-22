@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { WRITE_TASK_ENABLED } from "./config";
 import { allItems, units } from "./content";
 import { buildBuildTasks, buildClozeTasks, buildFinalRoundTasks, buildNewCardBlocks, evaluateBuild, evaluateChoice, evaluateWrite, makeItemTask, makeReviewTask, taskTypeForReview } from "./tasks";
 import type { ChoiceTask, WriteTask } from "./tasks";
@@ -70,14 +71,21 @@ describe("Aufgabentyp beim Wiederholen", () => {
   const word = allItems.find((item) => item.kind === "word")!;
   const frame = allItems.find((item) => item.kind === "frame")!;
 
-  it("folgt dem Fach: 1 Erkennen, 2 Hören, ab 3 Erinnern, solange Schreiben nicht freigeschaltet ist", () => {
+  it("folgt dem Fach: 1 Erkennen, 2 Hören, ab 3 Schreiben (Schalter WRITE_TASK_ENABLED ist an)", () => {
+    expect(WRITE_TASK_ENABLED).toBe(true);
     const types = boxes.map((box) => taskTypeForReview(word, box, env));
+    expect(types).toEqual(["recognize", "listen", "write", "write", "write"]);
+  });
+
+  it("ist Schreiben ausgeschaltet, springt „Erinnern“ ein", () => {
+    const types = boxes.map((box) => taskTypeForReview(word, box, { ...env, writeEnabled: false }));
     expect(types).toEqual(["recognize", "listen", "recall", "recall", "recall"]);
   });
 
-  it("ist Schreiben freigeschaltet, bekommen Wörter und Wendungen ab Fach 3 „write“", () => {
-    const types = boxes.map((box) => taskTypeForReview(word, box, { ...env, writeEnabled: true }));
-    expect(types).toEqual(["recognize", "listen", "write", "write", "write"]);
+  it("eine Wendung in Fach 3 kommt als Schreibaufgabe mit der deutschen Frage", () => {
+    const phrase = allItems.find((item) => item.kind === "phrase")!;
+    const task = makeReviewTask(phrase.id, 3, createRng(1), env);
+    expect(task).toMatchObject({ kind: "write", prompt: phrase.de, solution: phrase.es });
   });
 
   it("ohne spanische Stimme wird aus „listen“ „recognize“", () => {
@@ -135,6 +143,12 @@ describe("Rückmeldung", () => {
     const task: WriteTask = { kind: "write", id: "w", type: "write", itemId: "x", prompt: "ist", promptLang: "de", speak: "está", solution: "está" };
     expect(evaluateWrite(task, "esta")).toMatchObject({ correct: true, verdict: "accent", accentHint: "está" });
     expect(evaluateWrite(task, "está")).toMatchObject({ verdict: "correct", accentHint: null });
+  });
+
+  it("Schreiben: „manana“ für „mañana“ ist falsch, die Lösung und die getippte Antwort stehen in der Rückmeldung", () => {
+    const task: WriteTask = { kind: "write", id: "w", type: "write", itemId: "x", prompt: "morgen", promptLang: "de", speak: "mañana", solution: "mañana" };
+    expect(evaluateWrite(task, "manana")).toMatchObject({ correct: false, verdict: "wrong", solution: "mañana", chosen: "manana", accentHint: null });
+    expect(evaluateWrite(task, "Mañana.")).toMatchObject({ correct: true, verdict: "correct" });
   });
 });
 

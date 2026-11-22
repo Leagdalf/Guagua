@@ -57,6 +57,11 @@ export function recordActivity(progress: Progress, lastInputMs: number | null, n
   };
 }
 
+/** Zahl der Kalendertage mit aktiver Lernzeit. */
+export function activeDays(progress: Progress): number {
+  return Object.values(progress.stats.activeMsByDay).filter((ms) => ms > 0).length;
+}
+
 /** Gesamte Lernzeit in Millisekunden. */
 export function totalActiveMs(progress: Progress): number {
   return Object.values(progress.stats.activeMsByDay).reduce((sum, ms) => sum + ms, 0);
