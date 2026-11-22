@@ -1,13 +1,19 @@
 // Ablauf der Lerneinheit als reine Zustandsmaschine (docs/02-spezifikation.md, 2.3 und 2.4).
 // Kein React, kein Browser-Speicher, keine echte Uhr: Uhr, Zufall und Stimme kommen aus `SessionContext`.
 //
-//   createSession(progress, request, ctx)       baut die Sitzung aus dem gespeicherten Fortschritt (auch nach einem Neuladen)
+//   createSession(progress, request, ctx)       baut die Sitzung (den Fahrplan der Einheit), auch nach einem Neuladen
 //   reduce(state, event, progress, ctx)         Ereignis ergibt neuen Zustand, neuen Fortschritt und optional den Ton
+//
+// Jede Sitzung beginnt mit dem Fahrplan (Bildschirm `plan`). Erst das Ereignis `begin`, das Tippen auf den Hauptknopf,
+// baut die erste Runde. Dann steht fest, ob es eine spanische Stimme gibt, und der erste Text wird im selben Tippen gesprochen.
 //
 // Der Ton (`speak`) wird nicht hier gesprochen: Die Maschine liefert den Text mit dem Zustandswechsel, die Ansicht
 // spricht ihn in derselben Klick-Behandlung (iOS spielt nur direkt aus einem Tippen).
+//
+// Jedes Ergebnis trägt den Fortschritt (`progress`). Wer die Maschine aufruft, muss ihn speichern (`sessionDriver.ts`).
 
-import { isRoundTimeUp } from "../../core/cards";
+import { extraRoundIds, isRoundTimeUp } from "../../core/cards";
+import { EXTRA_ROUND_CARDS } from "../../core/config";
 import { getUnit } from "../../core/content";
 import { buildClozeRound, buildExtraRound, buildFinalRound, buildNewCards, buildReviewRound } from "../../core/flow";
 import { answerInRound, currentTask, isRepeat, isRoundDone } from "../../core/round";
@@ -19,7 +25,8 @@ import { today } from "../../core/time";
 import type { Clock } from "../../core/time";
 import type { Rng } from "../../core/random";
 import type { Day, Item, Progress, Step } from "../../core/types";
-import { completeStep, finishReviewRound, sessionPlan, startUnit, stopStates } from "../../core/units";
+import { completeStep, finishReviewRound, sessionPlan, startUnit, stopState, stopStates } from "../../core/units";
+import type { StopState } from "../../core/units";
 import type { SessionRequest } from "./types";
 
 // ---------- Typen ----------
@@ -48,6 +55,28 @@ export interface PairsRun {
   wrong: { left: string; right: string } | null;
 }
 
+/** Eine Zeile im Fahrplan der Einheit. */
+export interface PlanRow {
+  /** Nummer des Schritts, `null` in der freien Runde. */
+  step: Step | null;
+  name: string;
+  /** Kurze Angabe rechts: „16 Karten“, das Grammatikthema, der Ort des Dialogs. */
+  detail: string;
+  done: boolean;
+}
+
+/** Erster Bildschirm jeder Sitzung: Übersicht der heutigen Schritte (docs/04-design.md, „Fahrplan der Einheit“). */
+export interface PlanScreen {
+  kind: "plan";
+  /** „Heute · Haltestelle 2“ oder „Heute“. */
+  label: string;
+  /** Name der Haltestelle (Spanisch, mit Marker) oder deutsche große Zeile. */
+  title: { text: string; spanish: boolean };
+  rows: readonly PlanRow[];
+  /** „Beginnen“ oder „Weiter bei Schritt 3“. */
+  button: string;
+}
+
 export interface CardsScreen {
   kind: "cards";
   blocks: readonly { items: Item[]; pairs: PairsTask }[];
@@ -74,7 +103,10 @@ export interface TaskScreen {
   round: RoundState | null;
   /** Lückensätze (Rolle cloze). */
   cloze: { tasks: readonly ChoiceTask[]; index: number } | null;
-  startedMs: number;
+  /** Aktive Zeit der Sitzung (`SessionState.activeMs`) beim Beginn der Runde, für die Grenze von 6 Minuten. */
+  startedActiveMs: number;
+  /** Aufgaben der Abschlussrunde, die schon vor einem Neuladen beantwortet waren. Der Zähler zählt sie mit. */
+  offset: number;
   /** Satzbau: Indizes in `task.tokens` in der Reihenfolge des Satzes. */
   placed: readonly number[];
   /** Auswahl: gewählte Antwort. */
@@ -101,7 +133,7 @@ export interface SummaryScreen {
   summary: SummaryKind;
 }
 
-export type Screen = CardsScreen | GrammarScreen | TaskScreen | DialogueScreen | MissionScreen | SummaryScreen;
+export type Screen = PlanScreen | CardsScreen | GrammarScreen | TaskScreen | DialogueScreen | MissionScreen | SummaryScreen;
 
 export interface SessionTally {
   /** Wiederholte Karten (Wiederholen und freie Runde). */
@@ -120,10 +152,14 @@ export interface SessionState {
   screen: Screen;
   /** Zeitpunkt der letzten Eingabe für die Lernzeit, `null` nach dem Wechsel in den Hintergrund. */
   lastInputMs: number | null;
+  /** Aktive Zeit dieser Sitzung in Millisekunden (Abschnitt 5.4): Abstände über 60 Sekunden und Hintergrund zählen nicht. */
+  activeMs: number;
   tally: SessionTally;
 }
 
 export type SessionEvent =
+  /** Hauptknopf des Fahrplans: baut die erste Runde und spricht ihren ersten Text. */
+  | { type: "begin" }
   /** „Weiter“ */
   | { type: "next" }
   | { type: "choose"; index: number }
@@ -170,9 +206,16 @@ function emptyPairs(): PairsRun {
   return { selected: null, found: [], wrong: null };
 }
 
-function taskScreenOf(role: TaskRole, round: RoundState, ctx: SessionContext, previous?: TaskScreen): TaskScreen {
+/** Aufgaben der ganzen Abschlussrunde einer Haltestelle: jede Karte einmal, dazu der Satzbau. */
+function finalTaskCount(unitId: string): number {
+  const unit = getUnit(unitId);
+  return unit ? unit.items.length + unit.build.length : 0;
+}
+
+function taskScreenOf(role: TaskRole, round: RoundState, state: SessionState, previous?: TaskScreen): TaskScreen {
   const task = currentTask(round);
   if (!task) throw new Error("Runde ohne Aufgabe");
+  const offset = previous?.offset ?? (role === "final" && state.unitId !== null ? Math.max(finalTaskCount(state.unitId) - round.total, 0) : 0);
   return {
     kind: "task",
     role,
@@ -181,14 +224,15 @@ function taskScreenOf(role: TaskRole, round: RoundState, ctx: SessionContext, pr
     task,
     round,
     cloze: null,
-    startedMs: previous?.startedMs ?? nowMs(ctx),
+    startedActiveMs: previous?.startedActiveMs ?? state.activeMs,
+    offset,
     placed: [],
     chosen: null,
     answer: null,
   };
 }
 
-function clozeScreenOf(tasks: readonly ChoiceTask[], index: number, ctx: SessionContext, previous?: TaskScreen): TaskScreen {
+function clozeScreenOf(tasks: readonly ChoiceTask[], index: number, state: SessionState, previous?: TaskScreen): TaskScreen {
   const task = tasks[index];
   if (!task) throw new Error("Lückensatz fehlt");
   return {
@@ -199,7 +243,8 @@ function clozeScreenOf(tasks: readonly ChoiceTask[], index: number, ctx: Session
     task,
     round: null,
     cloze: { tasks, index },
-    startedMs: previous?.startedMs ?? nowMs(ctx),
+    startedActiveMs: previous?.startedActiveMs ?? state.activeMs,
+    offset: 0,
     placed: [],
     chosen: null,
     answer: null,
@@ -211,39 +256,125 @@ export function withBackground(state: SessionState): SessionState {
   return state.lastInputMs === null ? state : { ...state, lastInputMs: null };
 }
 
+// ---------- Fahrplan ----------
+
+const STEP_NAMES: Record<Step, string> = {
+  1: "Wiederholen",
+  2: "Neue Karten",
+  3: "Grammatik",
+  4: "Dialog",
+  5: "Abschlussrunde",
+  6: "Mission",
+};
+
+function cards(count: number): string {
+  return count === 0 ? "keine Karten" : `${count} ${count === 1 ? "Karte" : "Karten"}`;
+}
+
+/** Der Fahrplan für den Fortschritt `progress`. Ändert nichts: Eine Haltestelle gilt erst mit dem Hauptknopf als begonnen. */
+function planScreenOf(progress: Progress, request: SessionRequest, day: Day, now: Clock): { unitId: string | null; screen: PlanScreen } {
+  if (request.kind === "extra") {
+    const count = extraRoundIds(progress, day).length;
+    return {
+      unitId: null,
+      screen: {
+        kind: "plan",
+        label: "Heute",
+        title: { text: `${EXTRA_ROUND_CARDS} Karten extra`, spanish: false },
+        rows: [{ step: null, name: "Karten üben", detail: cards(count), done: false }],
+        button: "Beginnen",
+      },
+    };
+  }
+
+  // Die Haltestelle so rechnen, als wäre sie begonnen (ein gespeicherter Schritt 1 gilt dann als erledigt), ohne zu speichern.
+  const wasRunning = request.unitId !== null && stopState(progress, request.unitId) === "running";
+  const planned = request.unitId !== null ? startUnit(progress, request.unitId, now) : progress;
+  const plan = sessionPlan(planned, request.unitId, day);
+  const unit = plan.unitId === null ? undefined : getUnit(plan.unitId);
+
+  if (plan.unitId === null || plan.step === null || !unit) {
+    return {
+      unitId: null,
+      screen: {
+        kind: "plan",
+        label: "Heute",
+        title: { text: "Wiederholen", spanish: false },
+        rows: [{ step: 1, name: STEP_NAMES[1], detail: cards(plan.reviewCount), done: false }],
+        button: "Beginnen",
+      },
+    };
+  }
+
+  const name = progress.profile.name;
+  const details: Record<Step, string> = {
+    1: cards(plan.reviewCount),
+    2: cards(unit.items.length),
+    3: unit.grammar.topic_de.replaceAll("{name}", name),
+    4: unit.dialogue.setting_de.replaceAll("{name}", name),
+    5: `${finalTaskCount(unit.id)} Aufgaben`,
+    6: unit.mission.title_de.replaceAll("{name}", name),
+  };
+  const steps: Step[] = plan.review ? [1, 2, 3, 4, 5, 6] : [2, 3, 4, 5, 6];
+  const rows: PlanRow[] = steps.map((step) => ({ step, name: STEP_NAMES[step], detail: details[step], done: step > 1 && step < (plan.step ?? 2) }));
+  const resume = wasRunning && !plan.review && plan.step > 2;
+  return {
+    unitId: plan.unitId,
+    screen: {
+      kind: "plan",
+      label: `Heute · Haltestelle ${unit.stop}`,
+      title: { text: unit.title_es, spanish: true },
+      rows,
+      button: resume ? `Weiter bei Schritt ${plan.step}` : "Beginnen",
+    },
+  };
+}
+
 // ---------- Sitzung aufbauen ----------
 
 /**
- * Baut die Sitzung aus dem Fortschritt. `day`: erst die Wiederholrunde, falls sie aussteht, dann der gespeicherte Schritt
- * der Haltestelle. Das gilt auch nach einem Neuladen: Es zählt nur, was im Fortschritt steht. Der Ton ist hier immer `null`,
- * weil die Sitzung nicht durch ein Tippen in dieser Ansicht beginnt.
+ * Baut die Sitzung: den Fahrplan der Einheit. Es gibt noch keine Runde und keinen Ton. Das gilt auch nach einem Neuladen:
+ * Der Fahrplan zeigt, was im Fortschritt steht. Der zurückgegebene Fortschritt ist der übergebene, ändert sich aber das
+ * Anlegen einmal, muss der Aufrufer ihn speichern (`startSession` in `sessionDriver.ts` tut das).
  */
 export function createSession(progress: Progress, request: SessionRequest, ctx: SessionContext): SessionResult {
   const day = today(ctx.now);
-  let p = progress;
-  if (request.kind === "day" && request.unitId !== null) p = startUnit(p, request.unitId, ctx.now);
-  const base: SessionState = {
+  const { unitId, screen } = planScreenOf(progress, request, day, ctx.now);
+  const state: SessionState = {
     request,
-    unitId: null,
-    screen: summaryScreen("review"),
+    unitId,
+    screen,
     lastInputMs: nowMs(ctx),
-    tally: { reviewed: 0, right: 0, answered: 0, startPoints: p.stats.points },
+    activeMs: 0,
+    tally: { reviewed: 0, right: 0, answered: 0, startPoints: progress.stats.points },
   };
+  return { state, progress, speak: null };
+}
+
+/** Tippen auf den Hauptknopf des Fahrplans: die erste Runde bauen. Erst jetzt gilt die Haltestelle als begonnen. */
+function begin(s: SessionState, progress: Progress, ctx: SessionContext): SessionResult {
+  const day = today(ctx.now);
+  const request = s.request;
 
   if (request.kind === "extra") {
-    const round = buildExtraRound(p, day, ctx.rng, envOf(ctx));
-    const screen = isRoundDone(round) ? summaryScreen("extra") : taskScreenOf("extra", round, ctx);
-    return { state: { ...base, screen }, progress: p, speak: null };
+    const round = buildExtraRound(progress, day, ctx.rng, envOf(ctx));
+    if (isRoundDone(round)) return { state: { ...s, screen: summaryScreen("extra") }, progress, speak: null };
+    const screen = taskScreenOf("extra", round, s);
+    return { state: { ...s, screen }, progress, speak: speakForTask(screen.task) };
   }
 
+  const p = request.unitId !== null ? startUnit(progress, request.unitId, ctx.now) : progress;
   const plan = sessionPlan(p, request.unitId, day);
-  const state: SessionState = { ...base, unitId: plan.unitId };
+  const state: SessionState = { ...s, unitId: plan.unitId };
   if (plan.review) {
     const round = buildReviewRound(p, day, ctx.rng, envOf(ctx));
-    if (!isRoundDone(round)) return { state: { ...state, screen: taskScreenOf("review", round, ctx) }, progress: p, speak: null };
-    return { ...afterReview(state, p, ctx), speak: null };
+    if (!isRoundDone(round)) {
+      const screen = taskScreenOf("review", round, state);
+      return { state: { ...state, screen }, progress: p, speak: speakForTask(screen.task) };
+    }
+    return afterReview(state, p, ctx);
   }
-  return { ...proceed(state, p, ctx), speak: null };
+  return proceed(state, p, ctx);
 }
 
 /** Die Wiederholrunde ist durch oder an der Grenze: merken und beim gespeicherten Schritt 1 abschließen. */
@@ -288,7 +419,8 @@ function enterStep(state: SessionState, progress: Progress, step: Step, ctx: Ses
     case 5: {
       const round = buildFinalRound(progress, unitId, ctx.rng, envOf(ctx));
       if (isRoundDone(round)) return finishFinal(state, progress, ctx, null);
-      return { state: { ...state, screen: taskScreenOf("final", round, ctx) }, progress, speak: null };
+      const screen = taskScreenOf("final", round, state);
+      return { state: { ...state, screen }, progress, speak: speakForTask(screen.task) };
     }
     default:
       return { state: { ...state, screen: { kind: "mission" } }, progress, speak: null };
@@ -318,13 +450,18 @@ export function reduce(state: SessionState, event: SessionEvent, progress: Progr
   if (event.type === "background") return { state: withBackground(state), progress, speak: null };
 
   const ms = nowMs(ctx);
-  let p = recordActivity(progress, state.lastInputMs, ms, today(ctx.now));
-  if (state.unitId !== null && !p.units[state.unitId]) p = startUnit(p, state.unitId, ctx.now);
-  const s: SessionState = { ...state, lastInputMs: ms };
+  const day = today(ctx.now);
+  let p = recordActivity(progress, state.lastInputMs, ms, day);
+  // Aktive Zeit der Sitzung: genau das, was `recordActivity` dem Tag gutgeschrieben hat (höchstens 60 s je Abstand).
+  const gap = (p.stats.activeMsByDay[day] ?? 0) - (progress.stats.activeMsByDay[day] ?? 0);
+  if (state.screen.kind !== "plan" && state.unitId !== null && !p.units[state.unitId]) p = startUnit(p, state.unitId, ctx.now);
+  const s: SessionState = { ...state, lastInputMs: ms, activeMs: state.activeMs + gap };
   const ignore: SessionResult = { state: s, progress: p, speak: null };
 
   const screen = s.screen;
   switch (screen.kind) {
+    case "plan":
+      return event.type === "begin" ? begin(s, p, ctx) : ignore;
     case "cards":
       return onCards(s, screen, event, p, ctx) ?? ignore;
     case "grammar":
@@ -391,7 +528,7 @@ function startCloze(s: SessionState, p: Progress, ctx: SessionContext): SessionR
   if (s.unitId === null) return { state: s, progress: p, speak: null };
   const tasks = buildClozeRound(s.unitId, ctx.rng);
   if (tasks.length === 0) return enterStep(s, completeStep(p, s.unitId, 3, ctx.now), 4, ctx);
-  return { state: { ...s, screen: clozeScreenOf(tasks, 0, ctx) }, progress: p, speak: null };
+  return { state: { ...s, screen: clozeScreenOf(tasks, 0, s) }, progress: p, speak: null };
 }
 
 // --- Aufgaben ---
@@ -446,7 +583,7 @@ function advanceTask(s: SessionState, screen: TaskScreen, p: Progress, ctx: Sess
   if (screen.role === "cloze" && screen.cloze) {
     const index = screen.cloze.index + 1;
     if (index < screen.cloze.tasks.length) {
-      return { state: { ...s, screen: clozeScreenOf(screen.cloze.tasks, index, ctx, screen) }, progress: p, speak: null };
+      return { state: { ...s, screen: clozeScreenOf(screen.cloze.tasks, index, s, screen) }, progress: p, speak: null };
     }
     if (s.unitId === null) return { state: { ...s, screen: summaryScreen("review") }, progress: p, speak: null };
     return enterStep(s, completeStep(p, s.unitId, 3, ctx.now), 4, ctx);
@@ -454,9 +591,10 @@ function advanceTask(s: SessionState, screen: TaskScreen, p: Progress, ctx: Sess
 
   const round = screen.round;
   if (!round) return { state: s, progress: p, speak: null };
-  const timeUp = screen.role === "review" && isRoundTimeUp(screen.startedMs, nowMs(ctx));
+  // Die Grenze von 6 Minuten zählt aktive Zeit: Pausen über 60 Sekunden und Zeit im Hintergrund zählen nicht (5.4).
+  const timeUp = screen.role === "review" && isRoundTimeUp(screen.startedActiveMs, s.activeMs);
   if (!isRoundDone(round) && !timeUp) {
-    const next = taskScreenOf(screen.role, round, ctx, screen);
+    const next = taskScreenOf(screen.role, round, s, screen);
     return { state: { ...s, screen: next }, progress: p, speak: speakForTask(next.task) };
   }
 
@@ -491,11 +629,13 @@ function onDialogue(s: SessionState, screen: DialogueScreen, event: SessionEvent
 
 // ---------- Anzeige-Hilfen ----------
 
-/** Nummer des Schritts für die Linie im Kopf, `null` ohne Haltestelle. */
+/** Nummer des Schritts für die Linie im Kopf, `null` ohne Haltestelle und im Fahrplan. */
 export function stepNumberOf(state: SessionState): number | null {
   if (state.unitId === null) return null;
   const screen = state.screen;
   switch (screen.kind) {
+    case "plan":
+      return null;
     case "cards":
       return 2;
     case "grammar":
@@ -510,7 +650,7 @@ export function stepNumberOf(state: SessionState): number | null {
   }
 }
 
-/** Zähler im Kopf: „5 von 18“. */
+/** Zähler im Kopf: „5 von 18“. In der Abschlussrunde zählt er über die ganze Runde, auch nach einem Neuladen. */
 export function counterOf(state: SessionState): string | null {
   const screen = state.screen;
   switch (screen.kind) {
@@ -530,7 +670,8 @@ export function counterOf(state: SessionState): string | null {
       if (!round) return null;
       // Vor der Antwort zählt eine erste Aufgabe schon mit, eine Wiedervorlage nicht.
       const shown = screen.answer === null && !isRepeat(round) ? round.completed + 1 : round.completed;
-      return `${Math.min(Math.max(shown, 1), Math.max(round.total, 1))} von ${round.total}`;
+      const total = screen.offset + round.total;
+      return `${Math.min(Math.max(screen.offset + shown, 1), Math.max(total, 1))} von ${total}`;
     }
     default:
       return null;
@@ -566,6 +707,59 @@ export function summaryFacts(state: SessionState, progress: Progress, day: Day):
 }
 
 /** Zustände der zehn Haltestellen für den Berg. */
-export function mountainStops(progress: Progress) {
+export function mountainStops(progress: Progress): StopState[] {
   return stopStates(progress).map((stop) => stop.state);
+}
+
+/**
+ * Der Berg vor dem Abschluss der Haltestelle `unitId`: Sie läuft noch, die nächste ist noch gesperrt.
+ * Die Zusammenfassung blendet ihn ein und wechselt dann auf `mountainStops` (docs/04-design.md, „Bewegung“).
+ */
+export function mountainBefore(after: readonly StopState[], unitId: string | null): StopState[] {
+  const index = unitId === null ? -1 : (getUnit(unitId)?.stop ?? 0) - 1;
+  return after.map((state, i) => (i === index ? "running" : i > index && state === "open" ? "locked" : state));
+}
+
+export interface SummaryLine {
+  label: string;
+  value: string;
+}
+
+export interface SummaryText {
+  headline: string;
+  /** Sachliche Sätze unter der Zeile. */
+  notes: string[];
+  lines: SummaryLine[];
+}
+
+/**
+ * Text der Zusammenfassung. Zeigt nur, was war: Zeilen mit „+0“ oder „0 Tage“ gibt es nicht, „ist geschafft“ nur, wo
+ * eine Haltestelle abgeschlossen wurde. Im Ruhemodus fehlen Punkte und Serie.
+ */
+export function summaryText(facts: SummaryFacts, opts: { calm: boolean; missionTitle: string | null; doneStops: number }): SummaryText {
+  const lines: SummaryLine[] = [];
+  const notes: string[] = [];
+  let headline: string;
+  if (facts.kind === "unit") {
+    headline = `Haltestelle ${facts.stop ?? ""} ist geschafft.`;
+    notes.push(`${opts.doneStops} von 10 Haltestellen abgeschlossen.`);
+    if (opts.missionTitle) notes.push(`Deine Mission ist offen: ${opts.missionTitle}`);
+    lines.push({ label: "Neue Karten", value: String(facts.newCards) });
+  } else if (facts.kind === "extra") {
+    if (facts.answered === 0) {
+      headline = "Noch nichts zu üben.";
+      notes.push("Die freie Runde nimmt Karten aus abgeschlossenen Haltestellen. Schließe zuerst Haltestelle 1 ab.");
+    } else {
+      headline = "Die freie Runde ist zu Ende.";
+      notes.push("Sie ändert keine Fächer und gibt keine Punkte.");
+      lines.push({ label: "Geübte Karten", value: String(facts.reviewed) });
+    }
+  } else {
+    headline = facts.answered === 0 ? "Heute ist nichts mehr fällig." : "Die Wiederholrunde ist zu Ende.";
+    if (facts.answered > 0) lines.push({ label: "Wiederholte Karten", value: String(facts.reviewed) });
+  }
+  if (facts.answered > 0) lines.push({ label: "Richtige Antworten", value: `${facts.right} von ${facts.answered}` });
+  if (!opts.calm && facts.kind !== "extra" && facts.pointsGained > 0) lines.push({ label: "Punkte", value: `+${facts.pointsGained}` });
+  if (!opts.calm && facts.streak >= 1) lines.push({ label: "Serie", value: `${facts.streak} ${facts.streak === 1 ? "Tag" : "Tage"}` });
+  return { headline, notes, lines };
 }

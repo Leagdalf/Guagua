@@ -3,19 +3,43 @@
 import { createRng } from "../../core/random";
 import type { Rng } from "../../core/random";
 import { isRepeat } from "../../core/round";
-import { parseProgress, serializeProgress } from "../../core/progress";
+import { STORAGE_KEY } from "../../core/config";
+import { serializeProgress } from "../../core/progress";
+import { createProgressStore } from "../../core/store";
+import type { ProgressStore, StorageLike } from "../../core/store";
 import { freshProgress, makeClock } from "../../core/testkit";
 import type { Progress } from "../../core/types";
-import { createSession, reduce } from "./machine";
 import type { SessionContext, SessionEvent, SessionState, SpeakRequest, TaskScreen } from "./machine";
+import { sendEvent, startSession } from "./sessionDriver";
 import type { SessionRequest } from "./types";
 
 export const U01 = "u01";
 
 export type Clock = ReturnType<typeof makeClock>;
 
+/** Speicher im Arbeitsspeicher wie `localStorage`. `failing`: `setItem` wirft (Speicher voll oder gesperrt). */
+export class MemoryStorage implements StorageLike {
+  items = new Map<string, string>();
+  failing = false;
+
+  getItem(key: string): string | null {
+    return this.items.get(key) ?? null;
+  }
+
+  setItem(key: string, value: string): void {
+    if (this.failing) throw new Error("Speicher voll");
+    this.items.set(key, value);
+  }
+}
+
+/**
+ * Eine Sitzung treiben wie die App: durch `startSession` und `sendEvent` aus `sessionDriver.ts` mit einem echten
+ * `ProgressStore` über einem Speicher im Arbeitsspeicher. `progress` ist immer das, was gespeichert ist. Neuladen baut
+ * einen neuen Speicher über denselben Text.
+ */
 export class Run {
-  progress: Progress;
+  storage = new MemoryStorage();
+  store: ProgressStore;
   state: SessionState;
   /** Jede Ausgabe des Tons mit dem Zustand, den dasselbe Tippen gezeigt hat. */
   spoken: { text: string; after: SessionState }[] = [];
@@ -25,19 +49,32 @@ export class Run {
   extraMs = 0;
   rng: Rng;
 
+  /** `begin`: gleich auf den Hauptknopf des Fahrplans tippen. `false` lässt die Sitzung auf dem Fahrplan stehen. */
   constructor(
     progress: Progress,
     request: SessionRequest,
     public clock: Clock,
     public hasSpanishVoice = true,
     seed = 1,
+    begin = true,
   ) {
     this.rng = createRng(seed);
-    const created = createSession(progress, request, this.ctx());
-    if (created.speak !== null) throw new Error("Die Sitzung darf beim Start nicht sprechen");
-    this.progress = created.progress;
-    this.state = created.state;
+    this.storage.setItem(STORAGE_KEY, serializeProgress(progress));
+    this.store = this.openStore();
+    this.state = this.open(request, begin);
+  }
+
+  private openStore(): ProgressStore {
+    return createProgressStore({ storage: this.storage, now: () => this.ctx().now() });
+  }
+
+  private open(request: SessionRequest, begin: boolean): SessionState {
+    const started = startSession(this.store, this.progress, request, this.ctx());
+    started.commit();
+    this.state = started.state;
     this.note();
+    if (begin) this.send({ type: "begin" });
+    return this.state;
   }
 
   ctx(): SessionContext {
@@ -48,17 +85,24 @@ export class Run {
     };
   }
 
+  /** Der gespeicherte Fortschritt. */
+  get progress(): Progress {
+    const snapshot = this.store.getSnapshot();
+    if (snapshot.status !== "ready") throw new Error("Speicher nicht bereit");
+    return snapshot.progress;
+  }
+
   private note(): void {
     if (this.state.screen.kind === "task") this.types.add(this.state.screen.task.type);
   }
 
   send(event: SessionEvent): SpeakRequest | null {
-    const result = reduce(this.state, event, this.progress, this.ctx());
-    this.state = result.state;
-    this.progress = result.progress;
-    if (result.speak) this.spoken.push({ text: result.speak.text, after: result.state });
+    const sent = sendEvent(this.store, this.state, event, this.ctx());
+    if (!sent) throw new Error("Speicher nicht bereit");
+    this.state = sent.state;
+    if (sent.speak) this.spoken.push({ text: sent.speak.text, after: sent.state });
     this.note();
-    return result.speak;
+    return sent.speak;
   }
 
   get task(): TaskScreen {
@@ -66,18 +110,14 @@ export class Run {
     return this.state.screen;
   }
 
-  /** Neuladen: Fortschritt serialisieren, lesen und die Sitzung neu aufbauen. */
-  reload(request: SessionRequest, seed = 99): void {
-    const parsed = parseProgress(serializeProgress(this.progress));
-    if (parsed.status !== "ok") throw new Error("Fortschritt nicht lesbar");
+  /** Neuladen: neuer Speicher über dem gespeicherten Text, Sitzung neu aufgebaut (mit dem Tippen auf den Fahrplan, wenn `begin`). */
+  reload(request: SessionRequest, seed = 99, begin = true): void {
     this.rng = createRng(seed);
-    const created = createSession(parsed.progress, request, this.ctx());
-    this.progress = created.progress;
-    this.state = created.state;
-    this.note();
+    this.store = this.openStore();
+    this.spoken = [];
+    this.open(request, begin);
   }
 }
-
 export interface Bot {
   /** Hält an, sobald das wahr wird (vor der nächsten Handlung). */
   stopWhen?: (run: Run) => boolean;
@@ -94,6 +134,9 @@ export function play(run: Run, bot: Bot = {}): boolean {
     switch (screen.kind) {
       case "summary":
         return true;
+      case "plan":
+        run.send({ type: "begin" });
+        break;
       case "grammar":
       case "mission":
       case "dialogue":

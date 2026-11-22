@@ -164,24 +164,74 @@ describe("Folgetag", () => {
     expect(summaryFacts(review.state, review.progress, "2026-11-24")).toMatchObject({ kind: "review", reviewed: 16, answered: 16 });
   });
 
-  it("die Wiederholrunde endet nach 6 Minuten, der Rest bleibt fällig", () => {
+  it("die Wiederholrunde endet nach 6 Minuten aktiver Zeit, der Rest bleibt fällig", () => {
+    const { clock, run } = playUnit1();
+    clock.advance(1);
+    const day2 = new Run(run.progress, { kind: "day", unitId: "u02" }, clock);
+    // Alle 50 Sekunden ein Tippen: nach dem siebten Tippen sind es 350 s, nach dem achten 400 s (Grenze 360 s).
+    let taps = 0;
+    while (day2.state.screen.kind === "task" && taps < 40) {
+      day2.extraMs += 50_000;
+      taps++;
+      const screen = day2.task;
+      day2.send(screen.answer === null ? { type: "choose", index: (screen.task as ChoiceTask).correctIndex } : { type: "next" });
+    }
+    expect(taps).toBe(8);
+    expect(day2.state.activeMs).toBe(400_000);
+    expect(day2.state.screen.kind).toBe("cards");
+    expect(day2.progress.stats.lastReviewDay).toBe("2026-11-24");
+    expect(day2.state.tally.answered).toBe(4);
+  });
+
+  it("Pausen über 60 Sekunden zählen für die Grenze von 6 Minuten nicht", () => {
     const { clock, run } = playUnit1();
     clock.advance(1);
     const day2 = new Run(run.progress, { kind: "day", unitId: "u02" }, clock);
     day2.send({ type: "choose", index: (day2.task.task as ChoiceTask).correctIndex });
-    day2.extraMs = 7 * MINUTE;
+    day2.extraMs = 7 * MINUTE; // eine lange Pause: zählt höchstens 60 s
     day2.send({ type: "next" });
-    expect(day2.state.screen.kind).toBe("cards");
-    expect(day2.progress.stats.lastReviewDay).toBe("2026-11-24");
-    expect(day2.state.tally.answered).toBe(1);
+    expect(day2.state.activeMs).toBe(60_000);
+    expect(day2.state.screen.kind).toBe("task");
+    expect(day2.task.role).toBe("review");
+    expect(day2.progress.stats.lastReviewDay).toBeUndefined();
+  });
+
+  it("Zeit im Hintergrund zählt für die Grenze von 6 Minuten nicht", () => {
+    const { clock, run } = playUnit1();
+    clock.advance(1);
+    const day2 = new Run(run.progress, { kind: "day", unitId: "u02" }, clock);
+    for (let i = 0; i < 6; i++) {
+      day2.send({ type: "background" });
+      day2.extraMs += 10 * MINUTE;
+      const screen = day2.task;
+      day2.send(screen.answer === null ? { type: "choose", index: (screen.task as ChoiceTask).correctIndex } : { type: "next" });
+    }
+    expect(day2.state.activeMs).toBe(0);
+    expect(day2.task.role).toBe("review");
+    expect(day2.progress.stats.lastReviewDay).toBeUndefined();
   });
 });
 
 describe("Ton im selben Tippen", () => {
-  it("die Sitzung selbst spricht nie (kein Tippen in dieser Ansicht)", () => {
+  it("die Sitzung beginnt auf dem Fahrplan und schweigt; erst das Tippen auf den Hauptknopf spricht", () => {
     const { clock, progress } = newDay1();
-    const run = new Run(progress, { kind: "day", unitId: U01 }, clock);
+    const run = new Run(progress, { kind: "day", unitId: U01 }, clock, true, 1, false);
+    expect(run.state.screen.kind).toBe("plan");
     expect(run.spoken).toEqual([]);
+    const speak = run.send({ type: "begin" });
+    expect(run.state.screen.kind).toBe("cards");
+    expect(speak).toEqual({ text: speakTextOf(unit01.items[0]!) });
+  });
+
+  it("Wiederholen mit Hören an erster Stelle: das Tippen auf „Beginnen“ spricht die erste Aufgabe", () => {
+    const { clock, run: day1 } = playUnit1();
+    clock.advance(1);
+    const day2 = new Run(day1.progress, { kind: "day", unitId: "u02" }, clock, true, 5, false);
+    expect(day2.spoken).toEqual([]);
+    const speak = day2.send({ type: "begin" });
+    const task = day2.task.task;
+    expect(task.kind === "choice" && task.type).toBe("listen");
+    expect(speak).toEqual({ text: task.kind === "choice" ? task.speak : "" });
   });
 
   it("neue Karten: „Weiter“ zeigt die nächste Karte und liefert ihren Ton mit demselben Ergebnis", () => {
@@ -304,7 +354,7 @@ describe("Neuladen mitten in der Abschlussrunde", () => {
     expect(run.task.round?.total).toBe(total - 5);
     expect(run.progress.stats.points).toBe(pointsBefore);
     expect(run.progress.cards).toEqual(cardsBefore);
-    expect(counterOf(run.state)).toBe(`1 von ${total - 5}`);
+    expect(counterOf(run.state)).toBe(`6 von ${total}`);
 
     expect(play(run)).toBe(true);
     expect(run.progress.stats.points).toBe(FULL_POINTS);

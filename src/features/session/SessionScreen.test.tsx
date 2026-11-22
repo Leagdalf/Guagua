@@ -2,7 +2,6 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { getUnit } from "../../core/content";
 import type { Progress } from "../../core/types";
-import { createSession } from "./machine";
 import type { SessionState } from "./machine";
 import { SessionScreen } from "./SessionScreen";
 import { newDay1, play, playUnit1, Run, U01 } from "./sessionKit";
@@ -128,8 +127,8 @@ describe("SessionScreen (Server-Render, ohne DOM)", () => {
 
   it("freie Runde ohne Karten: Zusammenfassung mit Erklärung, ohne Punkte", () => {
     const { clock, progress } = newDay1();
-    const created = createSession(progress, { kind: "extra" }, { now: clock.now, rng: () => 0.5, hasSpanishVoice: true });
-    const html = render(created.state, created.progress);
+    const extra = new Run(progress, { kind: "extra" }, clock);
+    const html = render(extra.state, extra.progress);
     expect(html).toContain("Noch nichts zu üben.");
     expect(html).not.toContain("Punkte</dt>");
   });

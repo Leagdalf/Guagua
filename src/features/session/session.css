@@ -5,6 +5,10 @@
 }
 
 .sx-body {
+  /* Deutsche Frage in Aufgaben und Titel der Mission: 24 px, iPad 32 px (docs/04-design.md, „Schrift“). */
+  --sx-fs-question: 24px;
+  /* Abstand vor einer Beschriftung in Großbuchstaben, die einen neuen Abschnitt beginnt: 24 px, iPad 32 px („Formen“). */
+  --sx-gap-section: var(--s6);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -14,6 +18,8 @@
 
 @media (min-width: 700px) {
   .sx-body {
+    --sx-fs-question: 32px;
+    --sx-gap-section: var(--s8);
     padding-top: calc(var(--s12) + var(--s10));
   }
 }
@@ -40,7 +46,7 @@
 /* Deutsche Frage in Aufgaben (Erinnern, Satzbau, Schreiben) */
 .sx-prompt-de {
   margin: var(--s4) 0 0;
-  font-size: var(--fs-es-field);
+  font-size: var(--sx-fs-question);
   font-weight: 600;
   line-height: 1.2;
 }
@@ -182,7 +188,7 @@
 /* Mission */
 .sx-title {
   margin: var(--s3) 0 0;
-  font-size: var(--fs-es-field);
+  font-size: var(--sx-fs-question);
   font-weight: 600;
   line-height: 1.2;
 }
@@ -205,8 +211,9 @@
   border-top: var(--hair) solid var(--raya);
 }
 
-.sx-section {
-  margin-top: var(--s8);
+/* Muss `.sx-body .label { margin: 0 }` übertreffen, sonst bleibt der Abstand weg. */
+.sx-body .sx-section {
+  margin-top: var(--sx-gap-section);
 }
 
 .sx-section > .label {
@@ -235,4 +242,66 @@
 .sx-summary {
   align-self: stretch;
   margin-top: var(--s6);
+}
+
+/* Fahrplan der Einheit */
+.sx-plan-title {
+  margin: var(--s3) 0 0;
+}
+
+.sx-plan-title--de {
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+@media (min-width: 700px) {
+  .sx-plan-title--de {
+    font-size: 44px;
+  }
+}
+
+.sx-plan {
+  align-self: stretch;
+  margin: var(--s8) 0 0;
+  padding: 0;
+  list-style: none;
+  border-bottom: var(--hair) solid var(--raya);
+}
+
+.sx-plan__row {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) minmax(0, auto);
+  align-items: center;
+  column-gap: var(--s4);
+  min-height: 48px;
+  padding: var(--s2) 0;
+  border-top: var(--hair) solid var(--raya);
+}
+
+.sx-plan__box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: var(--base-line) solid var(--tinta);
+  border-radius: 4px;
+}
+
+.sx-plan__box--done {
+  background: var(--atlantico);
+  color: var(--nieve);
+}
+
+.sx-plan__box .icon {
+  width: 14px;
+  height: 14px;
+}
+
+.sx-plan__detail {
+  max-width: 60%;
+  font-size: var(--fs-note);
+  color: var(--ceniza);
+  text-align: right;
 }

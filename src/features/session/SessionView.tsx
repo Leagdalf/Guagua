@@ -3,17 +3,18 @@ import { appClock, newRng, progressStore, useStoreState, useToday } from "../../
 import { NoVoiceNotice, speak, useVoices } from "../../audio";
 import type { Rng } from "../../core/random";
 import type { Progress } from "../../core/types";
-import { startUnit } from "../../core/units";
 import { ActionBar, LessonPage, PrimaryButton } from "../../ui";
-import { createSession, reduce, withBackground } from "./machine";
+import { withBackground } from "./machine";
 import type { SessionContext, SessionEvent, SessionState } from "./machine";
+import { SaveFailedNotice } from "./SaveFailedNotice";
+import { sendEvent, startSession } from "./sessionDriver";
 import { SessionScreen } from "./SessionScreen";
 import type { SessionViewProps } from "./types";
 
 /**
  * Lerneinheit (docs/02-spezifikation.md, 2.3 und 2.4). Dünn: Der Ablauf steht in `machine.ts`, das Aussehen in
- * `SessionScreen.tsx`. Hier laufen Speicher, Uhr und Ton zusammen. Der Stand ist nach jeder Antwort und jedem Schritt
- * gespeichert, „Schließen“ und „Zur Linie“ rufen nur `onExit`.
+ * `SessionScreen.tsx`, der Weg in den Speicher in `sessionDriver.ts`. Hier laufen Speicher, Uhr und Ton zusammen.
+ * Der Stand ist nach jeder Antwort und jedem Schritt gespeichert, „Schließen“ und „Zur Linie“ rufen nur `onExit`.
  */
 export function SessionView({ request, onExit }: SessionViewProps) {
   const store = useStoreState();
@@ -30,6 +31,7 @@ export function SessionView({ request, onExit }: SessionViewProps) {
 function RunningSession({ request, onExit, initial }: SessionViewProps & { initial: Progress }) {
   const store = useStoreState();
   const progress = store.status === "ready" ? store.progress : initial;
+  const saveFailed = store.status === "ready" && store.saveFailed;
   const { hasVoice } = useVoices();
   const day = useToday();
 
@@ -37,14 +39,13 @@ function RunningSession({ request, onExit, initial }: SessionViewProps & { initi
   if (rngRef.current === null) rngRef.current = newRng();
   const makeContext = (): SessionContext => ({ now: appClock, rng: rngRef.current ?? newRng(), hasSpanishVoice: hasVoice });
 
-  const [state, setState] = useState<SessionState>(() => createSession(initial, request, makeContext()).state);
+  // Die Sitzung beginnt mit dem Fahrplan. Was das Anlegen am Fortschritt ändert, speichert `commit` nach dem ersten Zeichnen.
+  const [started] = useState(() => startSession(progressStore, initial, request, makeContext()));
+  const [state, setState] = useState<SessionState>(started.state);
   const stateRef = useRef<SessionState>(state);
-
-  // Eine begonnene Haltestelle gilt auf der Linie als „läuft“, auch wenn die erste Antwort noch fehlt.
-  const unitId = request.kind === "day" ? request.unitId : null;
   useEffect(() => {
-    if (unitId !== null) progressStore.update((p) => startUnit(p, unitId, appClock));
-  }, [unitId]);
+    started.commit();
+  }, [started]);
 
   // Im Hintergrund pausiert die Lernzeit (Spezifikation 5.4).
   useEffect(() => {
@@ -59,13 +60,11 @@ function RunningSession({ request, onExit, initial }: SessionViewProps & { initi
 
   // Jedes Tippen: Maschine rechnen, speichern, anzeigen und den Ton im selben Tippen sprechen (iOS).
   const handleEvent = (event: SessionEvent) => {
-    const snapshot = progressStore.getSnapshot();
-    if (snapshot.status !== "ready") return;
-    const result = reduce(stateRef.current, event, snapshot.progress, makeContext());
-    stateRef.current = result.state;
-    progressStore.update(() => result.progress);
-    setState(result.state);
-    if (result.speak) speak(result.speak.text, { slow: result.speak.slow === true });
+    const sent = sendEvent(progressStore, stateRef.current, event, makeContext());
+    if (!sent) return;
+    stateRef.current = sent.state;
+    setState(sent.state);
+    if (sent.speak) speak(sent.speak.text, { slow: sent.speak.slow === true });
   };
 
   const handleSpeak = (text: string, slow?: boolean) => {
@@ -75,6 +74,7 @@ function RunningSession({ request, onExit, initial }: SessionViewProps & { initi
   return (
     <>
       <NoVoiceNotice />
+      <SaveFailedNotice saveFailed={saveFailed} />
       <SessionScreen
         state={state}
         progress={progress}

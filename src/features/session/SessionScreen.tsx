@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { getUnit } from "../../core/content";
 import type { ChoiceTask, Feedback as TaskFeedback, PairsTask, RoundTask } from "../../core/tasks";
@@ -9,6 +9,7 @@ import {
   AnswerList,
   AnswerRow,
   AudioButton,
+  CheckIcon,
   CrossIcon,
   Es,
   Feedback,
@@ -24,9 +25,9 @@ import {
   TextField,
   UnitHeader,
 } from "../../ui";
-import type { PairItem, PairState } from "../../ui";
-import { counterOf, mountainStops, stepNumberOf, summaryFacts } from "./machine";
-import type { CardsScreen, DialogueScreen, SessionEvent, SessionState, TaskScreen } from "./machine";
+import type { PairItem, PairState, StopState } from "../../ui";
+import { counterOf, mountainBefore, mountainStops, stepNumberOf, summaryFacts, summaryText } from "./machine";
+import type { CardsScreen, DialogueScreen, PlanScreen, SessionEvent, SessionState, TaskScreen } from "./machine";
 import "./session.css";
 
 // Die Ansicht zeigt nur an. Alles Tippen geht als Ereignis an die Maschine (`onEvent`), alles Sprechen über `onSpeak`.
@@ -103,6 +104,8 @@ function renderScreen(props: SessionScreenProps, fill: (text: string) => string,
   const { state } = props;
   const screen = state.screen;
   switch (screen.kind) {
+    case "plan":
+      return plan(props, screen);
     case "cards":
       return screen.stage === "look" ? cardLook(props, screen) : cardPairs(props, screen);
     case "grammar":
@@ -116,6 +119,40 @@ function renderScreen(props: SessionScreenProps, fill: (text: string) => string,
     case "summary":
       return summary(props);
   }
+}
+
+// ---------- Fahrplan ----------
+
+function plan(props: SessionScreenProps, screen: PlanScreen): View {
+  return {
+    body: (
+      <div className="sx-body enter" key="plan">
+        <Label as="h1">{screen.label}</Label>
+        {screen.title.spanish ? (
+          <Es as="p" size="today" className="sx-plan-title" id="sx-plan-title">
+            <Marker>{screen.title.text}</Marker>
+          </Es>
+        ) : (
+          <p className="sx-plan-title sx-plan-title--de">{screen.title.text}</p>
+        )}
+        <ul className="sx-plan" aria-label="Schritte">
+          {screen.rows.map((row) => (
+            <li key={row.name} className="sx-plan__row">
+              <span className={row.done ? "sx-plan__box sx-plan__box--done" : "sx-plan__box"} aria-hidden="true">
+                {row.done && <CheckIcon />}
+              </span>
+              <span className="sx-plan__name">
+                {row.name}
+                <span className="vh">{row.done ? ", erledigt" : ", offen"}</span>
+              </span>
+              <span className="sx-plan__detail">{row.detail}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    ),
+    footer: <PrimaryButton onClick={() => props.onEvent({ type: "begin" })}>{screen.button}</PrimaryButton>,
+  };
 }
 
 // ---------- Neue Karten ----------
@@ -488,50 +525,58 @@ function mission(props: SessionScreenProps, fill: (text: string) => string): Vie
 
 // ---------- Zusammenfassung ----------
 
+/** Wirkt `prefers-reduced-motion: reduce`? Ohne Browser (Server-Render, Tests) zählt es als ja: Dann steht gleich der neue Stand. */
+function prefersReducedMotion(): boolean {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return true;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+/**
+ * Berg der Zusammenfassung. Mit Bewegung erscheint er mit dem alten Stand und wechselt nach dem Einblenden auf den neuen
+ * (die Bausteine blenden die Füllung in 600 ms über). Im Ruhemodus und bei `prefers-reduced-motion` steht gleich der neue.
+ * Reiner Zustandswechsel im Effekt, ohne Ton.
+ */
+function SummaryMountain({ before, after, animate }: { before: readonly StopState[]; after: readonly StopState[]; animate: boolean }) {
+  const [reached, setReached] = useState(false);
+  const key = after.join(",");
+  useEffect(() => {
+    if (!animate) return;
+    const timer = window.setTimeout(() => setReached(true), 80);
+    return () => window.clearTimeout(timer);
+  }, [animate, key]);
+  return <Mountain stops={animate && !reached ? before : after} />;
+}
+
 function summary(props: SessionScreenProps): View {
   const { state, progress, day } = props;
   const facts = summaryFacts(state, progress, day);
-  const calm = progress.profile.calm;
   const unit = state.unitId === null ? undefined : getUnit(state.unitId);
-  const done = mountainStops(progress).filter((stop) => stop === "done").length;
-
-  const items: { label: string; value: ReactNode }[] = [];
-  let headline: string;
-  let sub: string | null = null;
-  if (facts.kind === "unit") {
-    headline = `Haltestelle ${facts.stop ?? ""} ist geschafft.`;
-    sub = unit ? `Deine Mission ist offen: ${unit.mission.title_de}` : null;
-    items.push({ label: "Neue Karten", value: String(facts.newCards) });
-  } else if (facts.kind === "extra") {
-    headline = facts.answered === 0 ? "Noch nichts zu üben." : "Die Runde ist geschafft.";
-    sub =
-      facts.answered === 0
-        ? "Die freie Runde nimmt Karten aus abgeschlossenen Haltestellen. Schließe zuerst Haltestelle 1 ab."
-        : "Die freie Runde ändert keine Fächer und gibt keine Punkte.";
-    items.push({ label: "Geübte Karten", value: String(facts.reviewed) });
-  } else {
-    headline = facts.answered === 0 ? "Heute ist nichts mehr fällig." : "Wiederholen ist geschafft.";
-    items.push({ label: "Wiederholte Karten", value: String(facts.reviewed) });
-  }
-  if (facts.answered > 0) items.push({ label: "Richtige Antworten", value: `${facts.right} von ${facts.answered}` });
-  if (!calm && facts.kind !== "extra") items.push({ label: "Punkte", value: `+${facts.pointsGained}` });
-  if (!calm) items.push({ label: "Serie", value: `${facts.streak} ${facts.streak === 1 ? "Tag" : "Tage"}` });
+  const after = mountainStops(progress);
+  const text = summaryText(facts, {
+    calm: progress.profile.calm,
+    missionTitle: unit ? unit.mission.title_de : null,
+    doneStops: after.filter((stop) => stop === "done").length,
+  });
+  const animate = facts.kind === "unit" && !progress.profile.calm && !prefersReducedMotion();
 
   return {
     body: (
       <div className="sx-body enter" key="summary">
         {facts.kind === "unit" && (
           <div className="sx-mountain">
-            <Mountain stops={mountainStops(progress)} />
+            <SummaryMountain before={mountainBefore(after, state.unitId)} after={after} animate={animate} />
           </div>
         )}
         <Label as="h1" className={facts.kind === "unit" ? "sx-section" : undefined}>
           Zusammenfassung
         </Label>
-        <p className="sx-headline">{headline}</p>
-        {facts.kind === "unit" && <p className="sx-note">{done} von 10 Haltestellen abgeschlossen.</p>}
-        {sub && <p className="sx-note">{sub}</p>}
-        {items.length > 0 && <SummaryList className="sx-summary" items={items} />}
+        <p className="sx-headline">{text.headline}</p>
+        {text.notes.map((note) => (
+          <p key={note} className="sx-note">
+            {note}
+          </p>
+        ))}
+        {text.lines.length > 0 && <SummaryList className="sx-summary" items={text.lines} />}
       </div>
     ),
     footer: <PrimaryButton onClick={props.onExit}>Zur Linie</PrimaryButton>,
