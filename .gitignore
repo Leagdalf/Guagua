@@ -5,6 +5,7 @@ dev-dist/
 coverage/
 playwright-report/
 test-results/
+dist-e2e/
 *.local
 .DS_Store
 Thumbs.db
