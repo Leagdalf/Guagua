@@ -1,0 +1,190 @@
+/* Mehr: Liste und Unterseiten. Farben und Maße nur über die Variablen aus src/styles. */
+
+.more-menu {
+  margin: var(--s6) 0 0;
+  padding: 0;
+  list-style: none;
+  border-bottom: var(--hair) solid var(--raya);
+}
+
+.more-menu__row {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--s1);
+  width: 100%;
+  min-height: var(--answer-h);
+  padding: var(--s3) 0;
+  border: 0;
+  border-top: var(--hair) solid var(--raya);
+  background: transparent;
+  color: var(--tinta);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.more-menu__label {
+  font-weight: 600;
+}
+
+.more-menu__detail {
+  font-size: var(--fs-note);
+  color: var(--ceniza);
+}
+
+.more__back {
+  margin-bottom: var(--s2);
+}
+
+.more__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s4);
+  margin-top: var(--s4);
+}
+
+.more__msg {
+  margin-top: var(--s4);
+}
+
+.more__msg--error {
+  color: var(--mojo);
+}
+
+.more__manual {
+  margin-top: var(--s4);
+}
+
+.file-pick {
+  cursor: pointer;
+}
+
+.file-pick:focus-within {
+  outline: 2px solid var(--atlantico);
+  outline-offset: 2px;
+}
+
+/* Spickzettel */
+.gram__topic {
+  margin-top: var(--s2);
+  font-weight: 600;
+}
+
+.gtable {
+  width: 100%;
+  margin-top: var(--s4);
+  border-collapse: collapse;
+}
+
+.gtable th,
+.gtable td {
+  padding: var(--s2) var(--s3) var(--s2) 0;
+  border-top: var(--hair) solid var(--raya);
+  text-align: left;
+  vertical-align: baseline;
+}
+
+.gtable th {
+  font-size: var(--fs-small);
+  font-weight: 400;
+  color: var(--ceniza);
+}
+
+.gtable tbody tr:last-child > * {
+  border-bottom: var(--hair) solid var(--raya);
+}
+
+.examples {
+  margin: var(--s4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.examples li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+  padding: var(--s2) 0;
+  border-top: var(--hair) solid var(--raya);
+}
+
+.examples li:last-child {
+  border-bottom: var(--hair) solid var(--raya);
+}
+
+.examples__de {
+  font-size: var(--fs-note);
+  color: var(--ceniza);
+}
+
+/* Zahlen und Wochentage: Telefon zwei Spalten, iPad drei, zuerst die erste Spalte von oben nach unten. */
+.ref-list {
+  margin: var(--s3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ref-list--numbers {
+  column-count: 2;
+  column-gap: var(--s6);
+}
+
+@media (min-width: 700px) {
+  .ref-list--numbers {
+    column-count: 3;
+    column-gap: var(--s8);
+  }
+}
+
+.ref-list li {
+  break-inside: avoid;
+}
+
+.ref__cell {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+  width: 100%;
+  min-height: var(--tap);
+  padding: var(--s2) 0;
+  border: 0;
+  border-top: var(--hair) solid var(--raya);
+  background: transparent;
+  color: var(--tinta);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.ref__cell:disabled {
+  color: var(--ceniza);
+  cursor: default;
+}
+
+.ref__n {
+  min-width: 2.4em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.ref__wide {
+  min-width: 6em;
+}
+
+.ref__de {
+  color: var(--ceniza);
+}
+
+.tips {
+  margin: var(--s3) 0 0;
+  padding-left: var(--s6);
+}
+
+.tips li + li {
+  margin-top: var(--s2);
+}

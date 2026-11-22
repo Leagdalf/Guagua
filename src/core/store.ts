@@ -6,7 +6,7 @@
 // Oberfläche `restart()` aufruft. Auch dann bleibt der alte Text unter einem Sicherungsschlüssel erhalten.
 
 import { STORAGE_KEY } from "./config";
-import { createProgress, parseProgress, serializeProgress } from "./progress";
+import { createProgress, parseProgress, serializeProgress, validateProgress } from "./progress";
 import type { LoadErrorReason } from "./progress";
 import type { Clock } from "./time";
 import type { Progress } from "./types";
@@ -25,6 +25,12 @@ export type StoreState =
   /** Gespeicherte Daten sind unbrauchbar. Es wird nichts überschrieben. `raw` ist der gelesene Text. */
   | { status: "error"; reason: LoadErrorReason; raw: string | null };
 
+/** Ergebnis von `replaceProgress`. Bei jedem Fehler bleibt der alte Stand unverändert. */
+export type ReplaceResult =
+  | { ok: true; backupKey: string | null }
+  /** `invalid`: der neue Fortschritt besteht `validateProgress` nicht. `backup-failed`: die Sicherung des alten Standes ließ sich nicht schreiben. `save-failed`: das Schreiben des neuen Standes scheiterte. */
+  | { ok: false; reason: "invalid" | "backup-failed" | "save-failed" };
+
 export interface ProgressStore {
   getSnapshot(): StoreState;
   subscribe(listener: () => void): () => void;
@@ -39,6 +45,13 @@ export interface ProgressStore {
    * (`false` auch, wenn der Zustand gar nicht „error“ ist).
    */
   restart(): boolean;
+  /**
+   * Ersetzt den Fortschritt (Import einer Sicherung). Prüft zuerst mit `validateProgress`, legt dann eine Sicherung
+   * des aktuellen Standes unter `<Schlüssel>:backup-<Zeitpunkt>` an und schreibt erst danach den neuen Stand.
+   * Scheitert eine der Stufen, bleiben Zustand und gespeicherter Text unverändert. Im Zustand „empty“ gibt es nichts
+   * zu sichern (`backupKey: null`), im Zustand „error“ wird der unlesbare Text gesichert.
+   */
+  replaceProgress(next: Progress): ReplaceResult;
 }
 
 export interface ProgressStoreOptions {
@@ -79,6 +92,19 @@ export function createProgressStore({ storage, now, key = STORAGE_KEY }: Progres
     }
   }
 
+  /** Schreibt `text` unter einen freien Sicherungsschlüssel und liest ihn zurück. `null`, wenn das scheitert. */
+  function writeBackup(text: string): string | null {
+    const base = `${key}:backup-${now().toISOString()}`;
+    try {
+      let backupKey = base;
+      for (let n = 2; storage.getItem(backupKey) !== null; n++) backupKey = `${base}-${n}`;
+      storage.setItem(backupKey, text);
+      return storage.getItem(backupKey) === text ? backupKey : null;
+    } catch {
+      return null;
+    }
+  }
+
   return {
     getSnapshot: () => state,
 
@@ -116,6 +142,20 @@ export function createProgressStore({ storage, now, key = STORAGE_KEY }: Progres
       }
       emit({ status: "empty" });
       return true;
+    },
+
+    replaceProgress(next) {
+      const valid = validateProgress(next);
+      if (valid === null) return { ok: false, reason: "invalid" };
+      let backupKey: string | null = null;
+      const old = state.status === "ready" ? serializeProgress(state.progress) : state.status === "error" ? state.raw : null;
+      if (old !== null) {
+        backupKey = writeBackup(old);
+        if (backupKey === null) return { ok: false, reason: "backup-failed" };
+      }
+      if (!save(valid)) return { ok: false, reason: "save-failed" };
+      emit({ status: "ready", progress: valid, saveFailed: false });
+      return { ok: true, backupKey };
     },
   };
 }

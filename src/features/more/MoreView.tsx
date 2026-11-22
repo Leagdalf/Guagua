@@ -1,101 +1,79 @@
 import { useState } from "react";
-import { useVoices } from "../../audio";
-import { NAME_MAX_LENGTH } from "../../core/config";
-import { normalizeName, updateProfile } from "../../core/progress";
-import type { ProfilePatch } from "../../core/progress";
-import { currentStreak } from "../../core/stats";
+import type { Clock } from "../../core/time";
 import type { Day, Progress } from "../../core/types";
-import { SimplePage, SummaryList, TextField } from "../../ui";
-import { AI_NOTE, APP_VERSION, CONTENT_DATE, FONT_LICENSES } from "./aboutModel";
-import { ChoiceGroup } from "./ChoiceGroup";
-import { VoiceTest } from "./VoiceTest";
+import type { ReplaceResult } from "../../core/store";
+import { appClock, progressStore } from "../../state";
+import { SimplePage } from "../../ui";
+import { AboutPage } from "./AboutPage";
+import { BackupPage } from "./BackupPage";
+import { CheatSheetPage } from "./CheatSheetPage";
+import { SettingsPage } from "./SettingsPage";
 import "./choice.css";
+import "./more.css";
 
 export interface MoreViewProps {
   progress: Progress;
   day: Day;
   /** Ändert den Fortschritt und speichert sofort (`progressStore.update`). */
   onUpdate: (fn: (progress: Progress) => Progress) => void;
+  /** Ersetzt den Fortschritt beim Import (`progressStore.replaceProgress`). Standard: der Speicher der App. */
+  onReplace?: (next: Progress) => ReplaceResult;
+  /** Uhr für Datum im Export. Standard: die Uhr der App. */
+  now?: Clock;
+  /** Unterseite, mit der die Ansicht beginnt (für Tests). */
+  initialPage?: MorePage;
 }
 
-/** Mehr (Spezifikation 2.7, MVP): Einstellungen und Über die App. Gehört in `AppShell`. */
-export function MoreView({ progress, day, onUpdate }: MoreViewProps) {
-  const { profile } = progress;
-  const { voices } = useVoices();
-  const [draft, setDraft] = useState(profile.name);
+export type MorePage = "menu" | "cheat" | "settings" | "backup" | "about";
 
-  const change = (patch: ProfilePatch): void => onUpdate((p) => updateProfile(p, patch));
-  const valid = normalizeName(draft) !== null;
+export const MENU: ReadonlyArray<{ id: Exclude<MorePage, "menu">; label: string; detail: string }> = [
+  { id: "cheat", label: "Spickzettel", detail: "Grammatik, Zahlen, Wochentage, Aussprache" },
+  { id: "settings", label: "Einstellungen", detail: "Name, Stimme, Tempo, Ruhemodus" },
+  { id: "backup", label: "Fortschritt sichern", detail: "Exportieren und importieren" },
+  { id: "about", label: "Über die App", detail: "Version, Lernzeit, Lizenzen" },
+];
 
-  return (
-    <SimplePage className="more">
-      <h1 className="page-title">Mehr</h1>
+/** Mehr (Spezifikation 2.7): Liste mit vier Unterseiten, ohne Router. Jede Unterseite hat „Zurück“. */
+export function MoreView({ progress, day, onUpdate, onReplace, now = appClock, initialPage = "menu" }: MoreViewProps) {
+  const [page, setPage] = useState<MorePage>(initialPage);
 
-      <section className="sec" aria-labelledby="more-settings">
-        <h2 className="sec__title" id="more-settings">
-          Einstellungen
-        </h2>
-        <TextField
-          className="sec__text"
-          label="Name"
-          value={draft}
-          autoComplete="given-name"
-          onChange={(value) => {
-            setDraft(value);
-            if (normalizeName(value) !== null) change({ name: value });
-          }}
-          help={
-            valid
-              ? "Die App spricht dich damit an. Der Name bleibt auf diesem Gerät."
-              : `Der Name braucht 1 bis ${NAME_MAX_LENGTH} Zeichen. Bis dahin gilt: ${profile.name}.`
-          }
+  const open = (next: MorePage): void => {
+    setPage(next);
+    window.scrollTo(0, 0);
+  };
+  const back = (): void => open("menu");
+
+  switch (page) {
+    case "cheat":
+      return <CheatSheetPage progress={progress} onBack={back} />;
+    case "settings":
+      return <SettingsPage progress={progress} onUpdate={onUpdate} onBack={back} />;
+    case "backup":
+      return (
+        <BackupPage
+          progress={progress}
+          now={now}
+          onReplace={onReplace ?? ((next) => progressStore.replaceProgress(next))}
+          onBack={back}
         />
-        <VoiceTest
-          voices={voices}
-          voiceURI={profile.voiceURI}
-          name={profile.name}
-          onPick={(voiceURI) => change({ voiceURI })}
-        />
-        <ChoiceGroup
-          className="sec"
-          label="Sprechtempo"
-          value={profile.rate}
-          onChange={(id) => id && change({ rate: id === "slow" ? "slow" : "normal" })}
-          options={[
-            { id: "normal", label: "Normal" },
-            { id: "slow", label: "Langsam" },
-          ]}
-        />
-      </section>
-
-      <section className="sec" aria-labelledby="more-about">
-        <h2 className="sec__title" id="more-about">
-          Über die App
-        </h2>
-        <SummaryList
-          items={[
-            { label: "Version", value: APP_VERSION },
-            { label: "Stand der Inhalte", value: CONTENT_DATE },
-            { label: "Punkte", value: String(progress.stats.points) },
-            { label: "Serie", value: serieText(currentStreak(progress, day)) },
-          ]}
-        />
-        <p className="sec__muted">
-          Schriften:{" "}
-          {FONT_LICENSES.map((font, index) => (
-            <span key={font.name}>
-              {index > 0 && ", "}
-              {font.name} ({font.license})
-            </span>
-          ))}
-          .
-        </p>
-        <p className="sec__text">{AI_NOTE}</p>
-      </section>
-    </SimplePage>
-  );
-}
-
-function serieText(days: number): string {
-  return days === 1 ? "1 Tag" : `${days} Tage`;
+      );
+    case "about":
+      return <AboutPage progress={progress} day={day} onBack={back} />;
+    case "menu":
+      return (
+        <SimplePage className="more">
+          <h1 className="page-title">Mehr</h1>
+          <ul className="more-menu">
+            {MENU.map((entry) => (
+              <li key={entry.id}>
+                <button type="button" className="more-menu__row" onClick={() => open(entry.id)}>
+                  <span className="more-menu__label">{entry.label}</span>
+                  <span className="more-menu__detail">{entry.detail}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </SimplePage>
+      );
+  }
 }

@@ -4,6 +4,7 @@ import { createProgress, parseProgress, serializeProgress, updateProfile, valida
 import { createProgressStore } from "./store";
 import type { StorageLike } from "./store";
 import { freshProgress, makeClock } from "./testkit";
+import type { Progress } from "./types";
 
 const clock = makeClock("2026-11-23");
 
@@ -181,5 +182,101 @@ describe("Speicher", () => {
     store.restart();
     expect(store.getSnapshot()).toEqual({ status: "empty" });
     expect(storage.setItem).not.toHaveBeenCalled();
+  });
+});
+
+describe("Speicher: Fortschritt ersetzen (Import)", () => {
+  const imported = (): Progress => ({ ...freshProgress(clock, "Eva"), stats: { ...freshProgress(clock).stats, points: 340 } });
+
+  it("legt vor dem Ersetzen eine Sicherung des alten Stands an, danach gilt der neue", () => {
+    const old = freshProgress(clock, "Ana");
+    const { storage, data } = fakeStorage({ [STORAGE_KEY]: serializeProgress(old) });
+    const store = createProgressStore({ storage, now: clock.now });
+    const listener = vi.fn();
+    store.subscribe(listener);
+
+    const result = store.replaceProgress(imported());
+    expect(result.ok).toBe(true);
+    if (!result.ok || result.backupKey === null) throw new Error("Sicherung fehlt");
+    expect(result.backupKey.startsWith(`${STORAGE_KEY}:backup-`)).toBe(true);
+    expect(data.get(result.backupKey)).toBe(serializeProgress(old));
+    expect(JSON.parse(data.get(STORAGE_KEY) ?? "null").profile.name).toBe("Eva");
+    expect(store.getSnapshot()).toMatchObject({ status: "ready", saveFailed: false });
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it("die Sicherung wird vor dem neuen Stand geschrieben", () => {
+    const { storage } = fakeStorage({ [STORAGE_KEY]: serializeProgress(freshProgress(clock, "Ana")) });
+    const store = createProgressStore({ storage, now: clock.now });
+    store.replaceProgress(imported());
+    const keys = storage.setItem.mock.calls.map((call) => call[0]);
+    expect(keys).toHaveLength(2);
+    expect(keys[0]?.startsWith(`${STORAGE_KEY}:backup-`)).toBe(true);
+    expect(keys[1]).toBe(STORAGE_KEY);
+  });
+
+  it("scheitert das Schreiben der Sicherung, bleibt der alte Stand", () => {
+    const old = freshProgress(clock, "Ana");
+    const { storage, data } = fakeStorage({ [STORAGE_KEY]: serializeProgress(old) });
+    const store = createProgressStore({ storage, now: clock.now });
+    storage.setItem.mockImplementation((key: string, value: string) => {
+      if (key !== STORAGE_KEY) throw new Error("voll");
+      data.set(key, value);
+    });
+    expect(store.replaceProgress(imported())).toEqual({ ok: false, reason: "backup-failed" });
+    expect(data.get(STORAGE_KEY)).toBe(serializeProgress(old));
+    const snapshot = store.getSnapshot();
+    if (snapshot.status !== "ready") throw new Error("Zustand");
+    expect(snapshot.progress).toEqual(old);
+    expect(storage.setItem).toHaveBeenCalledTimes(1); // nur der Versuch der Sicherung
+  });
+
+  it("scheitert das Schreiben des neuen Stands, bleibt der alte Stand", () => {
+    const old = freshProgress(clock, "Ana");
+    const { storage, data } = fakeStorage({ [STORAGE_KEY]: serializeProgress(old) });
+    const store = createProgressStore({ storage, now: clock.now });
+    storage.setItem.mockImplementation((key: string, value: string) => {
+      if (key === STORAGE_KEY) throw new Error("voll");
+      data.set(key, value);
+    });
+    expect(store.replaceProgress(imported())).toEqual({ ok: false, reason: "save-failed" });
+    expect(data.get(STORAGE_KEY)).toBe(serializeProgress(old));
+    const snapshot = store.getSnapshot();
+    if (snapshot.status !== "ready") throw new Error("Zustand");
+    expect(snapshot.progress.profile.name).toBe("Ana");
+  });
+
+  it("ein ungültiger Fortschritt wird nicht übernommen und löst nichts aus", () => {
+    const { storage } = fakeStorage({ [STORAGE_KEY]: serializeProgress(freshProgress(clock)) });
+    const store = createProgressStore({ storage, now: clock.now });
+    const broken = { ...freshProgress(clock), cards: 5 } as unknown as Progress;
+    expect(store.replaceProgress(broken)).toEqual({ ok: false, reason: "invalid" });
+    expect(storage.setItem).not.toHaveBeenCalled();
+  });
+
+  it("zwei Importe in derselben Millisekunde überschreiben keine Sicherung", () => {
+    const { storage, data } = fakeStorage({ [STORAGE_KEY]: serializeProgress(freshProgress(clock, "Ana")) });
+    const store = createProgressStore({ storage, now: clock.now });
+    store.replaceProgress(imported());
+    store.replaceProgress({ ...imported(), favorites: ["pb-x-01"] });
+    expect([...data.keys()].filter((key) => key.includes(":backup-"))).toHaveLength(2);
+  });
+
+  it("aus dem Fehlerzustand: der unlesbare Text wird gesichert, dann gilt der Import", () => {
+    const { storage, data } = fakeStorage({ [STORAGE_KEY]: "{kaputt" });
+    const store = createProgressStore({ storage, now: clock.now });
+    expect(store.getSnapshot().status).toBe("error");
+    const result = store.replaceProgress(imported());
+    expect(result.ok).toBe(true);
+    expect([...data.entries()].some(([key, value]) => key.includes(":backup-") && value === "{kaputt")).toBe(true);
+    expect(store.getSnapshot().status).toBe("ready");
+  });
+
+  it("aus dem leeren Zustand: nichts zu sichern, der Import legt den Stand an", () => {
+    const { storage, data } = fakeStorage();
+    const store = createProgressStore({ storage, now: clock.now });
+    expect(store.replaceProgress(imported())).toEqual({ ok: true, backupKey: null });
+    expect(JSON.parse(data.get(STORAGE_KEY) ?? "null").profile.name).toBe("Eva");
+    expect(store.getSnapshot().status).toBe("ready");
   });
 });
