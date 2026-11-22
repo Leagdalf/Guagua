@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { stopStates } from "../../core/units";
+import { stopStates, todayPlan } from "../../core/units";
 import { formatDateDe } from "./dateText";
-import { FINAL_STOP_ID, lineModel } from "./lineModel";
+import { FINAL_STOP_ID, lineModel, stopTap } from "./lineModel";
 import { afterUnit1, newClock, newProgress, completeUnit } from "./testProgress";
 
 describe("Linie", () => {
@@ -17,9 +17,39 @@ describe("Linie", () => {
     const { progress } = afterUnit1();
     const m = lineModel(progress);
     expect(m.stops[0]).toMatchObject({ id: "u01", name: "¡Hola!", state: "done", selectable: true });
-    expect(m.stops[1]).toMatchObject({ id: "u02", name: "En el café", state: "open", selectable: false });
-    expect(m.stops[2]?.state).toBe("locked");
+    expect(m.stops[1]).toMatchObject({ id: "u02", name: "En el café", state: "open", selectable: true });
+    expect(m.stops[2]).toMatchObject({ state: "locked", selectable: false });
     expect(m.summary).toBe("1 von 10 abgeschlossen");
+  });
+
+  it("die offene Haltestelle heißt „heute“, solange todayPlan sie anbietet, sonst „offen“", () => {
+    const { clock, progress } = afterUnit1();
+    clock.advance(1);
+    const offered = todayPlan(progress, clock.current());
+    expect(offered.unitId).toBe("u02");
+    expect(lineModel(progress, offered.unitId).stops[1]?.statusText).toBe("heute");
+    expect(lineModel(progress, null).stops[1]?.statusText).toBe("offen");
+  });
+
+  it("heute schon eine geschafft: Haltestelle 2 heißt „offen“, bleibt aber antippbar", () => {
+    const { clock, progress } = afterUnit1();
+    const plan = todayPlan(progress, clock.current());
+    expect(plan.unitId).toBeNull();
+    const stop = lineModel(progress, plan.unitId).stops[1];
+    expect(stop).toMatchObject({ state: "open", statusText: "offen", selectable: true });
+  });
+
+  it("Tippen: abgeschlossen öffnet die Übersicht, offen und laufend beginnen die Lerneinheit, gesperrt und Endstation nichts", () => {
+    const clock = newClock();
+    const { progress } = afterUnit1(clock);
+    const m = lineModel(progress, null);
+    expect(stopTap(m.stops, "u01")).toEqual({ type: "overview", unitId: "u01" });
+    // Heute ist schon eine geschafft, die offene Haltestelle 2 lässt sich trotzdem beginnen.
+    expect(stopTap(m.stops, "u02")).toEqual({ type: "session", unitId: "u02" });
+    expect(stopTap(m.stops, "u03")).toEqual({ type: "none" });
+    expect(stopTap(m.stops, FINAL_STOP_ID)).toEqual({ type: "none" });
+    const started = { ...progress, units: { ...progress.units, u02: { step: 3 as const, startedAt: clock.now().toISOString() } } };
+    expect(stopTap(lineModel(started, "u02").stops, "u02")).toEqual({ type: "session", unitId: "u02" });
   });
 
   it("der Berg zeigt denselben Stand wie die Linie", () => {

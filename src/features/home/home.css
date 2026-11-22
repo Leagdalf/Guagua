@@ -23,8 +23,9 @@
   color: var(--ceniza);
 }
 
+/* Ein Abschnitt beginnt mit einer Beschriftung: Abstand nach oben wie `label--section` (24 px, iPad 32 px). */
 .ov__sec {
-  margin-top: var(--s10);
+  margin-top: var(--label-gap);
 }
 
 .ov__h3 {

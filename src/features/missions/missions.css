@@ -40,7 +40,7 @@
 }
 
 .mi__take {
-  margin-top: var(--s4);
+  margin-top: var(--label-gap);
   font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.1em;

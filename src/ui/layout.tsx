@@ -11,6 +11,7 @@ export function Label({
   tone = "muted",
   className,
   id,
+  section,
   children,
 }: {
   as?: "p" | "h1" | "h2" | "h3" | "span";
@@ -18,9 +19,15 @@ export function Label({
   className?: string;
   /** Zum Beispiel für `aria-labelledby` eines Abschnitts. */
   id?: string;
+  /** Die Beschriftung beginnt einen neuen Abschnitt der Ansicht: 24 px Abstand nach oben, iPad 32 px (Klasse `label--section`). */
+  section?: boolean;
   children: ReactNode;
 }) {
-  return createElement(as, { id, className: cx("label", tone === "accent" && "label--accent", className) }, children);
+  return createElement(
+    as,
+    { id, className: cx("label", tone === "accent" && "label--accent", section && "label--section", className) },
+    children,
+  );
 }
 
 /** Rahmen der App: Inhalt, darunter fest die untere Leiste. Ein Hinweis steht ganz oben. */
@@ -77,7 +84,8 @@ export function Today({
   title: string;
   /** `es`: Spanisch mit Marker. `de`: Deutsch in Figtree 600. */
   titleLang?: "es" | "de";
-  text: string;
+  /** Erklärzeile; darf spanische Wörter als `<Es size="inherit">` enthalten. */
+  text: ReactNode;
 }) {
   return (
     <div className="home__today">

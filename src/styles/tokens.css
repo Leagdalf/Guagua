@@ -42,6 +42,8 @@
   --fs-es-text: 20px;
   --fs-es-field: 24px;
   --fs-today-text: 16px;
+  --fs-today-de: 34px;
+  --label-gap: var(--s6);
   --lh-de: 1.4;
   --lh-es-big: 1.05;
   --icon: 20px;
@@ -82,6 +84,8 @@
     --fs-es-text: 24px;
     --fs-es-field: 32px;
     --fs-today-text: 19px;
+    --fs-today-de: 44px;
+    --label-gap: var(--s8);
     --icon: 24px;
     --btn-h: 60px;
     --answer-h: 68px;

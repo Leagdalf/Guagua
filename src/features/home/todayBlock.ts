@@ -1,7 +1,7 @@
 // Block „Heute“ aus dem Plan des Tages: Beschriftung, große Zeile, Erklärzeile und Hauptknopf.
 // Texte nach docs/04-design.md, Abschnitt „Texte“ (beide Tabellen zum Block „Heute“). Reine Funktion, kein React.
 
-import { getUnit, units } from "../../core/content";
+import { getUnit } from "../../core/content";
 import type { TodayPlan } from "../../core/units";
 import type { Step } from "../../core/types";
 import type { SessionRequest } from "../session/types";
@@ -23,8 +23,9 @@ export interface TodayBlock {
   /** `es`: Spanisch mit Marker. `de`: Deutsch in Figtree 600. */
   titleLang: "es" | "de";
   text: TextPart[];
-  button: string;
-  action: BlockAction;
+  /** `null`: kein Hauptknopf (nur im Fall „Alles erledigt“, wenn es keine Karten zum Üben gibt). */
+  button: string | null;
+  action: BlockAction | null;
 }
 
 export const STEP_NAMES: Record<Step, string> = {
@@ -45,7 +46,11 @@ function cards(n: number): string {
   return n === 1 ? "1 Karte" : `${n} Karten`;
 }
 
-export function todayBlock(plan: TodayPlan): TodayBlock {
+/**
+ * `hasExtraCards`: Es gibt Karten aus abgeschlossenen Haltestellen. Nur dann bietet der Fall „Alles erledigt“
+ * „10 Karten extra“ an, sonst bleibt der Block ohne Hauptknopf.
+ */
+export function todayBlock(plan: TodayPlan, hasExtraCards = true): TodayBlock {
   if (plan.kind === "work") {
     const unit = plan.unitId ? getUnit(plan.unitId) : undefined;
     if (unit) {
@@ -88,12 +93,16 @@ export function todayBlock(plan: TodayPlan): TodayBlock {
   }
 
   if (plan.kind === "missionOnly") {
-    const unit = plan.openMissionId ? missionTitle(plan.openMissionId) : null;
+    // Die Mission steht auf der Startseite nur in der angehefteten Zeile, nicht noch einmal hier.
+    const next = plan.nextUnitId ? getUnit(plan.nextUnitId) : undefined;
+    const text: TextPart[] = next
+      ? [`Morgen geht es weiter mit Haltestelle ${next.stop}, `, { es: next.title_es }, ". Draußen wartet deine Mission."]
+      : ["Draußen wartet deine Mission."];
     return {
       label: "Heute",
-      title: "Mission offen",
+      title: "Für heute fertig",
       titleLang: "de",
-      text: [unit ?? ""],
+      text,
       button: "Mission ansehen",
       action: { type: "missions" },
     };
@@ -103,9 +112,12 @@ export function todayBlock(plan: TodayPlan): TodayBlock {
   const text: TextPart[] = next
     ? [`Morgen: Haltestelle ${next.stop}, `, { es: next.title_es }]
     : [plan.finalStationOpen ? "Alle zehn Haltestellen sind geschafft. Die Endstation folgt." : "Alle zehn Haltestellen sind geschafft."];
-  return { label: "Heute", title: "Für heute fertig", titleLang: "de", text, button: "10 Karten extra", action: { type: "extra" } };
-}
-
-function missionTitle(missionId: string): string | null {
-  return units.find((unit) => unit.mission.id === missionId)?.mission.title_de ?? null;
+  return {
+    label: "Heute",
+    title: "Für heute fertig",
+    titleLang: "de",
+    text,
+    button: hasExtraCards ? "10 Karten extra" : null,
+    action: hasExtraCards ? { type: "extra" } : null,
+  };
 }

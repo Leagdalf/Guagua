@@ -60,8 +60,9 @@
 }
 
 /* Seiten der Bereiche Mehr, Missionen und der Anleitung */
+/* Ein Abschnitt beginnt mit einer Beschriftung: Abstand nach oben wie `label--section` (24 px, iPad 32 px). */
 .sec {
-  margin-top: var(--s10);
+  margin-top: var(--label-gap);
 }
 
 .sec__title {

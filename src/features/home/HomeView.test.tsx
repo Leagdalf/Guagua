@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { completeMission } from "../../core/units";
+import { extraRoundIds } from "../../core/cards";
+import { completeMission, completeStep, startUnit } from "../../core/units";
 import { HomeView } from "./HomeView";
 import { afterUnit1, newClock, newProgress } from "./testProgress";
 
@@ -61,12 +62,47 @@ describe("HomeView (Server-Render)", () => {
     expect(html).toContain("Buenos días.");
   });
 
+  it("nur Mission offen: „Für heute fertig“ in Figtree, Erklärzeile mit spanischem Namen, Mission genau einmal", () => {
+    const { clock, progress } = afterUnit1();
+    const html = render(progress, clock.current());
+    expect(html).toContain('<h1 class="today__title today__title--de">Für heute fertig</h1>');
+    expect(html).toContain("Morgen geht es weiter mit Haltestelle 2, ");
+    expect(html).toMatch(/<span lang="es" class="es es--inherit">En el café<\/span>\. Draußen wartet deine Mission\./);
+    expect(html).toContain("Mission ansehen");
+    expect(html.match(/Dreimal grüßen/g)).toHaveLength(1);
+    expect(html).not.toContain("Mission offen</h1>");
+  });
+
+  it("Linie: die Haltestelle des Tages heißt „heute“, nach einer Haltestelle am selben Tag heißt die nächste „offen“", () => {
+    const { clock, progress } = afterUnit1();
+    const sameDay = render(progress, clock.current());
+    expect(sameDay).toMatch(/<span class="stop__status">offen<\/span>/);
+    expect(sameDay).not.toMatch(/<span class="stop__status">heute<\/span>/);
+    clock.advance(1);
+    const nextDay = render(progress, clock.current());
+    expect(nextDay).toMatch(/<span class="stop__status">heute<\/span>/);
+    expect(nextDay).not.toMatch(/<span class="stop__status">offen<\/span>/);
+  });
+
+  it("Linie: offene und laufende Haltestellen sind Knöpfe, gesperrte nicht und tragen „gesperrt“ für Screenreader", () => {
+    const { clock, progress } = afterUnit1();
+    const html = render(progress, clock.current());
+    const items = html.split('<li class="stop ').slice(1);
+    expect(items[1]).toContain('<button type="button" class="stop__body"');
+    for (const locked of items.slice(2, 10)) {
+      expect(locked).not.toContain("<button");
+      expect(locked).toContain('<span class="vh"> gesperrt</span>');
+    }
+    expect(items[0]).not.toContain("gesperrt");
+  });
+
   it("ohne offene Mission keine Missionszeile", () => {
     const { clock, progress } = afterUnit1();
     const html = render(completeMission(progress, "u01-m", clock.now), clock.current());
     expect(html).not.toContain("home__mission");
     expect(html).toContain("Für heute fertig");
     expect(html).toContain("Morgen: Haltestelle 2, ");
+    expect(html).not.toContain("Draußen wartet deine Mission");
     expect(html).toMatch(/<span lang="es" class="es es--inherit">En el café<\/span>/);
   });
 
@@ -77,6 +113,15 @@ describe("HomeView (Server-Render)", () => {
     expect(render(progress, c2.current()).match(/10 Karten extra/g)).toHaveLength(1);
     const allDone = completeMission(progress, "u01-m", c2.now);
     expect(render(allDone, c2.current()).match(/10 Karten extra/g)).toHaveLength(1);
+  });
+
+  it("„10 Karten extra“ fehlt, solange es nur Karten aus einer noch nicht abgeschlossenen Haltestelle gibt", () => {
+    const clock = newClock();
+    let p = startUnit(newProgress(clock), "u01", clock.now);
+    p = completeStep(completeStep(p, "u01", 1, clock.now), "u01", 2, clock.now);
+    expect(Object.keys(p.cards).length).toBeGreaterThan(0);
+    expect(extraRoundIds(p, clock.current())).toHaveLength(0);
+    expect(render(p, clock.current())).not.toContain("10 Karten extra");
   });
 
   it("die Endstation steht nicht zur Wahl und erklärt nichts, solange sie gesperrt ist", () => {

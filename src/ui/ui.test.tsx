@@ -9,6 +9,7 @@ import {
   Feedback,
   HomeHeader,
   HomePage,
+  Label,
   Line,
   LessonPage,
   Marker,
@@ -426,5 +427,50 @@ describe("Zusammenfassung", () => {
     expect(out.match(/summary__row/g)).toHaveLength(2);
     expect(out).toContain('<dt class="summary__label">Neue Karten</dt>');
     expect(out).toContain('<dd class="summary__value">3 Tage</dd>');
+  });
+});
+describe("Nachträge: Strich, Abschnitts-Beschriftung, Erklärzeile, Linie", () => {
+  it("falsch gewählte Antwort: der Text steht in answer__text, auch Spanisch bleibt ein Inline-Element darin", () => {
+    const out = html(
+      <AnswerRow state="wrong">
+        <Es size="inherit">Buenas noches.</Es>
+      </AnswerRow>,
+    );
+    expect(out).toContain('class="answer answer--wrong"');
+    expect(out).toContain('<span class="answer__text"><span lang="es" class="es es--inherit">Buenas noches.</span></span>');
+  });
+
+  it("Label mit section trägt label--section, ohne section nicht", () => {
+    expect(html(<Label section>Karten</Label>)).toContain("label label--section");
+    expect(html(<Label>Karten</Label>)).not.toContain("label--section");
+    expect(html(<Label as="h2" tone="accent" section id="x">Karten</Label>)).toContain('class="label label--accent label--section"');
+  });
+
+  it("Today nimmt als Erklärzeile auch Knoten mit spanischem Wort und lang=es", () => {
+    const out = html(
+      <Today
+        label="Heute"
+        title="Für heute fertig"
+        titleLang="de"
+        text={
+          <>
+            Morgen: <Es size="inherit">En el café</Es>.
+          </>
+        }
+      />,
+    );
+    expect(out).toContain('<p class="today__text">Morgen: <span lang="es" class="es es--inherit">En el café</span>.</p>');
+  });
+
+  it("Line: statusText ersetzt den Zustandstext, gesperrte Haltestellen tragen „gesperrt“ für Screenreader", () => {
+    const stops: LineStop[] = [
+      { id: "a", name: "A", topic: "t", state: "open", statusText: "offen" },
+      { id: "b", name: "B", topic: "t", state: "locked" },
+    ];
+    const out = html(<Line stops={stops} />);
+    expect(out).toContain('<span class="stop__status">offen</span>');
+    expect(out).not.toContain(">heute<");
+    expect(out.match(/class="vh"> gesperrt</g)).toHaveLength(1);
+    expect(out.split('<li class="stop ')[1]).not.toContain("gesperrt");
   });
 });

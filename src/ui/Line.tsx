@@ -15,6 +15,8 @@ export interface LineStop {
   terminus?: boolean;
   /** Antippbar, zum Beispiel abgeschlossene Haltestellen mit ihrer Übersicht. */
   selectable?: boolean;
+  /** Text für den Zustand statt des Standards, zum Beispiel „offen“ statt „heute“ bei einer offenen Haltestelle, die nicht die des Tages ist. */
+  statusText?: string;
 }
 
 export interface LineProps {
@@ -54,7 +56,7 @@ export function Line({ stops, title, summary, onSelect, className }: LineProps) 
       )}
       <ol className="line">
         {stops.map((stop) => {
-          const status = STATUS_TEXT[stop.state];
+          const status = stop.statusText ?? STATUS_TEXT[stop.state];
           const marked = stop.state === "open" || stop.state === "running";
           const body = (
             <>
@@ -74,6 +76,7 @@ export function Line({ stops, title, summary, onSelect, className }: LineProps) 
                     <span className="stop__status">{status}</span>
                   </>
                 )}
+                {stop.state === "locked" && <span className="vh"> gesperrt</span>}
               </span>
             </>
           );

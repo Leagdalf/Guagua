@@ -23,6 +23,13 @@ function toTop(): void {
   window.scrollTo(0, 0);
 }
 
+export const SAVE_FAILED_TEXT = "Dein Lernstand lässt sich auf diesem Gerät nicht speichern. Er geht verloren, wenn du die App schließt.";
+
+/** Rahmen mit dem Hinweis bei gescheitertem Speichern. Gilt für den ersten Start und die Ansicht mit Leiste gleich. */
+export function SaveFailedNotice({ saveFailed }: { saveFailed: boolean }) {
+  return saveFailed ? <Notice text={SAVE_FAILED_TEXT} /> : null;
+}
+
 /**
  * Wurzel der App, ohne Router. Zustand des Speichers: leer = erster Start, Fehler = Lernstand nicht lesbar,
  * bereit = Leiste mit Linie, Missionen, Sprachführer und Mehr. Die Lerneinheit läuft im Vollbild ohne Leiste.
@@ -48,7 +55,7 @@ export function App() {
 
   if (state.status === "empty" || onboarding) {
     return (
-      <AppShell>
+      <AppShell notice={<SaveFailedNotice saveFailed={state.status === "ready" && state.saveFailed} />}>
         <Onboarding
           standalone={standalone}
           profile={state.status === "ready" ? state.progress.profile : null}
@@ -97,9 +104,7 @@ export function App() {
     <>
       {newVersion.ready && <Notice text="Neue Version bereit." actionLabel="Neu laden" onAction={newVersion.reload} />}
       {tab !== "phrasebook" && <NoVoiceNotice />}
-      {state.saveFailed && (
-        <Notice text="Dein Lernstand lässt sich auf diesem Gerät nicht speichern. Er geht verloren, wenn du die App schließt." />
-      )}
+      <SaveFailedNotice saveFailed={state.saveFailed} />
     </>
   );
 

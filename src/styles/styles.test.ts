@@ -279,4 +279,30 @@ describe("Nachträge aus docs/04-design.md", () => {
     expect(phoneTokens).toMatch(/--answer-h:\s*56px/);
     expect(ipadTokens).toMatch(/--answer-h:\s*68px/);
   });
+
+  it("falsch gewählte Antwort: durchgestrichen, Strich in mojo", () => {
+    const wrong = body(".answer--wrong .answer__text");
+    expect(wrong).toMatch(/text-decoration-line:\s*line-through/);
+    expect(wrong).toMatch(/(?:^|[;\s])text-decoration-color:\s*var\(--mojo\)/);
+    expect(wrong).toMatch(/text-decoration-thickness:\s*2px/);
+    // Kein Element in der Antwortzeile darf die Dekoration durch inline-block oder float unterbrechen.
+    expect(body(".answer .es")).not.toMatch(/display:\s*(inline-block|block|flex)|float:/);
+    expect(body(".answer__text")).not.toMatch(/display:\s*(inline-block|flex)|float:/);
+  });
+
+  it("deutsche große Zeile im Block Heute: 34 px, iPad 44 px, Schnitt 600", () => {
+    expect(body(".today__title--de")).toMatch(/font-size:\s*var\(--fs-today-de\)/);
+    expect(body(".today__title--de")).toMatch(/font-weight:\s*600/);
+    expect(phoneTokens).toMatch(/--fs-today-de:\s*34px/);
+    expect(ipadTokens).toMatch(/--fs-today-de:\s*44px/);
+  });
+
+  it("Beschriftung eines neuen Abschnitts: 24 px Abstand nach oben, iPad 32 px", () => {
+    expect(body(".label--section")).toMatch(/margin-top:\s*var\(--label-gap\)/);
+    expect(phoneTokens).toMatch(/--label-gap:\s*var\(--s6\)/);
+    expect(ipadTokens).toMatch(/--label-gap:\s*var\(--s8\)/);
+    expect(phoneTokens).toMatch(/--s6:\s*24px/);
+    expect(phoneTokens).toMatch(/--s8:\s*32px/);
+    for (const sel of [".sec", ".ov__sec", ".mi__take"]) expect(body(sel), sel).toMatch(/margin-top:\s*var\(--label-gap\)/);
+  });
 });

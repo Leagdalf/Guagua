@@ -1,16 +1,30 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
+import type { ReactNode } from "react";
+import { extraRoundIds } from "../../core/cards";
 import { units } from "../../core/content";
 import type { Day, Progress } from "../../core/types";
 import { dayCounter, todayPlan } from "../../core/units";
-import { ActionBar, HomeHeader, HomePage, Line, MissionRow, PrimaryButton, TextButton } from "../../ui";
+import { ActionBar, Es, HomeHeader, HomePage, Line, MissionRow, PrimaryButton, TextButton, Today } from "../../ui";
 import type { SessionRequest } from "../session/types";
 import { formatDateDe } from "./dateText";
-import { FINAL_STOP_ID, lineModel } from "./lineModel";
+import { lineModel, stopTap } from "./lineModel";
 import { StopOverview } from "./StopOverview";
 import { todayBlock } from "./todayBlock";
-import type { BlockAction } from "./todayBlock";
-import { TodayView } from "./TodayView";
+import type { BlockAction, TextPart } from "./todayBlock";
 import "./home.css";
+
+/** Erklärzeile des Blocks: Deutsch mit spanischen Wörtern (kursiv, `lang="es"`). */
+function textNode(parts: readonly TextPart[]): ReactNode {
+  return parts.map((part, index) =>
+    typeof part === "string" ? (
+      <Fragment key={index}>{part}</Fragment>
+    ) : (
+      <Es key={index} size="inherit">
+        {part.es}
+      </Es>
+    ),
+  );
+}
 
 export interface HomeViewProps {
   progress: Progress;
@@ -46,10 +60,11 @@ export function HomeView({ progress, day, onStartSession, onOpenMissions }: Home
   }
 
   const plan = todayPlan(progress, day);
-  const block = todayBlock(plan);
-  const line = lineModel(progress);
+  // „10 Karten extra“ gibt es nur, wenn Karten aus abgeschlossenen Haltestellen da sind (dieselbe Quelle wie die Runde selbst).
+  const hasExtraCards = extraRoundIds(progress, day).length > 0;
+  const block = todayBlock(plan, hasExtraCards);
+  const line = lineModel(progress, plan.unitId);
   const mission = plan.openMissionId ? units.find((unit) => unit.mission.id === plan.openMissionId)?.mission : undefined;
-  const hasCards = Object.keys(progress.cards).length > 0;
 
   const run = (action: BlockAction): void => {
     if (action.type === "session") onStartSession(action.request);
@@ -60,11 +75,13 @@ export function HomeView({ progress, day, onStartSession, onOpenMissions }: Home
   return (
     <HomePage
       header={<HomeHeader date={formatDateDe(day)} progress={`Tag ${dayCounter(progress, day)}`} stops={line.mountain} />}
-      today={<TodayView block={block} />}
+      today={<Today label={block.label} title={block.title} titleLang={block.titleLang} text={textNode(block.text)} />}
       action={
-        <ActionBar aboveTabs>
-          <PrimaryButton onClick={() => run(block.action)}>{block.button}</PrimaryButton>
-        </ActionBar>
+        block.action && block.button ? (
+          <ActionBar aboveTabs>
+            <PrimaryButton onClick={() => run(block.action as BlockAction)}>{block.button}</PrimaryButton>
+          </ActionBar>
+        ) : null
       }
       mission={
         mission ? (
@@ -83,13 +100,17 @@ export function HomeView({ progress, day, onStartSession, onOpenMissions }: Home
             summary={line.summary}
             stops={line.stops}
             onSelect={(id) => {
-              if (id === FINAL_STOP_ID) return;
-              setOverview(id);
-              toTop();
+              const tap = stopTap(line.stops, id);
+              if (tap.type === "overview") {
+                setOverview(tap.unitId);
+                toTop();
+              } else if (tap.type === "session") {
+                onStartSession({ kind: "day", unitId: tap.unitId });
+              }
             }}
           />
           {line.finalNote && <p className="home__note">{line.finalNote}</p>}
-          {hasCards && block.action.type !== "extra" && (
+          {hasExtraCards && block.action?.type !== "extra" && (
             <div className="home__extra">
               <TextButton onClick={() => onStartSession({ kind: "extra" })}>10 Karten extra</TextButton>
             </div>

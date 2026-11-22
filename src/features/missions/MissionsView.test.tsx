@@ -2,7 +2,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { createProgressStore } from "../../core/store";
 import type { StorageLike } from "../../core/store";
-import { completeMission, missionState, skipMission } from "../../core/units";
+import { completeMission, missionState, skipMission, startUnit, stopState, stopStates, todayPlan } from "../../core/units";
+import { lineModel, stopTap } from "../home/lineModel";
 import { afterUnit1 } from "../home/testProgress";
 import { MissionsView } from "./MissionsView";
 import { missionList } from "./missionsModel";
@@ -96,11 +97,26 @@ describe("Missionen: Punkte und Überspringen", () => {
     expect(done.stats.points - progress.stats.points).toBe(50);
   });
 
-  it("Überspringen sperrt keine Haltestelle: Haltestelle 2 bleibt offen", () => {
+  it("Überspringen sperrt keine Haltestelle: Haltestelle 2 ist offen, wird am nächsten Tag angeboten und lässt sich beginnen", () => {
     const { clock, progress } = afterUnit1();
     const skipped = skipMission(progress, "u01-m", clock.now);
     expect(missionList(skipped)[0]?.state).toBe("skipped");
-    expect(render(skipped)).toContain("Haltestelle 2 · gesperrt");
+    // Haltestelle 2 ist offen, nicht gesperrt.
+    expect(stopState(skipped, "u02")).toBe("open");
+    expect(stopStates(skipped).find((s) => s.unitId === "u02")?.state).toBe("open");
+    // Die Linie bietet sie zum Antippen an und der Plan des nächsten Tages schlägt sie vor.
+    expect(stopTap(lineModel(skipped, null).stops, "u02")).toEqual({ type: "session", unitId: "u02" });
+    clock.advance(1);
+    const plan = todayPlan(skipped, clock.current());
+    expect(plan.unitId).toBe("u02");
+    expect(plan.unitState).toBe("open");
+    // Beginnen: Die Haltestelle läuft danach.
+    const begun = startUnit(skipped, "u02", clock.now);
+    expect(stopState(begun, "u02")).toBe("running");
+    expect(begun.units.u02).toBeDefined();
+    // Die übersprungene Mission bleibt nachholbar.
+    expect(missionState(begun, "u01-m")).toBe("skipped");
+    expect(render(skipped)).toContain("Nachholen");
   });
 
   it("gespeichert und nach dem Neuladen wieder da", () => {

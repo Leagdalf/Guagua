@@ -98,6 +98,11 @@
   color: var(--atlantico);
 }
 
+/* Beschriftung, die einen neuen Abschnitt beginnt: 24 px Abstand nach oben, iPad 32 px (Token --label-gap). */
+.label--section {
+  margin-top: var(--label-gap);
+}
+
 /* Antwortzeilen */
 .answers {
   display: flex;
@@ -186,9 +191,13 @@
   color: var(--mojo);
 }
 
+/* Strich in mojo, über die ganze Zeile und etwas kräftiger als der Standard, damit er auf Armlänge zu sehen ist. */
 .answer--wrong .answer__text {
-  text-decoration: line-through;
+  text-decoration-line: line-through;
+  -webkit-text-decoration-color: var(--mojo);
   text-decoration-color: var(--mojo);
+  text-decoration-thickness: 2px;
+  text-decoration-skip-ink: none;
 }
 
 /* Haltepunkt */

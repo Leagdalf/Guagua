@@ -24,11 +24,37 @@ describe("Block „Heute“: erste Tabelle im Design-Dokument", () => {
     const { clock, progress } = afterUnit1();
     const b = blockOf(progress, clock.current());
     expect(b.label).toBe("Heute");
-    expect(b.title).toBe("Mission offen");
+    expect(b.title).toBe("Für heute fertig");
     expect(b.titleLang).toBe("de");
-    expect(plainText(b.text)).toBe("Dreimal grüßen");
+    expect(plainText(b.text)).toBe("Morgen geht es weiter mit Haltestelle 2, En el café. Draußen wartet deine Mission.");
+    expect(b.text).toContainEqual({ es: "En el café" });
     expect(b.button).toBe("Mission ansehen");
     expect(b.action).toEqual({ type: "missions" });
+  });
+
+  it("nur Mission offen: der Titel der Mission steht nicht im Block, sie steht nur in der angehefteten Zeile", () => {
+    const { clock, progress } = afterUnit1();
+    const b = blockOf(progress, clock.current());
+    expect(JSON.stringify(b)).not.toContain("Dreimal grüßen");
+  });
+
+  it("nur Mission offen, keine nächste Haltestelle: der Satz mit „Morgen“ entfällt", () => {
+    const clock = newClock();
+    let p = newProgress(clock);
+    for (const id of ["u01", "u02", "u03", "u04", "u05", "u06", "u07", "u08", "u09", "u10"]) p = completeUnit(p, id, clock.now);
+    p = finishReviewRound(p, clock.current());
+    const b = blockOf(p, clock.current());
+    expect(b.title).toBe("Für heute fertig");
+    expect(plainText(b.text)).toBe("Draußen wartet deine Mission.");
+    expect(b.button).toBe("Mission ansehen");
+  });
+
+  it("alles erledigt ohne Karten aus abgeschlossenen Haltestellen: kein Knopf „10 Karten extra“", () => {
+    const { clock, progress } = afterUnit1();
+    const done = completeMission(progress, "u01-m", clock.now);
+    const b = todayBlock(todayPlan(done, clock.current()), false);
+    expect(b.button).toBeNull();
+    expect(b.action).toBeNull();
   });
 
   it("alles erledigt", () => {

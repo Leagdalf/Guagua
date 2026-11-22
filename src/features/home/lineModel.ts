@@ -20,7 +20,25 @@ export interface LineModel {
   finalNote: string | null;
 }
 
-export function lineModel(progress: Progress): LineModel {
+/**
+ * `offeredUnitId`: die Haltestelle des Tages (`todayPlan(...).unitId`). Nur sie heißt „heute“, eine andere offene
+ * Haltestelle heißt „offen“. Offene und laufende Haltestellen lassen sich antippen und beginnen.
+ */
+export type StopTap =
+  /** Abgeschlossen: Übersicht der Haltestelle. */
+  | { type: "overview"; unitId: string }
+  /** Offen oder laufend: die Lerneinheit, auch wenn heute schon eine geschafft ist. */
+  | { type: "session"; unitId: string }
+  | { type: "none" };
+
+/** Was Tippen auf einen Punkt der Linie bewirkt. Gesperrte Haltestellen und die Endstation bewirken nichts. */
+export function stopTap(stops: readonly LineStop[], id: string): StopTap {
+  const stop = stops.find((candidate) => candidate.id === id);
+  if (!stop || stop.terminus || stop.state === "locked") return { type: "none" };
+  return stop.state === "done" ? { type: "overview", unitId: id } : { type: "session", unitId: id };
+}
+
+export function lineModel(progress: Progress, offeredUnitId: string | null = null): LineModel {
   const states = stopStates(progress);
   const stops: LineStop[] = states.flatMap((info) => {
     const unit = getUnit(info.unitId);
@@ -31,7 +49,8 @@ export function lineModel(progress: Progress): LineModel {
         name: unit.title_es,
         topic: unit.title_de,
         state: info.state,
-        selectable: info.state === "done",
+        selectable: info.state !== "locked",
+        ...(info.state === "open" ? { statusText: unit.id === offeredUnitId ? "heute" : "offen" } : {}),
       },
     ];
   });

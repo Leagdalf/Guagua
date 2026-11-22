@@ -14,7 +14,7 @@ Spanischer Text: immer `<Es>` oder Klasse `es` plus `lang="es"`, auch nicht in e
 |---|---|---|
 | `Es` | `as?` (`span` `p` `h1` `h2` `h3` `div` `li`), `size?` (`text` 20/24 px, `card` 48/72, `today` 50/68, `stop` 23/26, `inherit`), `className?`, `id?`, `children` | Jeder spanische Text; setzt Newsreader kursiv und `lang="es"`. In einer Antwortzeile und in Paaren ist er 20/24 px, auch mit `size="inherit"`. |
 | `Marker` | `children`, `className?` | Gelber Balken hinter der Zeile, die gerade dran ist; um Text oder `Es` legen, einmal je Ansicht. |
-| `Label` | `as?` (`p` `h1` `h2` `h3` `span`), `tone?` (`muted` `accent`), `className?`, `id?`, `children` | Beschriftung in Großbuchstaben, zum Beispiel „Heute · Haltestelle 2“. `id` für `aria-labelledby`. |
+| `Label` | `as?` (`p` `h1` `h2` `h3` `span`), `tone?` (`muted` `accent`), `section?`, `className?`, `id?`, `children` | Beschriftung in Großbuchstaben, zum Beispiel „Heute · Haltestelle 2“. `id` für `aria-labelledby`. `section` für eine Beschriftung, die innerhalb der Ansicht einen neuen Abschnitt beginnt: Klasse `label--section`, 24 px Abstand nach oben (iPad 32 px, Token `--label-gap`). Nicht für die erste Beschriftung einer Ansicht. Eigene Abschnitte in Großbuchstaben setzen `margin-top: var(--label-gap)` statt eines festen Werts (so die Klassen `sec`, `ov__sec`, `mi__take`). |
 
 ## Knöpfe
 
@@ -29,7 +29,7 @@ Spanischer Text: immer `<Es>` oder Klasse `es` plus `lang="es"`, auch nicht in e
 
 | Baustein | Props | Verwendung |
 |---|---|---|
-| `AnswerRow` | `state?` (`selectable` `correct` `wrong` `locked`), `onClick?`, `children`, `className?` | Eine Antwortzeile; nach der Antwort richtige Zeile `correct`, gewählte falsche `wrong`, übrige `locked`. Haken und Kreuz haben 2,4 px Strich. |
+| `AnswerRow` | `state?` (`selectable` `correct` `wrong` `locked`), `onClick?`, `children`, `className?` | Eine Antwortzeile; nach der Antwort richtige Zeile `correct`, gewählte falsche `wrong`, übrige `locked`. Haken und Kreuz haben 2,4 px Strich; `wrong` streicht den Text durch (2 px, in mojo). |
 | `AnswerList` | `children`, `label?`, `className?` | Umschließt die Antwortzeilen und zieht die Haarlinien. |
 | `Feedback` | `result` (`correct` `wrong` `accent`), `solution`, `hint?`, `className?` | Rückmeldung unter den Antworten: Haken oder Kreuz mit „Richtig.“, „Falsch. Richtig ist:“ oder „Richtig. Achte auf den Akzent:“, dann der Lösungssatz (`solution`, Spanisches als `<Es>`), darunter der Hinweis in ceniza. `role="status"`. |
 | `PairsBoard` | `left`, `right` (je `PairItem[]`: `id`, `text`, `state` = `selectable` `selected` `found` `wrong`), `onSelect?(side, id)`, `leftLabel?`, `rightLabel?`, `className?` | Paare: links Spanisch (der Baustein setzt `lang="es"`), rechts Deutsch. Gewählt mit Marker, gefunden in ceniza mit Haken und gesperrt, falsch mit Kreuz. Die Zustände je Zeile setzt der Aufrufer. |
@@ -45,7 +45,7 @@ Spanischer Text: immer `<Es>` oder Klasse `es` plus `lang="es"`, auch nicht in e
 | Baustein | Props | Verwendung |
 |---|---|---|
 | `StopDot` | `state` (`locked` `open` `running` `done`), `terminus?`, `small?`, `className?` | Einzelner Haltepunkt; `terminus` für die Endstation (Quadrat), reine Zierde. |
-| `Line` | `stops` (je `id`, `name`, `topic`, `state`, `terminus?`, `selectable?`), `title?`, `summary?`, `onSelect?(id)`, `className?` | Die Linie mit Namen, Themen und Zuständen; `open` und `running` bekommen den Marker, `selectable` macht die Zeile antippbar. Am Telefon steht rechts nur ein kurzer Text (Thema bei gesperrt, sonst der Zustand, bei der Endstation „Endstation“); ein Name bricht nie um. |
+| `Line` | `stops` (je `id`, `name`, `topic`, `state`, `terminus?`, `selectable?`, `statusText?`), `title?`, `summary?`, `onSelect?(id)`, `className?` | Die Linie mit Namen, Themen und Zuständen; `open` und `running` bekommen den Marker, `selectable` macht die Zeile antippbar. `statusText` ersetzt den Zustandstext (Standard bei `open` ist „heute“; eine offene Haltestelle, die nicht die des Tages ist, bekommt „offen“). Gesperrte Zeilen tragen für Screenreader den Text „gesperrt“ (Klasse `vh`). Am Telefon steht rechts nur ein kurzer Text (Thema bei gesperrt, sonst der Zustand, bei der Endstation „Endstation“); ein Name bricht nie um. |
 | `Mountain` | `stops` (bis zu zehn `StopState`, fehlende zählen als `locked`), `className?` | Der Berg mit zehn Haltepunkten; 180 px breit, ab 700 px 340 px. |
 | `MOUNTAIN_POINTS` | Konstante | Die zehn Mittelpunkte `[cx, cy]` im `viewBox` `0 0 180 119`, von unten nach oben, aus docs/04-design.md. Für Zeichnungen, die denselben Weg brauchen. |
 
@@ -64,7 +64,7 @@ Spanischer Text: immer `<Es>` oder Klasse `es` plus `lang="es"`, auch nicht in e
 | `AppShell` | `tabs?`, `notice?`, `children` | Rahmen der Startseite, Missionen, Sprachführer und Mehr: Hinweis oben, das einzige `main`, `TabBar` fest unten. Ansichten darin bringen kein eigenes `main` mit. |
 | `HomePage` | `header`, `today`, `action`, `mission?`, `line` | Startseite: Telefon eine Spalte, iPad zwei Spalten, höchstens 1000 px; `action` ist eine `ActionBar aboveTabs` mit dem Hauptknopf. |
 | `HomeHeader` | `date`, `progress`, `stops` | Kopf der Startseite mit Datum, „Tag n“ (ohne „von 10“) und Berg. |
-| `Today` | `label`, `title`, `titleLang?` (`es` mit Marker, `de` in Figtree 600), `text` | Block „Heute“ ohne Hauptknopf; die Erklärzeile ist 16 px, auf dem iPad 19 px. |
+| `Today` | `label`, `title`, `titleLang?` (`es` mit Marker, `de` in Figtree 600, 34 px, iPad 44 px), `text` (`ReactNode`) | Block „Heute“ ohne Hauptknopf; die Erklärzeile ist 16 px, auf dem iPad 19 px und darf spanische Wörter als `<Es size="inherit">` enthalten. |
 | `MissionRow` | `title`, `text?`, `phrases?`, `actionLabel?` („Abhaken“), `onAction?`, `label?` | Offene Mission der Startseite; Telefon eine Zeile, iPad mit Text und Sätzen zum Mitnehmen. |
 | `LessonPage` | `header?`, `footer?`, `children` | Lerneinheit: Spalte, am iPad 620 px; `header` ist der `UnitHeader`, `footer` eine `ActionBar` mit dem Hauptknopf. |
 | `SimplePage` | `footer?`, `className?`, `children` | Missionen, Sprachführer, Mehr: Spalte, am iPad höchstens 680 px. |
