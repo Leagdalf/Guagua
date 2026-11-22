@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { allPhrases, phrasebook } from "../../core/content";
 import { PhrasebookResults } from "./PhrasebookResults";
 import { PhrasebookView } from "./PhrasebookView";
+import { FAVORITES_TITLE } from "./favorites";
 
 function decode(html: string): string {
   return html
@@ -26,14 +27,17 @@ describe("PhrasebookView (Server-Render, ohne DOM)", () => {
   });
 
   it("spanischer Text steht nie ohne lang=es, auch nicht in einem aria-label", () => {
-    expect(html).not.toMatch(/aria-label="[^"]*"/); // die Tonknöpfe verweisen mit aria-describedby auf den Satz
+    for (const label of html.matchAll(/aria-label="([^"]*)"/g)) {
+      for (const phrase of allPhrases) expect(label[1]).not.toContain(phrase.es);
+    }
+    // Ton- und Zeigen-Knöpfe verweisen mit aria-describedby auf den Satz
     for (const phrase of allPhrases) {
       const all = html.split(phrase.es).length - 1;
       const inEs = html.split(`lang="es" class="es">${phrase.es}</p>`).length - 1;
       expect(all, phrase.es).toBe(inEs);
     }
     const ids = [...html.matchAll(/aria-describedby="([^"]+)"/g)].map((m) => m[1]!);
-    expect(ids).toHaveLength(56);
+    expect(ids).toHaveLength(112); // je Satz Anhören und Zeigen
     for (const id of ids) expect(html, id).toContain(`id="${id}" lang="es"`);
   });
 
@@ -91,3 +95,53 @@ describe("PhrasebookResults", () => {
     expect(html).toContain("Nichts gefunden für „xyz“");
   });
 });
+
+describe("Sterne und Zeigen in der Liste", () => {
+  const render = (props: Parameters<typeof PhrasebookResults>[0]) => decode(renderToStaticMarkup(<PhrasebookResults {...props} />));
+  const second = phrasebook.categories[1]!.phrases[0]!;
+  const noop = () => {};
+
+  it("jeder Satz hat Zeigen; mit Profil auch einen Stern „Merken“", () => {
+    const html = render({ query: "", hasVoice: true, favorites: [], onToggleFavorite: noop, onShow: noop });
+    expect(html.match(/pb-show-btn/g)).toHaveLength(56);
+    expect(html.match(/aria-label="Merken"/g)).toHaveLength(56);
+    expect(html).not.toContain("Nicht mehr merken");
+  });
+
+  it("ohne Profil gibt es keine Sterne, der Sprachführer läuft trotzdem", () => {
+    const html = render({ query: "", hasVoice: true, favorites: null, onToggleFavorite: noop, onShow: noop });
+    expect(html).not.toContain("pb-star");
+    expect(html.match(/<li class="pb-row"/g)).toHaveLength(56);
+  });
+
+  it("ohne gemerkte Sätze fehlt die Kategorie „Gemerkt“", () => {
+    const html = render({ query: "", hasVoice: true, favorites: [], onToggleFavorite: noop });
+    expect(html).not.toContain(`>${FAVORITES_TITLE}<`);
+    expect(html.match(/<h2[ >]/g)).toHaveLength(phrasebook.categories.length);
+  });
+
+  it("mit gemerkten Sätzen steht „Gemerkt“ vor „Notfall und Gesundheit“ und der Satz bleibt in seiner Kategorie", () => {
+    const html = render({ query: "", hasVoice: true, favorites: [second.id], onToggleFavorite: noop, onShow: noop });
+    expect(phrasebook.categories[0]!.title_de).toBe("Notfall und Gesundheit");
+    const gemerkt = html.indexOf(`>${FAVORITES_TITLE}<`);
+    expect(gemerkt).toBeGreaterThan(-1);
+    expect(gemerkt).toBeLessThan(html.indexOf(phrasebook.categories[0]!.title_de));
+    expect(html.match(/<h2[ >]/g)).toHaveLength(phrasebook.categories.length + 1);
+    expect(html.split(second.es).length - 1).toBe(2);
+    expect(html.match(/aria-label="Nicht mehr merken"/g)).toHaveLength(2);
+    expect(html.match(/<li class="pb-row"/g)).toHaveLength(57);
+  });
+
+  it("die Suche findet gemerkte Sätze wie bisher", () => {
+    const html = render({ query: "xyz", hasVoice: true, favorites: [second.id], onToggleFavorite: noop });
+    expect(html).toContain("Nichts gefunden");
+    expect(render({ query: "WASSER", hasVoice: true, favorites: [], onToggleFavorite: noop }).match(/<li class="pb-row"/g)).toHaveLength(2);
+  });
+
+  it("ids der Sätze bleiben eindeutig, auch wenn ein Satz zweimal erscheint", () => {
+    const html = render({ query: "", hasVoice: true, favorites: [second.id], onToggleFavorite: noop, onShow: noop });
+    const ids = [...html.matchAll(/ id="(pb-es-[^"]+)"/g)].map((m) => m[1]!);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+

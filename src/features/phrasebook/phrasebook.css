@@ -27,13 +27,14 @@
   border-bottom: var(--hair) solid var(--raya);
 }
 
+/* Telefon: Aktionen unter dem Satz. iPad (unten): rechts daneben. */
 .pb-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s4);
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--s1);
   min-height: 64px;
-  padding: var(--s3) 0;
+  padding: var(--s3) 0 var(--s1);
   border-top: var(--hair) solid var(--raya);
 }
 
@@ -54,8 +55,92 @@
   color: var(--ceniza);
 }
 
-.pb-row .audio-btn {
+.pb-actions {
+  display: flex;
   flex: none;
+  align-items: center;
+  gap: var(--s6);
+}
+
+.pb-actions .text-btn {
+  flex: none;
+  justify-content: center;
+}
+
+/* Der Stern sitzt am Zeilenende und ist 44 mal 44 px groß. */
+.pb-star {
+  width: var(--tap);
+  height: var(--tap);
+  margin-left: auto;
+  color: var(--tinta);
+}
+
+.pb-star .icon {
+  width: 24px;
+  height: 24px;
+}
+
+.pb-star--on .icon path {
+  fill: var(--platano);
+}
+
+/* Vollbild „Zeigen“: über der ganzen App, auch über der unteren Leiste. */
+.pb-show {
+  /* Mindestgrößen; ShowOverlay setzt je Satz die passende Stufe inline. */
+  --show-fs-phone: 48px;
+  --show-fs-tablet: 72px;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  height: 100dvh;
+  padding: env(safe-area-inset-top, 0px) max(var(--edge), env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px)
+    max(var(--edge), env(safe-area-inset-left, 0px));
+  background: var(--pagina);
+  color: var(--tinta);
+  text-align: center;
+}
+
+.pb-show__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+}
+
+.pb-show__body > :first-child {
+  margin-top: auto;
+}
+
+.pb-show__body > :last-child {
+  margin-bottom: auto;
+}
+
+.pb-show .pb-show__es.es {
+  font-size: var(--show-fs-phone);
+  line-height: var(--lh-es-big);
+  letter-spacing: -0.01em;
+}
+
+.pb-show__de {
+  margin-top: var(--s6);
+  font-size: var(--fs-note);
+  color: var(--ceniza);
+}
+
+.pb-show__actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s10);
+  padding: var(--s3) 0 var(--s5);
+  border-top: var(--hair) solid var(--raya);
 }
 
 .pb-empty {
@@ -72,6 +157,29 @@
   }
 
   .pb-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s4);
     min-height: 72px;
+    padding: var(--s3) 0;
+  }
+
+  .pb-actions {
+    gap: var(--s4);
+  }
+
+  .pb-star {
+    margin-left: 0;
+  }
+
+  .pb-show .pb-show__es.es {
+    font-size: var(--show-fs-tablet);
+  }
+
+  .pb-show__de {
+    font-size: var(--fs-body);
   }
 }
+
+
