@@ -27,9 +27,9 @@ describe("Lerninhalte", () => {
     expect(getUnit("u99")).toBeUndefined();
   });
 
-  it("liefert den Sprachführer mit 56 Sätzen in 8 Kategorien", () => {
-    expect(phrasebook.categories).toHaveLength(8);
-    expect(allPhrases).toHaveLength(56);
+  it("liefert den Sprachführer mit 61 Sätzen in 9 Kategorien", () => {
+    expect(phrasebook.categories).toHaveLength(9);
+    expect(allPhrases).toHaveLength(61);
   });
 
   it("liefert die Zahlen 0 bis 100 und sieben Wochentage", () => {

@@ -275,6 +275,11 @@
       "Perdón, ¿dónde está la playa?",
       "¿Está lejos?",
       "Muchas gracias."
+    ],
+    "say_de": [
+      "Entschuldigung, wo ist der Strand?",
+      "Ist es weit weg?",
+      "Vielen Dank."
     ]
   },
   "canarias_de": "Der Linienbus heißt auf den Kanaren guagua, die Haltestelle parada de guaguas. Auf dem spanischen Festland sagt man autobús."

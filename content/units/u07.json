@@ -293,6 +293,11 @@
       "Hablo un poco de español.",
       "¿Qué tal?",
       "Más despacio, por favor."
+    ],
+    "say_de": [
+      "Ich spreche ein bisschen Spanisch.",
+      "Wie geht's?",
+      "Langsamer, bitte."
     ]
   },
   "canarias_de": "Für ‚ihr' sagen Kanarier ustedes statt vosotros, mit der Verbform der dritten Person: ‚¿Están de vacaciones?' statt ‚¿Estáis de vacaciones?'. Die vosotros-Formen brauchst du auf den Inseln deshalb nicht."

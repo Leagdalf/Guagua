@@ -293,6 +293,11 @@
       "¿Tiene una mesa para dos?",
       "De segundo, pescado, por favor.",
       "Está muy rico."
+    ],
+    "say_de": [
+      "Haben Sie einen Tisch für zwei?",
+      "Als Hauptgang Fisch, bitte.",
+      "Das schmeckt sehr gut."
     ]
   },
   "canarias_de": "Kartoffeln heißen auf den Kanaren papas, nicht patatas. Papas arrugadas kochen in sehr salzigem Wasser, bis die Schale runzlig wird, und kommen mit Mojo auf den Tisch."

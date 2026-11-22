@@ -1,6 +1,37 @@
 {
   "categories": [
     {
+      "id": "verstehen",
+      "title_de": "Wenn du nichts verstehst",
+      "phrases": [
+        {
+          "id": "pb-verstehen-01",
+          "es": "No entiendo.",
+          "de": "Ich verstehe nicht."
+        },
+        {
+          "id": "pb-verstehen-02",
+          "es": "¿Puede repetir?",
+          "de": "Können Sie das wiederholen?"
+        },
+        {
+          "id": "pb-verstehen-03",
+          "es": "Más despacio, por favor.",
+          "de": "Langsamer, bitte."
+        },
+        {
+          "id": "pb-verstehen-04",
+          "es": "Hablo un poco de español.",
+          "de": "Ich spreche ein bisschen Spanisch."
+        },
+        {
+          "id": "pb-verstehen-05",
+          "es": "¿Cómo se dice esto en español?",
+          "de": "Wie sagt man das auf Spanisch?"
+        }
+      ]
+    },
+    {
       "id": "notfall",
       "title_de": "Notfall und Gesundheit",
       "phrases": [

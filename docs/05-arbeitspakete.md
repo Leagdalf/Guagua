@@ -94,7 +94,7 @@ Abnahme:
 - Unit-Tests mit nachgebildetem `speechSynthesis`: Stimmenwahl in der Reihenfolge gespeichert, es-ES, es-MX, es-US, sonstige; leere Liste führt zum Zustand „kein Ton“; `…` und `{name}` werden vor dem Sprechen ersetzt.
 - `speak` wird nur aus Klick-Behandlungen aufgerufen. Im Code gibt es keinen Aufruf aus Zeitgebern oder Effekten.
 - Die Suche nach „medico“ findet „Necesito un médico.“ Die Suche nach „WASSER“ findet genau zwei Sätze: „Otra agua, por favor.“ und „No hay agua caliente.“ Die Suche nach „xyz“ zeigt einen leeren Zustand mit Text.
-- Alle 56 Sätze werden angezeigt, der Hinweis zur Notrufnummer steht über der ersten Kategorie.
+- Alle Sätze werden angezeigt (seit dem 23.11.2026 sind es 61 in 9 Kategorien), der Hinweis zur Notrufnummer steht über den Sätzen der Kategorie „Notfall und Gesundheit“.
 
 ## AP4 Lerneinheit
 

@@ -22,7 +22,7 @@ Die App deckt deshalb einen Ausschnitt von A1 ab, keinen Abschluss:
 | Grammatikbausteine | 10 |
 | Dialoge | 10 mit zusammen 74 Zeilen |
 | Missionen für draußen | 10 |
-| Sätze im Sprachführer | 56 in 8 Kategorien |
+| Sätze im Sprachführer | 61 in 9 Kategorien |
 
 Was von A1 fehlt, steht in docs/03-lehrplan.md unter „Nicht enthalten“.
 

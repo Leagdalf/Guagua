@@ -294,6 +294,11 @@
       "Quiero medio kilo de plátanos, por favor.",
       "Nada más, gracias.",
       "¿Puedo pagar con tarjeta?"
+    ],
+    "say_de": [
+      "Ich möchte ein halbes Kilo Bananen, bitte.",
+      "Das ist alles, danke.",
+      "Kann ich mit Karte zahlen?"
     ]
   },
   "canarias_de": "Die Banane von den Kanaren heißt plátano. Sie ist kleiner und süßer als die importierte Banane, die in Spanien banana genannt wird."

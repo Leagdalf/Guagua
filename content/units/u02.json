@@ -284,6 +284,11 @@
       "Un cortado, por favor.",
       "La cuenta, por favor.",
       "Gracias, hasta luego."
+    ],
+    "say_de": [
+      "Einen Cortado, bitte.",
+      "Die Rechnung, bitte.",
+      "Danke, bis später."
     ]
   },
   "canarias_de": "Der Barraquito stammt aus Santa Cruz de Tenerife: Kondensmilch, Likör, Espresso und Milch in Schichten, dazu Zimt und Zitronenschale. Wer ‚un leche y leche' bestellt, bekommt einen Cortado mit Kondensmilch."

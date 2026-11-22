@@ -61,7 +61,7 @@ Die Lernende ist eine Frau. Wo Spanisch nach Geschlecht unterscheidet, steht die
 
 ## Sprachführer
 
-56 Sätze zum Nachschlagen und Vorzeigen, getrennt vom Kurs: Notfall und Gesundheit (6), Unverträglichkeiten und Sonderwünsche (10), Im Restaurant (9), Unterkunft (7), Unterwegs (7), Einkaufen (5), Strand und Ausflug (6), Höflich bleiben (6).
+61 Sätze zum Nachschlagen und Vorzeigen, getrennt vom Kurs: Wenn du nichts verstehst (5), Notfall und Gesundheit (6), Unverträglichkeiten und Sonderwünsche (10), Im Restaurant (9), Unterkunft (7), Unterwegs (7), Einkaufen (5), Strand und Ausflug (6), Höflich bleiben (6).
 
 ## Nicht enthalten
 

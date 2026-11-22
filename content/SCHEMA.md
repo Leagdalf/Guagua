@@ -61,11 +61,11 @@ Der einzige erlaubte Platzhalter ist `{name}`. Die App ersetzt ihn durch den Nam
 
 ### Mission (`mission`)
 
-`id` (`uNN-m`), `title_de`, `task_de` (was genau zu tun ist, in der Du-Form) und `say` (2 bis 3 spanische Sätze zum Mitnehmen).
+`id` (`uNN-m`), `title_de`, `task_de` (was genau zu tun ist, in der Du-Form) und `say` (2 bis 3 spanische Sätze zum Mitnehmen) und `say_de` (die deutschen Übersetzungen der Sätze in `say`, gleich viele und in derselben Reihenfolge, nicht leer). Wo ein Satz schon als Karte, Beispiel, Dialogzeile oder Sprachführer-Satz vorkommt, gilt dessen deutsche Fassung.
 
 ## Sprachführer (`phrasebook.json`)
 
-`categories[]` mit `id`, `title_de`, optional `note_de` und `phrases[]`. Jeder Satz hat `id` (`pb-<kategorie>-NN`), `es`, `de` und optional `note_de`.
+`categories[]` mit `id`, `title_de`, optional `note_de` und `phrases[]`. Jeder Satz hat `id` (`pb-<kategorie>-NN`), `es`, `de` und optional `note_de`. Die erste Kategorie ist `verstehen` („Wenn du nichts verstehst“): Rettungssätze aus Haltestelle 7 (Wiederholung, langsamer sprechen, ein Wort erfragen), mit demselben Wortlaut wie dort, als vollständige Sätze.
 
 ## Nachschlagen (`reference.json`)
 

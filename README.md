@@ -27,7 +27,7 @@ Stand 23.11.2026: Die App ist gebaut und getestet, aber noch nicht veröffentlic
 | `docs/06-deployment-und-ipad.md` | Veröffentlichen, Installieren, Gerätetest, Fehlerbilder |
 | `docs/07-kickoff.md` | Aufträge zum Einfügen in Claude Code, Eintrag für die Vault |
 | `docs/08-quellen.md` | Belege und was nicht belegt ist |
-| `content/` | 10 Einheiten mit 154 Lernkarten, Sprachführer mit 56 Sätzen, Zahlen 0 bis 100 |
+| `content/` | 10 Einheiten mit 154 Lernkarten, Sprachführer mit 61 Sätzen, Zahlen 0 bis 100 |
 | `tools/validate-content.mjs` | Prüft die Inhalte, läuft ohne Installation |
 | `tools/simulate-reviews.mjs` | Rechnet die tägliche Wiederhollast durch |
 
@@ -37,7 +37,7 @@ Stand 23.11.2026: Die App ist gebaut und getestet, aber noch nicht veröffentlic
 node tools/validate-content.mjs
 ```
 
-Erwartete Ausgabe: `Inhalte in Ordnung: 10 Einheiten, 154 Lernkarten, 56 Sprachführer-Sätze, 308 eindeutige ids.`
+Erwartete Ausgabe: `Inhalte in Ordnung: 10 Einheiten, 154 Lernkarten, 61 Sprachführer-Sätze, 314 eindeutige ids.`
 
 ## Herkunft
 

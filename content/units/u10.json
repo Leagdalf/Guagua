@@ -286,6 +286,11 @@
       "Dos billetes, por favor.",
       "Tengo una reserva.",
       "¿Puede ayudarme?"
+    ],
+    "say_de": [
+      "Zwei Fahrkarten, bitte.",
+      "Ich habe eine Reservierung.",
+      "Können Sie mir helfen?"
     ]
   },
   "canarias_de": "Die Fähren nach La Gomera fahren im Hafen von Los Cristianos ab und brauchen etwa 50 Minuten bis San Sebastián de La Gomera."

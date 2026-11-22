@@ -274,6 +274,10 @@
     "say": [
       "¿Cuánto cuesta?",
       "¿Cuánto es?"
+    ],
+    "say_de": [
+      "Was kostet das?",
+      "Was macht das?"
     ]
   },
   "canarias_de": "Preise nennt man oft ohne das Wort euros: ‚Son tres con cincuenta.' Auf dem Kassenbon steht statt der Mehrwertsteuer IVA die kanarische Steuer IGIC."

@@ -148,6 +148,11 @@ units.forEach(({ file, data: u }, index) => {
   if (!isStr(m.title_de) || !isStr(m.task_de)) err(w, "mission.title_de oder task_de fehlt");
   if (!Array.isArray(m.say) || m.say.length < 2) err(w, "mission.say braucht mindestens 2 Sätze");
   (m.say ?? []).forEach((s, i) => checkPunctuation(`${w} mission.say[${i}]`, s));
+  if (!Array.isArray(m.say_de) || m.say_de.length === 0) err(w, "mission.say_de fehlt oder ist keine Liste");
+  else {
+    if (m.say_de.length !== (m.say ?? []).length) err(w, `mission.say_de hat ${m.say_de.length} Einträge, say hat ${(m.say ?? []).length}`);
+    m.say_de.forEach((s, i) => { if (!isStr(s)) err(w, `mission.say_de[${i}] leer`); });
+  }
 
   (u.tips_de ?? []).forEach((t, i) => { if (!isStr(t)) err(w, `tips_de[${i}] leer`); });
 });

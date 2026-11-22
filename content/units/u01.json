@@ -279,6 +279,11 @@
       "Buenos días.",
       "Buenas tardes.",
       "Gracias, hasta luego."
+    ],
+    "say_de": [
+      "Guten Morgen.",
+      "Guten Tag.",
+      "Danke, bis später."
     ]
   },
   "canarias_de": "‚Hasta luego' ist der Standardabschied in Läden und Cafés, auch wenn man sich nie wiedersieht. ‚Buenos días' gilt in Spanien bis zum Mittagessen gegen 14 Uhr, erst danach sagt man ‚buenas tardes'.",

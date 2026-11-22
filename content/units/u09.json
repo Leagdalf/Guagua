@@ -284,6 +284,11 @@
       "¿A qué hora abre?",
       "¿A qué hora sale la guagua?",
       "Mañana vamos a la playa."
+    ],
+    "say_de": [
+      "Um wie viel Uhr öffnet es?",
+      "Um wie viel Uhr fährt der Bus ab?",
+      "Morgen gehen wir zum Strand."
     ]
   },
   "canarias_de": "Auf den Kanaren ist es eine Stunde früher als auf dem spanischen Festland und in Deutschland. Spanische Radio- und Fernsehsender ergänzen ihre Zeitansagen deshalb mit ‚una hora menos en Canarias'."

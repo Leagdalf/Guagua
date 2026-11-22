@@ -285,6 +285,11 @@
       "Me gusta el mar.",
       "Me encanta el barraquito.",
       "Hoy hace sol."
+    ],
+    "say_de": [
+      "Ich mag das Meer.",
+      "Ich liebe Barraquito.",
+      "Heute scheint die Sonne."
     ]
   },
   "canarias_de": "Der Passatwind (los alisios) weht aus Nordosten. Er staut Wolken an der Nordseite Teneriffas, während der Süden trocken und sonnig bleibt."
