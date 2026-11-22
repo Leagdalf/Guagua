@@ -72,6 +72,7 @@ Die Trennung ist eine Lernhilfe: Was kursiv in der Serifenschrift steht, ist Spa
 | Spanisch im Fließtext, Dialog, Listen | Newsreader kursiv | 20 px | 24 px | 400 |
 | Deutsch, Bedienung | Figtree | 17 px | 19 px | 400 |
 | Knöpfe | Figtree | 17 px | 19 px | 600 |
+| Erklärzeile im Block „Heute“ | Figtree | 16 px | 19 px | 400, in ceniza |
 | Nebentext | Figtree | 14 bis 16 px | 16 px | 400 |
 | Beschriftung in Großbuchstaben | Figtree | 13 px | 14 px | 600, Laufweite 0,1 em |
 
@@ -96,11 +97,12 @@ Umsetzung als eine CSS-Regel auf einem Inline-Element: `box-shadow: inset 0 -0.3
 | abgeschlossen | atlántico mit Haken in nieve |
 
 - Es gibt keine Karten und keine Kästen. Gruppen entstehen durch Abstand und durch Haarlinien von 1 px in raya. Die Grundlinie unter dem Berg ist 1,5 px in tinta.
-- Der Hauptknopf ist eine volle Fläche in atlántico mit Schrift in nieve, 54 px hoch (iPad 60 px), 8 px Eckenradius. Pro Ansicht gibt es genau einen.
+- Der Hauptknopf ist eine volle Fläche in atlántico mit Schrift in nieve, 54 px hoch (iPad 60 px), 8 px Eckenradius. Pro Ansicht gibt es genau einen. Gesperrt (zum Beispiel „Prüfen“ ohne Eingabe) ist die Fläche raya und die Schrift ceniza. Dieses Paar hat 4,39 zu 1 und kommt nur am gesperrten Knopf vor.
 - Nebenaktionen sind Textknöpfe in atlántico, Schnitt 600, mit mindestens 44 px Höhe: „Abhaken“, „Anhören“, „Langsam“.
+- In der Linie steht am Telefon rechts neben dem Namen nur ein kurzer Text: das Thema bei gesperrten Haltestellen, sonst der Zustand („abgeschlossen“, „heute“, „läuft“), bei der Endstation „Endstation“. Kein Name bricht dort in zwei Zeilen um.
 - Antwortflächen sind gestapelte Zeilen über die volle Spaltenbreite, getrennt durch Haarlinien, 56 px hoch (iPad 68 px). Links steht ein Kreis von 20 px mit 1,5 px Rand in ceniza. Kein Raster aus Kacheln.
 - Rund sind nur Haltepunkte und Auswahlkreise.
-- Symbole sind Strichzeichnungen mit 1,8 px Strich und kommen nur mit Funktion vor: Schließen, Lautsprecher, Haken, Kreuz, Stern im Sprachführer.
+- Symbole sind Strichzeichnungen mit 1,8 px Strich und kommen nur mit Funktion vor: Schließen, Lautsprecher, Haken, Kreuz, Stern im Sprachführer. Haken und Kreuz in der Rückmeldung einer Aufgabe haben 2,4 px Strich, damit sie auf Armlänge erkennbar sind.
 - Keine Schatten, keine Verläufe.
 
 ## Der Berg

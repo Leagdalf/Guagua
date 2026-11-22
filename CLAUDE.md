@@ -38,9 +38,10 @@ Node 26.13.1 und Git 2.56.1 sind seit dem 22.11.2026 installiert. Findet eine Sh
 ## Aufbau des Codes
 
 ```
-src/core       Lernlogik ohne React: Typen, Inhalte, Karteikasten, Aufgaben, Speicher
+src/core       Lernlogik ohne React: Typen, Inhalte, Karteikasten, Aufgaben, Speicher (Übersicht in src/core/README.md)
+src/app        Verbindung von Lernlogik, Browser-Speicher und Ton für die Ansichten: progressStore, useStoreState, useToday, appClock, newRng. Gehört der Hauptsitzung. Zum Testen verschiebt `?tage=1` in der Adresse die Uhr um einen Tag.
 src/audio      Sprachausgabe
-src/ui         wiederverwendbare Bausteine
+src/ui         wiederverwendbare Bausteine (Übersicht in src/ui/README.md, Vorschau unter `?preview`)
 src/styles     CSS-Variablen, Schriften, Grundstile
 src/features   Ansichten: session, home, missions, phrasebook, more, onboarding
 content        Lerninhalte als JSON, werden ins Bundle importiert
