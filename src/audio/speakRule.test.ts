@@ -125,7 +125,7 @@ describe("speak nur aus Klick-Behandlungen (alle Quelldateien unter src)", () =>
   it("der Test sieht die ganze App und kennt mindestens einen Aufruf", () => {
     const names = Object.keys(files);
     expect(names.length).toBeGreaterThan(30);
-    for (const dir of ["core", "ui", "styles", "audio", "features", "app"]) {
+    for (const dir of ["core", "ui", "styles", "audio", "features", "state"]) {
       expect(names.some((n) => n.startsWith(`src/${dir}/`)), dir).toBe(true);
     }
     expect(names.some((n) => /\.test\./.test(n))).toBe(false);
