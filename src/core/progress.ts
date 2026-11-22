@@ -133,6 +133,16 @@ export function validateProgress(value: unknown): Progress | null {
     return null;
   }
   if (!Array.isArray(value.favorites) || !value.favorites.every((entry) => typeof entry === "string")) return null;
+  const notes = value.notes;
+  if (
+    notes !== undefined &&
+    !(
+      Array.isArray(notes) &&
+      notes.every((note) => isRecord(note) && typeof note.at === "string" && typeof note.text === "string")
+    )
+  ) {
+    return null;
+  }
   const review = value.finalReview;
   if (
     review !== undefined &&

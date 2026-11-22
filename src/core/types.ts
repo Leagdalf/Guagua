@@ -68,6 +68,8 @@ export interface Mission {
   title_de: string;
   task_de: string;
   say: string[];
+  /** Übersetzungen der Sätze in `say`, gleich lang und in derselben Reihenfolge. */
+  say_de?: string[];
 }
 
 export interface Unit {
@@ -203,8 +205,10 @@ export interface Progress {
     lastReviewDay?: Day;
     activeMsByDay: Record<Day, number>;
   };
-  /** ids aus dem Sprachführer. */
+  /** Gemerktes: ids aus dem Sprachführer und ids von Lernkarten. */
   favorites: string[];
+  /** Notizen der Lernenden für Florian („Hat mir gefehlt“, „Fehler gefunden“), `at` als ISO-Zeitpunkt. */
+  notes?: { at: string; text: string }[];
   finalReview?: { at: string; right: number; total: number };
   /**
    * Endstation, solange sie läuft: die 30 gewählten Karten (`ids`, in der Reihenfolge der Runde), die schon beantworteten
