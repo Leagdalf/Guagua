@@ -57,7 +57,7 @@ test("Name ändern bleibt nach dem Neuladen @telefon", async ({ page }) => {
   await expect.poll(async () => (await spoken(page)).at(-1)?.text).toBe("Hola, Mia Sofia");
 });
 
-test("Ruhemodus blendet Punkte und Serie aus, ohne sie zu verlieren @telefon", async ({ page, unit1 }) => {
+test("Ruhemodus blendet Punkte und Serie aus, ohne sie zu verlieren @telefon", async ({ unit1, page }) => {
   await seed(page, unit1);
   await open(page);
   await openMore(page, /^Über die App/);
@@ -93,9 +93,9 @@ test("Ruhemodus blendet Punkte und Serie aus, ohne sie zu verlieren @telefon", a
 });
 
 test("Export als Text und Import in einem frischen Browser-Kontext stellen denselben Stand her, mit Rückfrage", async ({
+  unit1,
   page,
   freshPage,
-  unit1,
 }) => {
   await seed(page, unit1);
   // Zwischenablage als Attrappe: Der Browser ohne Nutzerfreigabe verweigert das Lesen. Die App ruft `writeText` im Klick auf.
@@ -128,12 +128,20 @@ test("Export als Text und Import in einem frischen Browser-Kontext stellen dense
 
   // Rückfrage mit dem, was kommt, und mit dem, was ersetzt wird.
   await expect(other.getByRole("heading", { level: 1, name: "Stand importieren?" })).toBeVisible();
-  await expect(other.getByText("Das würde importiert:")).toBeVisible();
-  const summary = other.locator("dl");
-  await expect(summary).toContainText("Lena");
-  await expect(summary).toContainText("16");
-  await expect(summary).toContainText("1 von 10");
-  await expect(summary).toContainText("310");
+  await expect(other.getByText("So unterscheiden sich dein Stand und der Import:")).toBeVisible();
+  // Beide Stände stehen nebeneinander: links der aktuelle (Fremd, leer), rechts der importierte (Lena, Haltestelle 1 geschafft).
+  const compare = other.getByRole("table");
+  const cell = (label: string, column: "Dein Stand" | "Import") =>
+    compare.getByRole("row").filter({ has: other.getByRole("rowheader", { name: label, exact: true }) }).getByRole("cell").nth(column === "Dein Stand" ? 0 : 1);
+  await expect(cell("Name", "Dein Stand")).toHaveText("Fremd");
+  await expect(cell("Name", "Import")).toHaveText("Lena");
+  await expect(cell("Karten", "Dein Stand")).toHaveText("0");
+  await expect(cell("Karten", "Import")).toHaveText("16");
+  await expect(cell("Abgeschlossene Haltestellen", "Dein Stand")).toHaveText("0 von 10");
+  await expect(cell("Abgeschlossene Haltestellen", "Import")).toHaveText("1 von 10");
+  await expect(cell("Punkte", "Import")).toHaveText("310");
+  // Der Import hat mehr als der aktuelle Stand: keine Warnung.
+  await expect(other.getByRole("alert")).toHaveCount(0);
   await expect(other.getByText(/Dein aktueller Stand von Fremd wird ersetzt/)).toBeVisible();
   // Bis zur Bestätigung ändert sich nichts.
   expect((await readProgress(other)).profile.name).toBe("Fremd");
@@ -143,6 +151,9 @@ test("Export als Text und Import in einem frischen Browser-Kontext stellen dense
   await expect(other.getByRole("heading", { level: 1, name: "Fortschritt sichern" })).toBeVisible();
   expect((await readProgress(other)).profile.name).toBe("Fremd");
 
+  // Nach „Abbrechen“ ist das Einfügefeld leer: erneut einfügen und prüfen.
+  await expect(other.getByLabel("Oder Text einfügen")).toHaveValue("");
+  await other.getByLabel("Oder Text einfügen").fill(exported);
   await other.getByRole("button", { name: "Text prüfen" }).click();
   await other.getByRole("button", { name: "Jetzt importieren" }).click();
   await expect(other.getByText(/Der Stand von Lena ist importiert/)).toBeVisible();
@@ -161,7 +172,7 @@ test("Export als Text und Import in einem frischen Browser-Kontext stellen dense
   await expect(other.getByText("Mission offen")).toBeVisible();
 });
 
-test("Ohne Zwischenablage zeigt die App den Sicherungstext zum Markieren", async ({ page, unit1 }) => {
+test("Ohne Zwischenablage zeigt die App den Sicherungstext zum Markieren", async ({ unit1, page }) => {
   await seed(page, unit1);
   await page.addInitScript(() => {
     Object.defineProperty(navigator, "clipboard", { configurable: true, value: undefined });
@@ -175,7 +186,7 @@ test("Ohne Zwischenablage zeigt die App den Sicherungstext zum Markieren", async
   expect(JSON.parse(text).progress).toEqual(original);
 });
 
-test("Export als Datei bekommt einen Namen mit Datum ohne den Namen der Lernenden", async ({ page, unit1 }) => {
+test("Export als Datei bekommt einen Namen mit Datum ohne den Namen der Lernenden", async ({ unit1, page }) => {
   await seed(page, unit1);
   await open(page);
   await openMore(page, /^Fortschritt sichern/);
@@ -189,7 +200,7 @@ test("Export als Datei bekommt einen Namen mit Datum ohne den Namen der Lernende
   expect(parsed.progress.profile.name).toBe("Lena");
 });
 
-test("Kaputter Importtext ändert nichts", async ({ page, unit1 }) => {
+test("Kaputter Importtext ändert nichts", async ({ unit1, page }) => {
   await seed(page, unit1);
   await open(page);
   const before = await page.evaluate((key) => window.localStorage.getItem(key), STORAGE_KEY);
@@ -218,8 +229,8 @@ test("Kaputter Importtext ändert nichts", async ({ page, unit1 }) => {
 });
 
 test("Der Spickzettel zeigt die Zahlen von 0 bis 100, die Wochentage und die Grammatik begonnener Haltestellen @telefon", async ({
-  page,
   unit1,
+  page,
 }) => {
   await seed(page, unit1);
   await open(page);
@@ -252,7 +263,7 @@ test("Der Spickzettel ohne begonnene Haltestelle nennt, wann die Grammatik kommt
   await expect(page.locator("ul.ref-list--numbers > li")).toHaveCount(101);
 });
 
-test("Über die App nennt Version, Stand der Inhalte, Lizenzen und den KI-Hinweis", async ({ page, unit1 }) => {
+test("Über die App nennt Version, Stand der Inhalte, Lizenzen und den KI-Hinweis", async ({ unit1, page }) => {
   await seed(page, unit1);
   await open(page);
   await openMore(page, /^Über die App/);

@@ -54,7 +54,7 @@ test("„Anhören“ spricht mit Tempo 0,9, „Langsam“ mit Tempo 0,6, jeweils
   expect((await spoken(page)).every((u) => u.inGesture)).toBe(true);
 });
 
-test("Eine Hören-Aufgabe zeigt den spanischen Text nicht an, bis sie beantwortet ist @telefon", async ({ page, unit1: stand }) => {
+test("Eine Hören-Aufgabe zeigt den spanischen Text nicht an, bis sie beantwortet ist @telefon", async ({ unit1: stand, page }) => {
   await seed(page, stand);
   await open(page, "?tage=1");
   await homeButton(page, "Mit Wiederholen beginnen");
@@ -114,7 +114,7 @@ test.describe("ohne spanische Stimme", () => {
     expect(await spoken(page)).toEqual([]);
   });
 
-  test("Die Wiederholrunde bleibt durchspielbar: Hören wird zu Erkennen", async ({ page, unit1: stand }) => {
+  test("Die Wiederholrunde bleibt durchspielbar: Hören wird zu Erkennen", async ({ unit1: stand, page }) => {
     await seed(page, stand);
     await open(page, "?tage=1");
     await homeButton(page, "Mit Wiederholen beginnen");

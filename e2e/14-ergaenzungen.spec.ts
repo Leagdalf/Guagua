@@ -79,7 +79,7 @@ test("Dialog: Zeilen erscheinen einzeln und werden gesprochen, die Übersetzung 
   expect(boxCounts(progress)).toEqual({ 1: 16, 2: 0, 3: 0, 4: 0, 5: 0 });
 });
 
-test("Tippen auf eine abgeschlossene Haltestelle öffnet ihre Übersicht mit Karten, Grammatik und Dialog", async ({ page, unit1 }) => {
+test("Tippen auf eine abgeschlossene Haltestelle öffnet ihre Übersicht mit Karten, Grammatik und Dialog", async ({ unit1, page }) => {
   await seed(page, unit1);
   await open(page);
   await page.locator("ol.line > li").first().getByRole("button").click();
@@ -96,7 +96,7 @@ test("Tippen auf eine abgeschlossene Haltestelle öffnet ihre Übersicht mit Kar
   await expect(page.getByRole("heading", { name: "Deine Linie" })).toBeVisible();
 });
 
-test("Zwei Haltestellen an einem Tag: Tippen auf die offene Haltestelle 2 beginnt sie sofort", async ({ page, unit1 }) => {
+test("Zwei Haltestellen an einem Tag: Tippen auf die offene Haltestelle 2 beginnt sie sofort", async ({ unit1, page }) => {
   await seed(page, unit1);
   await open(page);
   await expect(page.getByText("Für heute fertig")).toBeVisible();
@@ -112,7 +112,7 @@ test("Zwei Haltestellen an einem Tag: Tippen auf die offene Haltestelle 2 beginn
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Neue Karten");
 });
 
-test("„10 Karten extra“ ist reine Übung: keine Fächer, keine Punkte", async ({ page, unit1 }) => {
+test("„10 Karten extra“ ist reine Übung: keine Fächer, keine Punkte", async ({ unit1, page }) => {
   await seed(page, unit1);
   await open(page);
   const before = await readProgress(page);

@@ -40,7 +40,7 @@ export interface Unit {
   dialogue: { setting_de: string; lines: DialogueLine[] };
   cloze: Cloze[];
   build: Build[];
-  mission: { id: string; title_de: string; task_de: string; say: string[] };
+  mission: { id: string; title_de: string; task_de: string; say: string[]; say_de?: string[] };
 }
 export interface Phrase {
   id: string;
@@ -86,3 +86,29 @@ export function unitById(id: string): Unit {
   if (!unit) throw new Error(`Unbekannte Einheit ${id}`);
   return unit;
 }
+
+/** Suchtext wie in der App: klein, ohne Akzente, ß als ss. Dient nur der Gegenrechnung in den Tests. */
+export const searchNorm = (text: string): string => text.normalize("NFD").replace(/\p{M}+/gu, "").replaceAll("ß", "ss").toLowerCase();
+
+/** Sätze des Sprachführers, in denen jedes Suchwort in Spanisch oder Deutsch vorkommt. */
+export function phraseHits(query: string): Phrase[] {
+  const words = searchNorm(query).split(/\s+/).filter(Boolean);
+  return phrasebook.categories
+    .flatMap((category) => category.phrases)
+    .filter((phrase) => words.every((word) => `${searchNorm(phrase.es)} ${searchNorm(phrase.de)}`.includes(word)));
+}
+
+/** Lernkarten des Kurses, in denen jedes Suchwort in Spanisch, Deutsch oder im Beispielsatz vorkommt (Suche ab zwei Zeichen). */
+export function courseHits(query: string): Item[] {
+  const words = searchNorm(query).split(/\s+/).filter(Boolean);
+  if (!words.some((word) => word.length >= 2)) return [];
+  return allItems.filter((item) => {
+    const haystack = [item.es, item.de, item.example?.es ?? "", item.example?.de ?? ""].map(searchNorm).join(" ");
+    return words.every((word) => haystack.includes(word));
+  });
+}
+
+/** Pläne aus content/course.json (Abgleich mit dem Plan). */
+export const course: { plan: { first_stop_date: string; last_stop_date: string } } = JSON.parse(
+  readFileSync(resolve(ROOT, "content", "course.json"), "utf8"),
+);

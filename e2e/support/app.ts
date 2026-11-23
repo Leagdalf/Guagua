@@ -55,7 +55,7 @@ export async function homeButton(page: Page, name: string | RegExp): Promise<voi
 
 // ---------- Aufgaben ----------
 
-export type TaskKind = "recognize" | "listen" | "recall" | "cloze" | "write" | "build";
+export type TaskKind = "recognize" | "listen" | "recall" | "cloze" | "write" | "build" | "say";
 
 const QUESTION: Array<[RegExp, TaskKind]> = [
   [/Was heißt das\?/, "recognize"],
@@ -64,6 +64,7 @@ const QUESTION: Array<[RegExp, TaskKind]> = [
   [/Welches Wort fehlt\?/, "cloze"],
   [/Schreib es auf Spanisch/, "write"],
   [/Setze den Satz zusammen/, "build"],
+  [/Sag es laut/, "say"],
 ];
 
 export async function headingText(page: Page): Promise<string> {
@@ -152,19 +153,33 @@ async function solveBuild(page: Page, right: boolean): Promise<void> {
 
 /** Tippt Text ins Schreibfeld und prüft. */
 export async function submitWritten(page: Page, text: string): Promise<void> {
-  await page.getByLabel("Spanisch").fill(text);
+  await page.getByLabel("Deine Antwort").fill(text);
   await page.getByRole("button", { name: "Prüfen" }).click();
 }
+
+/** Seiten, auf denen „Sag es laut“ die Aufgabe schon weitergeschaltet hat: das folgende `weiter` entfällt dann. */
+const advancedBySay = new WeakSet<Page>();
 
 /**
  * Löst die Aufgabe, die gerade zu sehen ist, und wartet auf die Rückmeldung. „Weiter“ tippt sie nicht.
  * `right: false` wählt gezielt eine falsche Antwort.
  */
 export async function solveTask(page: Page, right = true): Promise<SolvedTask> {
+  advancedBySay.delete(page);
   // Nach „Weiter“ baut die App die neue Ansicht erst einen Augenblick später auf: auf eine Aufgabe warten.
   await expect.poll(async () => kindOf(await headingText(page)), { message: "Aufgabe erscheint" }).not.toBeNull();
   const kind = kindOf(await headingText(page)) as TaskKind;
   let prompt = "";
+  if (kind === "say") {
+    // „Sag es laut“: Aufdecken, dann „Saß“ oder „Noch mal“. Beides wertet und geht gleich zur nächsten Aufgabe, es gibt keine Rückmeldung.
+    prompt = await promptText(page, kind);
+    await page.getByRole("button", { name: "Aufdecken" }).click();
+    await page.getByRole("button", { name: right ? "Saß" : "Noch mal" }).click();
+    // Die Lösung mit den zwei Knöpfen verschwindet, sobald die nächste Ansicht steht.
+    await expect(page.getByRole("button", { name: "Saß" })).toHaveCount(0);
+    advancedBySay.add(page);
+    return { kind, prompt, correct: right };
+  }
   if (kind === "build") {
     prompt = await promptText(page, kind);
     await solveBuild(page, right);
@@ -188,8 +203,9 @@ export async function solveTask(page: Page, right = true): Promise<SolvedTask> {
   return { kind, prompt, correct };
 }
 
-/** „Weiter“ tippen. Stand eine Rückmeldung da, wartet die Hilfe, bis die nächste Ansicht sie abgelöst hat. */
+/** „Weiter“ tippen. Stand eine Rückmeldung da, wartet die Hilfe, bis die nächste Ansicht sie abgelöst hat. Nach „Sag es laut“ ist nichts zu tippen: Die Aufgabe ist schon weitergegangen. */
 export async function weiter(page: Page): Promise<void> {
+  if (advancedBySay.delete(page)) return;
   const hadFeedback = (await feedback(page).count()) > 0;
   await page.getByRole("button", { name: "Weiter", exact: true }).click();
   if (hadFeedback) await expect(feedback(page)).toHaveCount(0);

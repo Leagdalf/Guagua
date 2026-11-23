@@ -2,7 +2,7 @@
 
 import type { Page } from "@playwright/test";
 import { createProfile, readProgress, tab } from "./support/app";
-import { phrasebook } from "./support/content";
+import { courseHits, phraseHits, phrasebook } from "./support/content";
 import { expect, test } from "./support/fixtures";
 import { spoken } from "./support/speech";
 
@@ -14,8 +14,12 @@ async function openPhrasebook(page: Page): Promise<void> {
 
 const search = (page: Page) => page.getByRole("searchbox", { name: "Suchen" });
 const rows = (page: Page) => page.getByRole("listitem");
+/** Zeilen der Kategorien des Sprachführers, ohne den Abschnitt „Aus dem Kurs“. */
+const phraseRows = (page: Page) =>
+  page.getByRole("region").filter({ hasNot: page.getByRole("heading", { level: 2, name: "Aus dem Kurs" }) }).getByRole("listitem");
+const courseRows = (page: Page) => page.getByRole("region", { name: "Aus dem Kurs" }).getByRole("listitem");
 
-test("Suche nach „medico“ findet „Necesito un médico.“, „WASSER“ genau zwei Sätze, „xyz“ den leeren Zustand @telefon", async ({
+test("Suche nach „medico“ findet „Necesito un médico.“, „WASSER“ zwei Sätze und danach die Lernkarten aus dem Kurs, „xyz“ den leeren Zustand @telefon", async ({
   page,
 }) => {
   await openPhrasebook(page);
@@ -25,8 +29,14 @@ test("Suche nach „medico“ findet „Necesito un médico.“, „WASSER“ ge
   await search(page).fill("medico");
   await expect(page.getByText("Necesito un médico.", { exact: true })).toBeVisible();
 
+  // Erst die Sätze des Sprachführers, danach unter „Aus dem Kurs“ die Lernkarten (Spezifikation 2.9, Punkt 1).
   await search(page).fill("WASSER");
-  await expect(rows(page)).toHaveCount(2);
+  expect(phraseHits("WASSER")).toHaveLength(2);
+  expect(courseHits("WASSER").length).toBeGreaterThan(0);
+  await expect(phraseRows(page)).toHaveCount(2);
+  await expect(courseRows(page)).toHaveCount(courseHits("WASSER").length);
+  const headings = await page.getByRole("heading", { level: 2 }).allTextContents();
+  expect(headings.at(-1)).toBe("Aus dem Kurs");
 
   await search(page).fill("xyz");
   await expect(page.getByRole("status").filter({ hasText: "Nichts gefunden für „xyz“." })).toBeVisible();

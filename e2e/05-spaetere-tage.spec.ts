@@ -1,4 +1,5 @@
-// Punkt 5: Spätere Tage. Wiederholungen über simulierte Tage, bis Karten in Fach 3 fällig sind, dann die Schreibaufgabe.
+// Punkt 5: Spätere Tage. Wiederholungen über simulierte Tage, bis Karten in Fach 3 fällig sind, dann die Schreibaufgabe
+// (höchstens sechs je Runde, die übrigen Wörter und Wendungen kommen als „Sag es laut“, Satzmuster als „Erinnern“; Spezifikation 2.4 und 2.9).
 
 import type { Page } from "@playwright/test";
 import {
@@ -24,11 +25,11 @@ const strip = (text: string): string => text.normalize("NFD").replace(/\p{M}+/gu
 
 /** Tippt Text und nutzt für jedes Sonderzeichen den Zeichenknopf, alles andere über die Tastatur. */
 async function typeWithCharButtons(page: Page, text: string): Promise<void> {
-  const field = page.getByLabel("Spanisch");
+  const field = page.getByLabel("Deine Antwort");
   await field.fill("");
   await field.focus();
   for (const char of text) {
-    if (SPECIAL.test(char)) await page.getByRole("button", { name: char, exact: true }).click();
+    if (SPECIAL.test(char)) await page.getByRole("button", { name: `${char} einfügen`, exact: true }).click();
     else await page.keyboard.type(char);
   }
 }
@@ -45,7 +46,7 @@ async function reviewDay1(page: Page): Promise<void> {
   await expect(page.getByRole("heading", { name: "Deine Linie" })).toBeVisible();
 }
 
-test("Tag 4: Karten in Fach 3 sind fällig und kommen als Schreibaufgabe", async ({ page, unit1 }) => {
+test("Tag 4: Karten in Fach 3 sind fällig, die ersten sechs kommen als Schreibaufgabe, der Rest als „Sag es laut“ oder „Erinnern“", async ({ unit1, page }) => {
   await seed(page, unit1);
 
   // Tag 2: alle 16 Karten richtig, sie steigen in Fach 3 und sind erst am Tag 4 wieder dran.
@@ -62,6 +63,7 @@ test("Tag 4: Karten in Fach 3 sind fällig und kommen als Schreibaufgabe", async
   await beginPlan(page);
 
   const kinds: TaskKind[] = [];
+  let firstWrites = 0;
   let usedChars = false;
   let usedAccent = false;
   let usedWrong = false;
@@ -71,6 +73,7 @@ test("Tag 4: Karten in Fach 3 sind fällig und kommen als Schreibaufgabe", async
   while (kindOf(await headingText(page))) {
     const kind = kindOf(await headingText(page)) as TaskKind;
     kinds.push(kind);
+    if (kind === "write" && !/noch einmal/.test(await headingText(page))) firstWrites++;
     if (kind !== "write") {
       await solveTask(page, true);
       await weiter(page);
@@ -83,7 +86,7 @@ test("Tag 4: Karten in Fach 3 sind fällig und kommen als Schreibaufgabe", async
     expect(solution, `Karte zu „${prompt}“`).not.toBe("");
 
     // Die Schreibaufgabe zeigt kein Spanisch vor der Antwort. „Prüfen“ ist gesperrt, solange das Feld leer ist.
-    await expect(page.getByLabel("Spanisch")).toHaveAttribute("lang", "es");
+    await expect(page.getByLabel("Deine Antwort")).toHaveAttribute("lang", "es");
     if (!emptyChecked) {
       await expect(page.getByRole("button", { name: "Prüfen" })).toBeDisabled();
       emptyChecked = true;
@@ -92,7 +95,7 @@ test("Tag 4: Karten in Fach 3 sind fällig und kommen als Schreibaufgabe", async
     if (!usedChars && SPECIAL.test(solution)) {
       // Eingabe mit den Zeichenknöpfen: á é í ó ú ñ ü ¿ ¡
       await typeWithCharButtons(page, solution);
-      await expect(page.getByLabel("Spanisch")).toHaveValue(solution);
+      await expect(page.getByLabel("Deine Antwort")).toHaveValue(solution);
       await page.getByRole("button", { name: "Prüfen" }).click();
       await expect(feedback(page)).toBeVisible();
       await expect(feedback(page)).toContainText("Richtig.");
@@ -111,8 +114,8 @@ test("Tag 4: Karten in Fach 3 sind fällig und kommen als Schreibaufgabe", async
       await expect(page.getByText("Deine Antwort:")).toBeVisible();
       usedWrong = true;
     } else if (!usedEnter) {
-      await page.getByLabel("Spanisch").fill(solution);
-      await page.getByLabel("Spanisch").press("Enter");
+      await page.getByLabel("Deine Antwort").fill(solution);
+      await page.getByLabel("Deine Antwort").press("Enter");
       await expect(feedback(page)).toContainText("Richtig.");
       usedEnter = true;
     } else {
@@ -120,14 +123,16 @@ test("Tag 4: Karten in Fach 3 sind fällig und kommen als Schreibaufgabe", async
       await expect(feedback(page)).toContainText("Richtig.");
     }
     // Nach der Antwort ist das Feld gesperrt, „Weiter“ führt zur nächsten Aufgabe.
-    await expect(page.getByLabel("Spanisch")).toBeDisabled();
+    await expect(page.getByLabel("Deine Antwort")).toBeDisabled();
     await weiter(page);
   }
 
   expect(usedChars && usedAccent && usedWrong && usedEnter, "alle Fälle der Schreibaufgabe wurden gespielt").toBe(true);
-  // Satzmuster („me llamo …“) bleiben bei „Erinnern“, alle übrigen Karten kommen als Schreiben.
+  // Höchstens sechs Schreibaufgaben je Runde (Wiederholungen einer falschen Karte nicht mitgezählt). 13 Karten wären schreibbar:
+  // Die übrigen kommen als „Sag es laut“. Satzmuster („me llamo …“) und die Karten der Ausschlussliste bleiben bei „Erinnern“.
+  expect(firstWrites).toBe(6);
+  expect(kinds.filter((kind) => kind === "say").length).toBeGreaterThanOrEqual(1);
   expect(kinds.filter((kind) => kind === "recall").length).toBeGreaterThanOrEqual(1);
-  expect(kinds.filter((kind) => kind === "write").length).toBeGreaterThanOrEqual(15);
 
   // Fächer: die Karte mit fehlendem Akzent zählt als richtig, die falsche Karte fällt in Fach 1.
   const progress = await readProgress(page);
@@ -136,7 +141,7 @@ test("Tag 4: Karten in Fach 3 sind fällig und kommen als Schreibaufgabe", async
   expect(boxes[4]).toBe(15);
 });
 
-test("Groß-/Kleinschreibung, Randleerzeichen und ein fehlender Akzent zählen nicht als Fehler @telefon", async ({ page, unit1 }) => {
+test("Groß-/Kleinschreibung, Randleerzeichen und ein fehlender Akzent zählen nicht als Fehler @telefon", async ({ unit1, page }) => {
   // Regeln der Antwortprüfung (Spezifikation 2.4) an einer echten Schreibaufgabe: „  PERDON  “ für „perdón“.
   await seed(page, unit1);
   await reviewDay1(page);

@@ -34,3 +34,38 @@ export function allStopsDone(unit1: string): any {
   progress.stats.points += 9 * 220;
   return progress;
 }
+
+const dayMs = 86_400_000;
+
+/** Tage zwischen zwei Kalendertagen (JJJJ-MM-TT). */
+export function daysBetween(from: string, to: string): number {
+  return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / dayMs);
+}
+
+export function addDaysTo(day: string, days: number): string {
+  return new Date(Date.parse(`${day}T00:00:00Z`) + days * dayMs).toISOString().slice(0, 10);
+}
+
+/** Der Kalendertag, an dem der Lernstand entstand (lastSeen einer Karte). */
+export function standDay(progress: any): string {
+  return (Object.values(progress.cards)[0] as { lastSeen: string }).lastSeen;
+}
+
+/** Verschiebt jedes Datum im Lernstand (Tage und ISO-Zeitpunkte) um `days` Tage. */
+export function shiftProgress(progress: any, days: number): any {
+  const text = JSON.stringify(progress).replace(/([0-9]{4}-[0-9]{2}-[0-9]{2})(?=[T"])/g, (day) => addDaysTo(day, days));
+  return JSON.parse(text);
+}
+
+/** Macht die Karten der genannten Haltestellen (alle, wenn leer) zu Karten in `box`, fällig an `day`; alle anderen Karten fällig in 30 Tagen. */
+export function dueCards(progress: any, day: string, box: number, onlyIds?: (id: string) => boolean): any {
+  for (const [id, card] of Object.entries<any>(progress.cards)) {
+    if (!onlyIds || onlyIds(id)) {
+      card.box = box;
+      card.due = day;
+    } else {
+      card.due = addDaysTo(day, 30);
+    }
+  }
+  return progress;
+}

@@ -12,7 +12,7 @@ async function seedAllDone(page: Page, unit1: string): Promise<any> {
   return progress;
 }
 
-test("Nach Haltestelle 10 ist die Endstation offen und zeigt 30 gemischte Aufgaben @telefon", async ({ page, unit1 }) => {
+test("Nach Haltestelle 10 ist die Endstation offen und zeigt 30 gemischte Aufgaben @telefon", async ({ unit1, page }) => {
   await seedAllDone(page, unit1);
   await expect(page.getByText("10 von 10 abgeschlossen")).toBeVisible();
   await expect(page.getByText("Heute · Endstation")).toBeVisible();
@@ -27,7 +27,7 @@ test("Nach Haltestelle 10 ist die Endstation offen und zeigt 30 gemischte Aufgab
   await expect(page.getByRole("list", { name: "Schritte" })).toContainText("30 Aufgaben");
 });
 
-test("Die Endstation mit 30 Aufgaben führt zur Ansicht „Deine Linie“ @telefon", async ({ page, unit1 }) => {
+test("Die Endstation mit 30 Aufgaben führt zur Ansicht „Deine Linie“ @telefon", async ({ unit1, page }) => {
   const seeded = await seedAllDone(page, unit1);
   await homeButton(page, "Endstation beginnen");
   await beginPlan(page);
@@ -70,13 +70,14 @@ test("Die Endstation mit 30 Aufgaben führt zur Ansicht „Deine Linie“ @telef
   await expect(page.getByText("Linie geschafft", { exact: true })).toBeVisible();
 });
 
-test("Eine falsche Antwort in der Endstation kommt wieder und zählt im Ergebnis als Fehler", async ({ page, unit1 }) => {
+test("Eine falsche Antwort in der Endstation kommt wieder und zählt im Ergebnis als Fehler", async ({ unit1, page }) => {
   await seedAllDone(page, unit1);
   await homeButton(page, "Endstation beginnen");
   await beginPlan(page);
 
-  await solveTask(page, false);
-  await expect(page.getByText("Falsch. Richtig ist:")).toBeVisible();
+  // Die erste Aufgabe falsch. „Sag es laut“ zeigt keine Rückmeldung („Noch mal“ wertet gleich), alle anderen Arten zeigen die Lösung.
+  const first = await solveTask(page, false);
+  if (first.kind !== "say") await expect(page.getByText("Falsch. Richtig ist:")).toBeVisible();
   await weiter(page);
   let repeated = false;
   while (kindOf(await headingText(page))) {
@@ -90,13 +91,14 @@ test("Eine falsche Antwort in der Endstation kommt wieder und zählt im Ergebnis
   await expect(page.locator("dl.sx-summary")).toContainText("29 von 30 richtig");
 });
 
-test("Neuladen mitten in der Endstation: dieselben Karten, keine Aufgabe doppelt gewertet", async ({ page, unit1 }) => {
+test("Neuladen mitten in der Endstation: dieselben Karten, keine Aufgabe doppelt gewertet", async ({ unit1, page }) => {
   const seeded = await seedAllDone(page, unit1);
   await homeButton(page, "Endstation beginnen");
   await beginPlan(page);
+  // Schreibaufgaben werden erst mit „Weiter“ gewertet: nach zehn Aufgaben mit „Weiter“ steht die elfte unbeantwortet da.
   for (let n = 1; n <= 10; n++) {
     await solveTask(page, true);
-    if (n < 10) await weiter(page);
+    await weiter(page);
   }
   const before = await readProgress(page);
   expect(before.finalRun.answered).toHaveLength(10);

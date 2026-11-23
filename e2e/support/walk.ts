@@ -166,6 +166,9 @@ export async function walkAllViews(page: Page, visit: Visit): Promise<void> {
   await at("Sprachführer");
   await page.getByRole("searchbox", { name: "Suchen" }).fill("xyz");
   await at("Sprachführer: leer");
+  await page.getByRole("searchbox", { name: "Suchen" }).fill("wasser");
+  await expect(page.getByRole("region", { name: "Aus dem Kurs" })).toBeVisible();
+  await at("Sprachführer: Treffer aus dem Kurs");
   await page.getByRole("searchbox", { name: "Suchen" }).fill("medico");
   await page.getByRole("listitem").first().getByRole("button", { name: "Merken" }).click();
   await page.getByRole("searchbox", { name: "Suchen" }).fill("");
@@ -182,12 +185,20 @@ export async function walkAllViews(page: Page, visit: Visit): Promise<void> {
     [/^Spickzettel/, "Mehr: Spickzettel"],
     [/^Einstellungen/, "Mehr: Einstellungen"],
     [/^Fortschritt sichern/, "Mehr: Fortschritt sichern"],
+    [/^Rückmeldung/, "Mehr: Rückmeldung"],
     [/^Über die App/, "Mehr: Über die App"],
   ] as const) {
     await page.getByRole("button", { name: entry }).click();
     await at(name);
     await page.getByRole("button", { name: "Zurück" }).click();
   }
+  // Zahlen üben
+  await page.getByRole("button", { name: /^Spickzettel/ }).click();
+  await page.getByRole("button", { name: "Zahlen üben" }).click();
+  await expect(page.getByText("Aufgabe 1 von 10", { exact: true })).toBeVisible();
+  await at("Mehr: Zahlen üben");
+  await page.getByRole("button", { name: "Zurück" }).click();
+  await page.getByRole("button", { name: "Zurück" }).click();
   // Import-Rückfrage
   await page.getByRole("button", { name: /^Fortschritt sichern/ }).click();
   await page.getByRole("button", { name: "In die Zwischenablage kopieren" }).click();
@@ -219,9 +230,21 @@ export async function walkAllViews(page: Page, visit: Visit): Promise<void> {
   await beginPlan(page);
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Schreib es auf Spanisch");
   await at("Lerneinheit: Schreiben");
-  await page.getByLabel("Spanisch").fill("x");
+  await page.getByLabel("Deine Antwort").fill("x");
   await at("Lerneinheit: Schreiben, Text eingegeben");
   await page.getByRole("button", { name: "Prüfen" }).click();
   await expect(feedback(page)).toBeVisible();
   await at("Lerneinheit: Schreiben, Rückmeldung");
+
+  // Weiter bis „Sag es laut“ (nach höchstens sechs Schreibaufgaben): Frage, dann aufgedeckte Lösung.
+  await weiter(page);
+  for (let n = 0; n < 10 && kindOf(await headingText(page)) !== "say"; n++) {
+    await solveTask(page, true);
+    await weiter(page);
+  }
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Sag es laut");
+  await at("Lerneinheit: Sag es laut");
+  await page.getByRole("button", { name: "Aufdecken" }).click();
+  await expect(page.getByRole("button", { name: "Saß" })).toBeVisible();
+  await at("Lerneinheit: Sag es laut, Lösung aufgedeckt");
 }

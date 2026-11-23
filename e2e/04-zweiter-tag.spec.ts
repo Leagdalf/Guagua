@@ -11,7 +11,7 @@ export function daysBetween(from: string, to: string): number {
   return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
 }
 
-test("Am zweiten Tag zeigt die Startseite 16 Karten zum Wiederholen und Haltestelle 2 @telefon", async ({ page, unit1 }) => {
+test("Am zweiten Tag zeigt die Startseite 16 Karten zum Wiederholen und Haltestelle 2 @telefon", async ({ unit1, page }) => {
   await seed(page, unit1);
   await open(page, "?tage=1");
 
@@ -27,8 +27,8 @@ test("Am zweiten Tag zeigt die Startseite 16 Karten zum Wiederholen und Halteste
 });
 
 test("Die Einheit am zweiten Tag beginnt mit der Wiederholrunde „1 von 16“, danach liegen die Karten in Fach 3 @telefon", async ({
-  page,
   unit1,
+  page,
 }) => {
   await seed(page, unit1);
   await open(page, "?tage=1");
@@ -65,7 +65,7 @@ test("Die Einheit am zweiten Tag beginnt mit der Wiederholrunde „1 von 16“, 
   await expect(feedback(page)).toHaveCount(0);
 });
 
-test("Nach der Wiederholrunde steht auf der Startseite „weiter bei Schritt 2“ und keine neue Wiederholung", async ({ page, unit1 }) => {
+test("Nach der Wiederholrunde steht auf der Startseite „weiter bei Schritt 2“ und keine neue Wiederholung", async ({ unit1, page }) => {
   await seed(page, unit1);
   await open(page, "?tage=1");
   await homeButton(page, "Mit Wiederholen beginnen");

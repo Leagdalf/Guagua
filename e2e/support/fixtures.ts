@@ -51,6 +51,10 @@ export async function seed(page: Page, json: string): Promise<void> {
   );
 }
 
+// Reihenfolge der Fixtures: Tests, die `unit1` brauchen, nennen es VOR `page` ({ unit1, page }). Das Fenster der Test-Seite
+// liegt sonst schon da, wenn die Fixture ihr eigenes Fenster aufmacht; unter Windows bekommt das zweite Fenster dann kaum
+// Animationsbilder, jeder Klick wartet auf „stabil“, und die Fixture reißt ihre 120 Sekunden (gemessen: 27 s allein,
+// über 120 s mit vorher geöffneter Seite).
 export const test = base.extend<Fixtures, WorkerFixtures>({
   unit1: [
     async ({ browser }, use, workerInfo) => {

@@ -13,7 +13,7 @@ async function points(page: Page): Promise<number> {
   return (await readProgress(page)).stats.points;
 }
 
-test("Mission abhaken mit Gefühl und Notiz gibt genau einmal 50 Punkte @telefon", async ({ page, unit1 }) => {
+test("Mission abhaken mit Gefühl und Notiz gibt genau einmal 50 Punkte @telefon", async ({ unit1, page }) => {
   await seed(page, unit1);
   await open(page);
   const start = await points(page);
@@ -52,7 +52,7 @@ test("Mission abhaken mit Gefühl und Notiz gibt genau einmal 50 Punkte @telefon
   await expect(page.getByText("Mission offen")).toHaveCount(0);
 });
 
-test("Die Mission lässt sich ohne Gefühl und ohne Notiz erledigen", async ({ page, unit1 }) => {
+test("Die Mission lässt sich ohne Gefühl und ohne Notiz erledigen", async ({ unit1, page }) => {
   await seed(page, unit1);
   await open(page);
   const start = await points(page);
@@ -66,7 +66,7 @@ test("Die Mission lässt sich ohne Gefühl und ohne Notiz erledigen", async ({ p
   expect(saved.note).toBeUndefined();
 });
 
-test("Abhaken auf der Startseite öffnet die Mission mit dem Formular", async ({ page, unit1 }) => {
+test("Abhaken auf der Startseite öffnet die Mission mit dem Formular", async ({ unit1, page }) => {
   await seed(page, unit1);
   await open(page);
   await expect(page.getByText("Mission offen")).toBeVisible();
@@ -75,7 +75,7 @@ test("Abhaken auf der Startseite öffnet die Mission mit dem Formular", async ({
   await expect(page.getByRole("button", { name: "Mission erledigt" })).toBeVisible();
 });
 
-test("Überspringen kostet nichts, Nachholen gibt später die 50 Punkte einmal", async ({ page, unit1 }) => {
+test("Überspringen kostet nichts, Nachholen gibt später die 50 Punkte einmal", async ({ unit1, page }) => {
   await seed(page, unit1);
   await open(page);
   const start = await points(page);
@@ -102,7 +102,7 @@ test("Überspringen kostet nichts, Nachholen gibt später die 50 Punkte einmal",
   expect(await points(page)).toBe(start + 50);
 });
 
-test("Keine Mission sperrt eine Haltestelle: Haltestelle 2 lässt sich mit offener Mission beginnen", async ({ page, unit1 }) => {
+test("Keine Mission sperrt eine Haltestelle: Haltestelle 2 lässt sich mit offener Mission beginnen", async ({ unit1, page }) => {
   await seed(page, unit1);
   await open(page, "?tage=1");
   await expect(page.getByText("Mission offen")).toBeVisible();
