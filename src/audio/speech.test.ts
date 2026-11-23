@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { SPEECH } from "../core/config";
-import { createSpeech, pickVoice, prepareSpeechText, sortSpanishVoices } from "./speech";
+import { createSpeech, hasGoodSpanishVoice, pickVoice, prepareSpeechText, sortSpanishVoices } from "./speech";
 import type { SynthLike } from "./speech";
 
 function voice(name: string, lang: string, voiceURI = name): SpeechSynthesisVoice {
@@ -86,6 +86,39 @@ describe("Stimmenwahl", () => {
     expect(pickVoice([], null)).toBeNull();
     expect(pickVoice([en], "Samantha")).toBeNull();
   });
+
+  // So meldet Safari auf dem iPad die Stimmen: Spaßstimmen stehen alphabetisch vor Mónica.
+  const eddy = voice("Eddy (Spanisch (Spanien))", "es-ES", "com.apple.eloquence.es-ES.Eddy");
+  const grandma = voice("Oma (Spanisch (Spanien))", "es-ES", "com.apple.eloquence.es-ES.Grandma");
+  const monica = voice("Mónica", "es-ES", "com.apple.voice.compact.es-ES.Monica");
+  const monicaPlus = voice("Mónica (erweitert)", "es-ES", "com.apple.voice.enhanced.es-ES.Monica");
+  const marisol = voice("Marisol (Premium)", "es-ES", "com.apple.voice.premium.es-ES.Marisol");
+  const paulinaPlus = voice("Paulina (Enhanced)", "es-MX", "com.apple.voice.enhanced.es-MX.Paulina");
+
+  it("lässt Spaßstimmen weg, solange es eine andere spanische Stimme gibt", () => {
+    expect(sortSpanishVoices([eddy, grandma, monica])).toEqual([monica]);
+    expect(pickVoice([eddy, grandma, monica], null)).toBe(monica);
+    expect(sortSpanishVoices([eddy, grandma])).toEqual([eddy, grandma]);
+  });
+
+  it("nimmt eine gespeicherte Spaßstimme nicht mehr, wenn es eine bessere gibt", () => {
+    expect(pickVoice([eddy, monica], eddy.voiceURI)).toBe(monica);
+  });
+
+  it("nimmt innerhalb einer Sprache Premium vor erweitert vor einfach", () => {
+    expect(sortSpanishVoices([eddy, monica, monicaPlus, marisol])).toEqual([marisol, monicaPlus, monica]);
+    expect(pickVoice([monica, monicaPlus], null)).toBe(monicaPlus);
+  });
+
+  it("bleibt bei es-ES vor es-MX, auch wenn die mexikanische Stimme besser ist", () => {
+    expect(pickVoice([paulinaPlus, monica], null)).toBe(monica);
+  });
+
+  it("erkennt, ob eine erweiterte oder Premium-Stimme geladen ist", () => {
+    expect(hasGoodSpanishVoice([monica])).toBe(false);
+    expect(hasGoodSpanishVoice([monica, monicaPlus])).toBe(true);
+    expect(hasGoodSpanishVoice([marisol])).toBe(true);
+  });
 });
 
 describe("Textaufbereitung", () => {
@@ -93,6 +126,11 @@ describe("Textaufbereitung", () => {
     expect(prepareSpeechText("me llamo …", "Anna")).toBe("me llamo");
     expect(prepareSpeechText("Un café … y un agua", "Anna")).toBe("Un café y un agua");
     expect(prepareSpeechText("me llamo...", "Anna")).toBe("me llamo");
+  });
+
+  it("liest Klammern nicht mit", () => {
+    expect(prepareSpeechText("(yo) soy", "Anna")).toBe("yo soy");
+    expect(prepareSpeechText("(él, ella, usted) es", "Anna")).toBe("él, ella, usted es");
   });
 
   it("ersetzt {name}", () => {

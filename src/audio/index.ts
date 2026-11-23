@@ -5,7 +5,7 @@ import { getSpeech } from "./instance";
 import type { SpeakOptions, SpeechProfile } from "./speech";
 
 export type { SpeechProfile } from "./speech";
-export { createSpeech, pickVoice, prepareSpeechText, sortSpanishVoices } from "./speech";
+export { createSpeech, hasGoodSpanishVoice, pickVoice, prepareSpeechText, sortSpanishVoices } from "./speech";
 export { getSpeech } from "./instance";
 export { NoVoiceNotice } from "./NoVoiceNotice";
 export { useVoices } from "./useVoices";

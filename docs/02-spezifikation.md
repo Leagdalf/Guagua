@@ -152,7 +152,8 @@ Web Speech API, `speechSynthesis`. Keine Audiodateien.
 
 - Eine Funktion `speak(text, { slow })` für die ganze App. Sie bricht laufende Ausgabe ab, entfernt `…` und ersetzt `{name}`.
 - Sprechtempo `rate` 0.9 normal und 0.6 langsam.
-- Stimmenwahl: zuerst die gespeicherte Stimme, sonst die erste mit Sprache es-ES, dann es-MX, dann es-US, dann jede mit `es`. Die Liste kann beim Start leer sein und erst mit dem Ereignis `voiceschanged` kommen.
+- Stimmenwahl: zuerst die gespeicherte Stimme, sonst die erste mit Sprache es-ES, dann es-MX, dann es-US, dann jede mit `es`. Innerhalb einer Sprache kommt Premium vor erweitert vor einfach. Apples Spaßstimmen (Eddy, Flo, Grandma, Grandpa, Reed, Rocko, Sandy, Shelley) fallen weg, solange es eine andere spanische Stimme gibt, weil sie falsch betonen; auch eine früher gespeicherte Spaßstimme gilt dann nicht mehr. Ist keine erweiterte oder Premium-Stimme geladen, sagt der Stimmentest, wo man eine lädt. Die Liste kann beim Start leer sein und erst mit dem Ereignis `voiceschanged` kommen.
+- Klammern im spanischen Text („(yo) soy“) werden nicht mitgelesen.
 - iOS spielt nur, wenn `speak` direkt in der Behandlung eines Tippens aufgerufen wird. Automatisches Vorlesen der nächsten Karte passiert deshalb im Klick auf „Weiter“, nie zeitgesteuert.
 - Ohne spanische Stimme bleiben alle Tonknöpfe sichtbar, aber deaktiviert, mit einmaligem Hinweis.
 - Spanischer Text trägt im HTML `lang="es"`, auch wegen VoiceOver.

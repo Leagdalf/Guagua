@@ -55,13 +55,42 @@ function languageRank(lang: string): number {
   return index === -1 ? SPEECH.languageOrder.length : index;
 }
 
-/** Spanische Stimmen in der Reihenfolge es-ES, es-MX, es-US, sonstige. Innerhalb einer Gruppe bleibt die Reihenfolge des Geräts. */
+/**
+ * Apples Spaßstimmen (Eloquence: Eddy, Flo, Grandma, …). Auf dem iPad stehen sie oft vor Mónica in der Liste,
+ * klingen aber blechern und betonen falsch. Zum Lernen taugen sie nicht.
+ */
+const NOVELTY_NAMES = new Set(["eddy", "flo", "grandma", "grandpa", "oma", "opa", "abuela", "abuelo", "reed", "rocko", "sandy", "shelley"]);
+
+export function isNoveltyVoice(voice: Pick<SpeechSynthesisVoice, "name" | "voiceURI">): boolean {
+  if (/eloquence/i.test(voice.voiceURI)) return true;
+  const firstWord = voice.name.trim().split(/[\s(]/)[0]?.toLowerCase() ?? "";
+  return NOVELTY_NAMES.has(firstWord);
+}
+
+/** 0 Premium, 1 erweitert, 2 einfach. iOS nennt die Qualität in der voiceURI und im Namen, je nach Sprache des Geräts. */
+export function voiceQuality(voice: Pick<SpeechSynthesisVoice, "name" | "voiceURI">): 0 | 1 | 2 {
+  const text = `${voice.voiceURI} ${voice.name}`;
+  if (/premium/i.test(text)) return 0;
+  if (/enhanced|erweitert|mejorad/i.test(text)) return 1;
+  return 2;
+}
+
+/**
+ * Spanische Stimmen in der Reihenfolge es-ES, es-MX, es-US, sonstige; innerhalb einer Sprache Premium vor erweitert
+ * vor einfach, sonst die Reihenfolge des Geräts. Spaßstimmen fallen weg, solange es eine andere spanische Stimme gibt.
+ */
 export function sortSpanishVoices(voices: readonly SpeechSynthesisVoice[]): SpeechSynthesisVoice[] {
-  return voices
-    .filter(isSpanishVoice)
-    .map((voice, index) => ({ voice, index, rank: languageRank(voice.lang) }))
-    .sort((a, b) => a.rank - b.rank || a.index - b.index)
+  const spanish = voices.filter(isSpanishVoice);
+  const serious = spanish.filter((voice) => !isNoveltyVoice(voice));
+  return (serious.length > 0 ? serious : spanish)
+    .map((voice, index) => ({ voice, index, rank: languageRank(voice.lang), quality: voiceQuality(voice) }))
+    .sort((a, b) => a.rank - b.rank || a.quality - b.quality || a.index - b.index)
     .map((entry) => entry.voice);
+}
+
+/** Ob unter den spanischen Stimmen eine erweiterte oder Premium-Stimme ist. Sonst lohnt der Hinweis, eine zu laden. */
+export function hasGoodSpanishVoice(voices: readonly Pick<SpeechSynthesisVoice, "name" | "voiceURI">[]): boolean {
+  return voices.some((voice) => voiceQuality(voice) < 2);
 }
 
 /** Erst die gespeicherte Stimme (sofern spanisch und vorhanden), sonst die erste der sortierten Liste. `null` heißt: kein Ton. */
@@ -77,12 +106,13 @@ export function pickVoice(
   return spanish[0] ?? null;
 }
 
-/** Entfernt „…“ (auch „...“), ersetzt `{name}` und räumt Leerzeichen auf. */
+/** Entfernt „…“ (auch „...“) und Klammern wie in „(yo) soy“, ersetzt `{name}` und räumt Leerzeichen auf. */
 export function prepareSpeechText(text: string, name: string): string {
   return text
     .replaceAll("{name}", name.trim())
     .replaceAll("…", " ")
     .replaceAll("...", " ")
+    .replace(/[()]/g, " ")
     .replace(/,\s*([.!?])/g, "$1")
     .replace(/\s+([,.;:!?])/g, "$1")
     .replace(/\s+/g, " ")

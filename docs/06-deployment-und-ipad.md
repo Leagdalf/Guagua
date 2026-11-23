@@ -63,6 +63,8 @@ Jeder Push auf den Hauptzweig veröffentlicht neu. Die App prüft beim Öffnen m
 
 Kommt der Hinweis nicht: App ganz schließen, mit Netz neu öffnen, eine halbe Minute warten, erneut schließen und öffnen.
 
+Bis zur Version vom 23.11.2026 lud „Neu laden“ in der installierten App oft nicht neu, weil der Knopf auf ein Ereignis wartete, das iOS dort nicht immer schickt. Seitdem lädt die App neu, sobald die neue Version übernimmt, spätestens nach 2,5 Sekunden. Wer noch die alte Version hat, kommt so weiter: App im App-Umschalter ganz schließen und wieder öffnen. Sind alle Fenster der App zu, übernimmt die wartende Version von selbst. Das Symbol dafür nicht vom Home-Bildschirm löschen.
+
 ## 6. Fortschritt und Speicher
 
 - Der Fortschritt liegt im Speicher der installierten Web-App. Wer das Symbol vom Home-Bildschirm löscht, löscht ihn mit.
@@ -77,4 +79,6 @@ Kommt der Hinweis nicht: App ganz schließen, mit Netz neu öffnen, eine halbe M
 | Kein Ton | Keine spanische Stimme, Stumm-Modus an oder Aufruf außerhalb eines Tippens | Stimmenliste und Stumm-Modus prüfen, sonst Fehler an `pwa-builder` |
 | Name und Fortschritt fehlen nach der Installation | Eingabe erfolgte in Safari statt in der installierten App | In der installierten App neu beginnen oder Sicherung importieren |
 | Alte Version trotz Veröffentlichung | Service Worker hat noch den alten Stand | Vorgehen aus Abschnitt 5 |
+| „Neu laden“ tut nichts | Version vor dem 23.11.2026 | App ganz schließen und wieder öffnen (Abschnitt 5) |
+| Stimme klingt blechern oder betont falsch | Spaßstimme gewählt oder nur einfache Stimme geladen | Unter Mehr, Einstellungen „Automatisch“ wählen; Mónica (erweitert) oder Marisol (Premium) in den iOS-Einstellungen laden |
 | App startet offline nicht | Erster Start war nicht vollständig geladen | Einmal mit Netz öffnen und bis zur Linie gehen |
