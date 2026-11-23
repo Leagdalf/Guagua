@@ -4,7 +4,7 @@
 //
 // Unlesbare oder fremde Daten überschreibt der Speicher nie. Er geht in den Zustand „error“ und wartet, bis die
 // Oberfläche `restart()` aufruft. Auch dann bleibt der alte Text unter einem Sicherungsschlüssel erhalten.
-// Von den Sicherungen behält der Speicher die drei neuesten (`BACKUPS_KEPT`), sofern der Speicher `keys` und `removeItem` kann.
+// Von den Sicherungen behält der Speicher die drei zuletzt angelegten (`BACKUPS_KEPT`, Reihenfolge nach fortlaufendem Zähler, nicht nach der Uhr), sofern der Speicher `keys` und `removeItem` kann.
 
 import { STORAGE_KEY } from "./config";
 import { createProgress, parseProgress, serializeProgress, validateProgress } from "./progress";
@@ -25,7 +25,7 @@ export interface StorageLike {
 /** So viele automatische Sicherungen bleiben erhalten, ältere werden gelöscht, sobald eine neue geschrieben ist. */
 export const BACKUPS_KEPT = 3;
 
-/** Eine automatische Sicherung, die sich lesen lässt. `at` ist der ISO-Zeitpunkt, an dem sie angelegt wurde. */
+/** Eine automatische Sicherung, die sich lesen lässt. `at` ist der ISO-Zeitpunkt, an dem sie angelegt wurde (nur zur Anzeige). */
 export interface BackupInfo {
   key: string;
   at: string;
@@ -54,7 +54,7 @@ export interface ProgressStore {
   /** Legt im Zustand „empty“ das Profil an. Gibt `false` zurück bei ungültigem Namen oder anderem Zustand. */
   createProfile(name: string): boolean;
   /**
-   * Ausdrücklicher Neustart nach einem Fehler: Der alte Text wird unter `<Schlüssel>:backup-<Zeitpunkt>` gesichert,
+   * Ausdrücklicher Neustart nach einem Fehler: Der alte Text wird unter `<Schlüssel>:backup-n<Zähler>-<Zeitpunkt>` gesichert,
    * der Zustand wird „empty“. Erst `createProfile` schreibt wieder unter den eigentlichen Schlüssel.
    * Scheitert das Sichern, bleibt der Zustand „error“ und nichts wird überschrieben. Gibt zurück, ob der Neustart geklappt hat
    * (`false` auch, wenn der Zustand gar nicht „error“ ist).
@@ -62,7 +62,7 @@ export interface ProgressStore {
   restart(): boolean;
   /**
    * Ersetzt den Fortschritt (Import einer Sicherung). Prüft zuerst mit `validateProgress`, legt dann eine Sicherung
-   * des aktuellen Standes unter `<Schlüssel>:backup-<Zeitpunkt>` an und schreibt erst danach den neuen Stand.
+   * des aktuellen Standes unter `<Schlüssel>:backup-n<Zähler>-<Zeitpunkt>` an und schreibt erst danach den neuen Stand.
    * Scheitert eine der Stufen, bleiben Zustand und gespeicherter Text unverändert. Im Zustand „empty“ gibt es nichts
    * zu sichern (`backupKey: null`), im Zustand „error“ wird der unlesbare Text gesichert.
    */
@@ -113,11 +113,25 @@ export function createProgressStore({ storage, now, key = STORAGE_KEY }: Progres
     }
   }
 
-  /** Sicherungsschlüssel `<Schlüssel>:backup-<ISO-Zeitpunkt>` mit optionalem Zähler `-2`, `-3` für denselben Zeitpunkt. */
-  const backupPattern = new RegExp(`^${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}:backup-(\\d{4}-\\d{2}-\\d{2}T[\\d:.]+Z)(?:-(\\d+))?$`);
+  /**
+   * Sicherungsschlüssel. Neu: `<Schlüssel>:backup-n<Zähler>-<ISO-Zeitpunkt>`, der fortlaufende Zähler bestimmt die Reihenfolge.
+   * Alt (weiter lesbar): `<Schlüssel>:backup-<ISO-Zeitpunkt>` mit optionalem `-2`, `-3`. Sie gelten als älter als jede mit Zähler.
+   */
+  const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const iso = "(\\d{4}-\\d{2}-\\d{2}T[\\d:.]+Z)";
+  const backupPattern = new RegExp(`^${escapedKey}:backup-(?:n(\\d+)-${iso}|${iso}(?:-(\\d+))?)$`);
+
+  interface BackupEntry {
+    key: string;
+    at: string;
+    /** Zähler neuer Sicherungen, 0 bei altem Format. */
+    seq: number;
+    /** Nummer im alten Format bei gleichem Zeitpunkt. */
+    n: number;
+  }
 
   /** Alle Sicherungen, neueste zuerst. Leer, wenn der Speicher keine Schlüssel auflisten kann. */
-  function listBackups(): { key: string; at: string; n: number }[] {
+  function listBackups(): BackupEntry[] {
     if (!storage.keys) return [];
     let all: string[];
     try {
@@ -125,12 +139,18 @@ export function createProgressStore({ storage, now, key = STORAGE_KEY }: Progres
     } catch {
       return [];
     }
-    const found: { key: string; at: string; n: number }[] = [];
+    const found: BackupEntry[] = [];
     for (const candidate of all) {
       const match = backupPattern.exec(candidate);
-      if (match) found.push({ key: candidate, at: match[1] as string, n: match[2] === undefined ? 1 : Number(match[2]) });
+      if (!match) continue;
+      if (match[1] !== undefined) found.push({ key: candidate, at: match[2] as string, seq: Number(match[1]), n: 0 });
+      else found.push({ key: candidate, at: match[3] as string, seq: 0, n: match[4] === undefined ? 1 : Number(match[4]) });
     }
-    found.sort((a, b) => (a.at === b.at ? b.n - a.n : a.at < b.at ? 1 : -1));
+    found.sort((x, y) => {
+      if (x.seq !== y.seq) return y.seq - x.seq;
+      if (x.at !== y.at) return x.at < y.at ? 1 : -1;
+      return y.n - x.n;
+    });
     return found;
   }
 
@@ -151,12 +171,11 @@ export function createProgressStore({ storage, now, key = STORAGE_KEY }: Progres
   /** Schreibt `text` unter einen freien Sicherungsschlüssel und liest ihn zurück, räumt danach auf. `null`, wenn das scheitert. */
   function writeBackup(text: string): string | null {
     const at = now().toISOString();
-    const base = `${key}:backup-${at}`;
-    // Nummer über der höchsten desselben Zeitpunkts, damit eine spätere Sicherung auch nach dem Aufräumen die höhere bleibt.
-    const highest = Math.max(0, ...listBackups().filter((entry) => entry.at === at).map((entry) => entry.n));
-    let backupKey = highest === 0 ? base : `${base}-${highest + 1}`;
+    // Der Zähler steigt über den höchsten vorhandenen, unabhängig von der Uhr des Geräts.
+    let seq = Math.max(0, ...listBackups().map((entry) => entry.seq)) + 1;
+    let backupKey = `${key}:backup-n${seq}-${at}`;
     try {
-      for (let n = highest + 2; storage.getItem(backupKey) !== null; n++) backupKey = `${base}-${n}`;
+      while (storage.getItem(backupKey) !== null) backupKey = `${key}:backup-n${++seq}-${at}`;
       storage.setItem(backupKey, text);
       if (storage.getItem(backupKey) !== text) return null;
     } catch {

@@ -12,9 +12,9 @@ export const NOTE_MAX_LENGTH = 500;
 
 export const NOTES_EMPTY_TEXT = "Noch keine Notizen. Schreib auf, was dir fehlt oder was falsch ist.";
 export const NOTES_INTRO =
-  "Schreib kurze Notizen für Florian auf, zum Beispiel „Hat mir gefehlt“ oder „Fehler gefunden“ mit der Karte dazu. Sie bleiben auf diesem Gerät, bis du sie teilst.";
+  "Schreib kurze Notizen zum Weitergeben auf, zum Beispiel „Hat mir gefehlt“ oder „Fehler gefunden“ mit der Karte dazu. Sie bleiben auf diesem Gerät, bis du sie teilst.";
 export const SHARE_NOTHING_TEXT = "Es gibt noch nichts zu teilen.";
-export const SHARE_COPIED = "Kopiert. Füge den Text in eine Nachricht an Florian ein.";
+export const SHARE_COPIED = "Kopiert. Füge den Text in eine Nachricht an die Person ein, die die App für dich betreut.";
 export const SHARE_COPY_MANUAL = "Kopieren geht hier nicht. Markiere den Text unten und kopiere ihn von Hand.";
 export const SHARE_SENT = "Das Teilen-Menü hat den Text übernommen.";
 export const SHARE_CANCELLED = "Teilen abgebrochen.";

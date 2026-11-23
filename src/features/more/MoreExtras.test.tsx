@@ -184,6 +184,21 @@ describe("Fortschritt sichern: Rückfrage mit Vergleich und letzte Sicherung", (
     expect(renderToStaticMarkup(<ImportConfirm summary={calmImport.summary} current={null} onConfirm={noop} onCancel={noop} />)).not.toContain("Punkte");
   });
 
+  it("warnt auch, wenn der Import weniger Punkte hat, aber nicht im Ruhemodus", () => {
+    const rich = { ...progress, stats: { ...progress.stats, points: progress.stats.points + 50 } };
+    const check = checkImport(buildExport(progress, clock.now));
+    if (!check.ok) throw new Error("Import");
+    const html = renderToStaticMarkup(<ImportConfirm summary={check.summary} current={summarizeProgress(rich, null)} onConfirm={noop} onCancel={noop} />);
+    expect(html).toContain("Achtung.");
+    expect(html).toContain("weniger Punkte");
+    const same = renderToStaticMarkup(<ImportConfirm summary={check.summary} current={summarizeProgress(progress, null)} onConfirm={noop} onCancel={noop} />);
+    expect(same).not.toContain("weniger Punkte");
+    const calm = renderToStaticMarkup(
+      <ImportConfirm summary={check.summary} current={summarizeProgress(updateProfile(rich, { calm: true }), null)} onConfirm={noop} onCancel={noop} />,
+    );
+    expect(calm).not.toContain("weniger Punkte");
+  });
+
   it("die Rückfrage zum Zurückholen heißt so und hat denselben Vergleich", () => {
     const check = checkImport(buildExport(empty, clock.now));
     if (!check.ok) throw new Error("Import");

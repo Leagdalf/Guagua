@@ -1,5 +1,6 @@
 // Texte und kleine Funktionen für „Fortschritt sichern“. Reine Daten und Funktionen, kein React.
 
+import type { ImportSummary } from "../../core/backup";
 import type { ReplaceResult } from "../../core/store";
 
 /** Hinweis aus docs/06-deployment-und-ipad.md, Abschnitt 6. */
@@ -75,4 +76,14 @@ export function downloadText(text: string, fileName: string): void {
   link.click();
   link.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
+
+/**
+ * Warnung, wenn der Import weniger Punkte hat als der aktuelle Stand. Wie die Zeile „Punkte“ im Vergleich entfällt sie,
+ * sobald einer der beiden Stände im Ruhemodus ist. Ergänzt `compareImport` aus `src/core/backup.ts`.
+ */
+export function pointsWarning(current: ImportSummary, imported: ImportSummary): string | null {
+  if (current.calm || imported.calm) return null;
+  if (imported.points >= current.points) return null;
+  return `Die Sicherung hat weniger Punkte als dein Stand: ${imported.points} statt ${current.points}.`;
 }

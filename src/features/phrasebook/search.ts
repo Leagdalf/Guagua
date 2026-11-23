@@ -40,8 +40,14 @@ export function itemMatches(item: Pick<Item, "es" | "de" | "example">, query: st
   return words.every((word) => haystack.includes(word));
 }
 
-/** Passende Lernkarten in der Reihenfolge der Eingabe. Ohne Suchwort kommt nichts zurück: Karten erscheinen nur bei einer Suche. */
+/** So viele Zeichen muss mindestens ein Suchwort haben, damit Karten aus dem Kurs erscheinen. Die Sätze des Sprachführers suchen ab dem ersten Zeichen. */
+export const MIN_ITEM_QUERY_LENGTH = 2;
+
+/**
+ * Passende Lernkarten in der Reihenfolge der Eingabe. Karten erscheinen nur bei einer Suche und erst, wenn ein Suchwort
+ * mindestens `MIN_ITEM_QUERY_LENGTH` Zeichen hat: Ein einzelner Buchstabe würde Hunderte Karten auflisten.
+ */
 export function searchItems<T extends Pick<Item, "es" | "de" | "example">>(items: readonly T[], query: string): T[] {
-  if (wordsOf(query).length === 0) return [];
+  if (!wordsOf(query).some((word) => word.length >= MIN_ITEM_QUERY_LENGTH)) return [];
   return items.filter((item) => itemMatches(item, query));
 }

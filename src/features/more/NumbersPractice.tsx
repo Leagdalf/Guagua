@@ -94,7 +94,6 @@ export function NumbersPractice({ tasks, hasVoice, onClose, onAgain, initialInde
             className="field__input"
             type="text"
             inputMode="decimal"
-            pattern="[0-9.,]*"
             enterKeyHint={result ? "next" : "done"}
             autoComplete="off"
             autoCapitalize="none"

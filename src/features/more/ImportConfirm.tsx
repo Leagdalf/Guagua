@@ -1,6 +1,7 @@
 import { compareImport, summaryRows } from "../../core/backup";
 import type { ImportSummary } from "../../core/backup";
 import { PrimaryButton, SummaryList, TextButton } from "../../ui";
+import { pointsWarning } from "./backupModel";
 import { SubPage } from "./SubPage";
 
 export interface ImportConfirmProps {
@@ -16,10 +17,12 @@ export interface ImportConfirmProps {
 
 /**
  * Rückfrage vor dem Import oder Zurückholen: stellt den aktuellen und den neuen Stand nebeneinander und warnt, wenn der neue
- * weniger Karten hat oder älter ist. Ändert nichts, bis „Jetzt …“ getippt wird.
+ * weniger Karten, Haltestellen oder Punkte hat oder älter ist. Ändert nichts, bis „Jetzt …“ getippt wird.
  */
 export function ImportConfirm({ summary, current, kind = "import", onConfirm, onCancel }: ImportConfirmProps) {
-  const comparison = current ? compareImport(current, summary) : null;
+  const base = current ? compareImport(current, summary) : null;
+  const extra = current ? pointsWarning(current, summary) : null;
+  const comparison = base ? { ...base, warnings: extra ? [...base.warnings, extra] : base.warnings } : null;
   const backup = kind === "backup";
   return (
     <SubPage title={backup ? "Sicherung zurückholen?" : "Stand importieren?"} onBack={onCancel}>

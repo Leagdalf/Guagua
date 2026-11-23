@@ -33,7 +33,7 @@ export const MENU: ReadonlyArray<{ id: Exclude<MorePage, "menu">; label: string;
   { id: "cheat", label: "Spickzettel", detail: "Grammatik, Zahlen üben, Wochentage, Aussprache" },
   { id: "settings", label: "Einstellungen", detail: "Name, Stimme, Tempo, Ruhemodus" },
   { id: "backup", label: "Fortschritt sichern", detail: "Exportieren und importieren" },
-  { id: "feedback", label: "Rückmeldung", detail: "Notizen für Florian" },
+  { id: "feedback", label: "Rückmeldung", detail: "Notizen zum Weitergeben" },
   { id: "about", label: "Über die App", detail: "Version, Lernzeit, Lizenzen" },
 ];
 

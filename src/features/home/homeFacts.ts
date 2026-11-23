@@ -72,12 +72,16 @@ export function finalDoneToday(progress: Progress, day: Day): boolean {
 }
 
 /**
- * Abgleich mit dem Plan (2.9, Punkt 9): Sind mehr Haltestellen offen, als Tage bis `plan.last_stop_date` bleiben
- * (heute eingeschlossen), kommt der sachliche Satz. Im Plan oder nach dem Plan: `null`.
+ * Abgleich mit dem Plan (2.9, Punkt 9): Der Satz steht nur, wenn die Haltestelle von heute geschafft ist. Deshalb zählen die
+ * Tage von morgen bis `plan.last_stop_date`. Sind mehr Haltestellen offen, als Tage bleiben, kommt der sachliche Satz.
+ * Am letzten Plantag steht stattdessen, dass der Plan heute endet und wie viele Haltestellen offen sind.
+ * Im Plan oder nach dem Plan: `null`.
  */
 export function planSentence(progress: Progress, day: Day, lastStopDate: Day = course.plan.last_stop_date): string | null {
   const open = units.filter((unit) => !isUnitDone(progress, unit.id)).length;
-  const daysLeft = daysBetween(day, lastStopDate) + 1;
-  if (daysLeft < 1 || open <= daysLeft) return null;
+  const daysLeft = daysBetween(day, lastStopDate);
+  if (daysLeft < 0 || open === 0) return null;
+  if (daysLeft === 0) return `Der Plan endet heute, es ${open === 1 ? "ist noch 1 Haltestelle" : `sind noch ${open} Haltestellen`} offen.`;
+  if (open <= daysLeft) return null;
   return `Bis zum ${formatDayMonthDe(lastStopDate)} sind es noch ${open} Haltestellen in ${daysLeft === 1 ? "1 Tag" : `${daysLeft} Tagen`}.`;
 }

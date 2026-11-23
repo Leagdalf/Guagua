@@ -71,6 +71,13 @@ describe("Suche über die Lernkarten des Kurses", () => {
     expect(itemMatches({ es: "¿dónde está …?", de: "wo ist …?" }, "DONDE")).toBe(true);
   });
 
+  it("ein einzelner Buchstabe listet keine Karten aus dem Kurs, die Sätze des Sprachführers werden weiter ab dem ersten Zeichen durchsucht", () => {
+    expect(found("a")).toEqual([]);
+    expect(found(" e ")).toEqual([]);
+    expect(found("ca").length).toBeGreaterThan(0);
+    expect(searchPhrasebook(phrasebook.categories, "a").length).toBeGreaterThan(0);
+  });
+
   it("ohne Suchwort kommen keine Karten", () => {
     expect(found("")).toEqual([]);
     expect(found("   ")).toEqual([]);

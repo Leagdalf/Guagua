@@ -132,16 +132,31 @@ describe("Nach der Endstation", () => {
 describe("Abgleich mit dem Plan", () => {
   it("liegt der Kurs im Plan, steht nichts", () => {
     const clock = newClock("2026-11-23");
-    expect(planSentence(newProgress(clock), "2026-11-23")).toBeNull();
     const one = completeUnit(newProgress(clock), "u01", clock.now);
-    expect(planSentence(one, "2026-11-24")).toBeNull();
+    // 23.11.: 9 offen, 9 Tage von morgen bis zum 2.12.
+    expect(planSentence(one, "2026-11-23")).toBeNull();
+    // 24.11. mit zwei geschafften: 8 offen, 8 Tage.
+    expect(planSentence(completeUnit(one, "u02", clock.now), "2026-11-24")).toBeNull();
   });
 
   it("mehr offene Haltestellen als Tage bis zum letzten Haltestellentag (heute eingeschlossen): der Satz mit dem Datum in Worten", () => {
     const clock = newClock("2026-11-27");
     const one = completeUnit(newProgress(clock), "u01", clock.now);
-    expect(planSentence(one, "2026-11-27")).toBe("Bis zum 2. Dezember sind es noch 9 Haltestellen in 6 Tagen.");
-    expect(planSentence(one, "2026-12-02", "2026-12-02")).toBe("Bis zum 2. Dezember sind es noch 9 Haltestellen in 1 Tag.");
+    expect(planSentence(one, "2026-11-27")).toBe("Bis zum 2. Dezember sind es noch 9 Haltestellen in 5 Tagen.");
+    // Fehlt genau eine Haltestelle gegenüber dem Plan, steht der Satz; eine weniger, und er entfällt.
+    expect(planSentence(one, "2026-11-30")).toBe("Bis zum 2. Dezember sind es noch 9 Haltestellen in 2 Tagen.");
+    expect(planSentence(one, "2026-12-01")).toBe("Bis zum 2. Dezember sind es noch 9 Haltestellen in 1 Tag.");
+    const sixOpen = ["u02", "u03", "u04"].reduce((acc, id) => completeUnit(acc, id, clock.now), one);
+    expect(planSentence(sixOpen, "2026-11-27")).toBe("Bis zum 2. Dezember sind es noch 6 Haltestellen in 5 Tagen.");
+    const fiveOpen = completeUnit(sixOpen, "u05", clock.now);
+    expect(planSentence(fiveOpen, "2026-11-27")).toBeNull();
+  });
+
+  it("am letzten Plantag mit offenen Haltestellen steht kein „in 0 Tagen“, sondern dass der Plan heute endet", () => {
+    const clock = newClock("2026-12-02");
+    const one = completeUnit(newProgress(clock), "u01", clock.now);
+    expect(planSentence(one, "2026-12-02")).toBe("Der Plan endet heute, es sind noch 9 Haltestellen offen.");
+    expect(planSentence(one, "2026-12-02")).not.toContain("0 Tagen");
   });
 
   it("ist der Plan vorbei, steht nichts", () => {
@@ -163,11 +178,11 @@ describe("Abgleich mit dem Plan", () => {
     expect(sentence).not.toBeNull();
     const mission = todayBlock(plan, true, { planSentence: sentence });
     expect(plainText(mission.text)).toBe(
-      "Morgen geht es weiter mit Haltestelle 2, En el café. Draußen wartet deine Mission. Bis zum 2. Dezember sind es noch 9 Haltestellen in 6 Tagen.",
+      "Morgen geht es weiter mit Haltestelle 2, En el café. Draußen wartet deine Mission. Bis zum 2. Dezember sind es noch 9 Haltestellen in 5 Tagen.",
     );
     expect(mission.secondary).toEqual({ label: "Noch eine Haltestelle", action: { type: "session", request: { kind: "day", unitId: "u02" } } });
     const done = todayBlock(todayPlan(completeMission(p, "u01-m", clock.now), clock.current()), true, { planSentence: sentence });
-    expect(plainText(done.text)).toBe("Morgen: Haltestelle 2, En el café. Bis zum 2. Dezember sind es noch 9 Haltestellen in 6 Tagen.");
+    expect(plainText(done.text)).toBe("Morgen: Haltestelle 2, En el café. Bis zum 2. Dezember sind es noch 9 Haltestellen in 5 Tagen.");
     expect(done.secondary?.label).toBe("Noch eine Haltestelle");
     // Im Plan: kein Satz, kein Knopf.
     const quiet = todayBlock(plan, true, { planSentence: null });

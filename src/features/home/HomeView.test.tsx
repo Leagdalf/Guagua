@@ -253,7 +253,7 @@ describe("HomeView (Server-Render)", () => {
       const clock = newClock("2026-11-27");
       const p = finishReviewRound(completeUnit(newProgress(clock), "u01", clock.now), clock.current());
       const html = render(p, clock.current());
-      expect(html).toContain("Bis zum 2. Dezember sind es noch 9 Haltestellen in 6 Tagen.");
+      expect(html).toContain("Bis zum 2. Dezember sind es noch 9 Haltestellen in 5 Tagen.");
       expect(html).toContain("Noch eine Haltestelle");
       const early = afterUnit1();
       const inPlan = render(early.progress, early.clock.current());

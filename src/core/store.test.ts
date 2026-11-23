@@ -313,7 +313,7 @@ describe("Speicher: drei neueste Sicherungen behalten, letzte zurückholen", () 
     expect(store.latestBackup()?.progress.profile.name).toBe("C");
   });
 
-  it("gleicher Zeitpunkt: -10 ist neuer als -2, es bleiben die drei neuesten", () => {
+  it("gleicher Zeitpunkt: der Zähler steigt, es bleiben die drei neuesten", () => {
     const { storage, data } = memory();
     data.set(STORAGE_KEY, serializeProgress(named("Start")));
     const store = createProgressStore({ storage, now: clock.now });
@@ -321,8 +321,48 @@ describe("Speicher: drei neueste Sicherungen behalten, letzte zurückholen", () 
     expect(backupKeys(data)).toHaveLength(3);
     // Die neueste Sicherung hält den Stand vor dem zwölften Ersetzen.
     expect(store.latestBackup()?.progress.profile.name).toBe("N11");
-    expect(backupKeys(data).some((key) => key.endsWith("-12"))).toBe(true);
-    expect(backupKeys(data).some((key) => key.endsWith("-2"))).toBe(false);
+    expect(backupKeys(data).some((key) => key.includes(":backup-n12-"))).toBe(true);
+    expect(backupKeys(data).some((key) => key.includes(":backup-n2-"))).toBe(false);
+  });
+
+  it("Uhr zurückgestellt: die zuletzt angelegte Sicherung ist die neueste und bleibt beim Aufräumen", () => {
+    const c = makeClock("2026-11-20");
+    const { storage, data } = memory();
+    data.set(STORAGE_KEY, serializeProgress(named("Start")));
+    const store = createProgressStore({ storage, now: c.now });
+    for (const name of ["A", "B", "C"]) {
+      c.advance(1);
+      store.replaceProgress(named(name));
+    }
+    // Uhr um zehn Tage zurück: die neuen Sicherungen tragen frühere Zeitpunkte.
+    c.advance(-10);
+    for (const name of ["D", "E"]) {
+      c.advance(1);
+      expect(store.replaceProgress(named(name)).ok).toBe(true);
+    }
+    expect(backupKeys(data)).toHaveLength(3);
+    // Neueste Sicherung = Stand vor dem letzten Ersetzen (D), obwohl ihr Zeitpunkt der früheste ist.
+    expect(store.latestBackup()?.progress.profile.name).toBe("D");
+    const names = backupKeys(data).map((k) => parseProgress(data.get(k) ?? null)).map((r) => (r.status === "ok" ? r.progress.profile.name : "?"));
+    expect(names.sort()).toEqual(["C", "D", "B"].sort());
+  });
+
+  it("Sicherungen im alten Format werden gefunden und gelten als älter als jede mit Zähler", () => {
+    const { storage, data } = memory();
+    data.set(STORAGE_KEY, serializeProgress(named("Start")));
+    data.set(`${STORAGE_KEY}:backup-2030-01-01T00:00:00.000Z`, serializeProgress(named("AltSpät")));
+    data.set(`${STORAGE_KEY}:backup-2026-01-01T00:00:00.000Z-2`, serializeProgress(named("AltFrüh")));
+    const store = createProgressStore({ storage, now: clock.now });
+    expect(store.latestBackup()?.progress.profile.name).toBe("AltSpät");
+    expect(store.latestBackup()?.at).toBe("2030-01-01T00:00:00.000Z");
+    expect(store.replaceProgress(named("Neu")).ok).toBe(true);
+    expect(store.latestBackup()?.progress.profile.name).toBe("Start");
+    // Zwei weitere Ersetzungen: die alten Schlüssel fallen zuerst weg, spätere Datumsangabe hin oder her.
+    store.replaceProgress(named("Neu2"));
+    store.replaceProgress(named("Neu3"));
+    expect(backupKeys(data).some((key) => key.includes("2030-01-01"))).toBe(false);
+    expect(backupKeys(data).some((key) => key.includes("2026-01-01"))).toBe(false);
+    expect(backupKeys(data)).toHaveLength(3);
   });
 
   it("fremde Schlüssel und Schlüssel ohne Zeitpunkt löscht der Speicher nie", () => {
