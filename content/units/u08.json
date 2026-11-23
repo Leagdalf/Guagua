@@ -40,7 +40,7 @@
       },
       {
         "es": "Me encantan los barraquitos.",
-        "de": "Ich liebe Barraquitos."
+        "de": "Ich finde Barraquitos toll."
       }
     ]
   },
@@ -283,12 +283,12 @@
     "task_de": "Sag deiner Begleitung heute drei Dinge auf Spanisch, die dir gefallen, und eins, das dir nicht gefällt. Kommentiere außerdem einmal das Wetter gegenüber jemandem vor Ort.",
     "say": [
       "Me gusta el mar.",
-      "Me encanta el barraquito.",
+      "No me gusta el viento.",
       "Hoy hace sol."
     ],
     "say_de": [
       "Ich mag das Meer.",
-      "Ich liebe Barraquito.",
+      "Ich mag den Wind nicht.",
       "Heute scheint die Sonne."
     ]
   },
