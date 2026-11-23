@@ -10,12 +10,14 @@ Andere Anbieter, die auch private Repositorys kostenlos ausliefern, habe ich fü
 
 ### Ablauf
 
-Stand 22.11.2026: Das Repository gibt es unter `https://github.com/Leagdalf/Guagua`, lokal als `origin` eingetragen. Florian hat es privat angelegt und will es für GitHub Pages öffentlich stellen. Laut GitHubs Tarifübersicht (am 22.11.2026 nachgelesen) gibt es Pages im kostenlosen Tarif nur für öffentliche Repositorys.
+Stand 23.11.2026: Das Repository liegt unter `https://github.com/Leagdalf/Guagua`, lokal als `origin` eingetragen. Es ist seit dem 23.11.2026 öffentlich, die Quelle für Pages steht auf „GitHub Actions“, und die App ist unter `https://leagdalf.github.io/Guagua/` erreichbar. Laut GitHubs Tarifübersicht (am 22.11.2026 nachgelesen) gibt es Pages im kostenlosen Tarif nur für öffentliche Repositorys.
 
-Solange das Repository privat ist, darf die Hauptsitzung nach jedem geprüften Arbeitspaket hochladen. Sobald es öffentlich ist, ist jeder Push eine Veröffentlichung: vorher Florian fragen.
+Jeder Push auf `main` ist eine Veröffentlichung: vorher Florian fragen. Schlägt im Workflow ein Schritt fehl, bleibt die zuletzt veröffentlichte Fassung stehen.
+
+Die Schritte 2 und 3 sind erledigt und stehen hier nur noch zum Nachlesen.
 
 1. Hochladen mit `git push`. Die Anmeldung läuft über das Fenster des Git Credential Manager, die GitHub CLI ist nicht installiert.
-2. Florian stellt das Repository auf github.com selbst auf öffentlich: Settings, General, ganz unten „Change repository visibility“.
+2. Das Repository auf github.com auf öffentlich stellen: Settings, General, ganz unten „Change repository visibility“.
 3. Auf github.com im Repository unter Settings, Pages als Quelle „GitHub Actions“ wählen.
 4. Workflow `.github/workflows/deploy.yml`: Node einrichten, `npm ci`, `npm test`, `npm run build`, den Ordner `dist` als Pages-Artefakt hochladen und veröffentlichen. Die aktuellen Versionen der offiziellen Pages-Aktionen in der GitHub-Doku nachschlagen und nicht aus dem Gedächtnis eintragen.
 5. In `vite.config.ts` den Pfad des Repositorys als `base` setzen: `/Guagua/`, mit großem G wie im Namen des Repositorys. `start_url` und `scope` im Manifest müssen dazu passen.
