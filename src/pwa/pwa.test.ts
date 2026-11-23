@@ -75,8 +75,11 @@ describe("App-Symbole in public/", () => {
   });
 });
 
-describe.skipIf(!fs.existsSync(path("dist/manifest.webmanifest")))("gebautes dist/", () => {
-  const manifest = JSON.parse(readText("dist/manifest.webmanifest")) as {
+const hasDist = fs.existsSync(path("dist/manifest.webmanifest"));
+
+describe.skipIf(!hasDist)("gebautes dist/", () => {
+  // Der Rumpf der Gruppe läuft auch dann, wenn sie übersprungen wird. Ohne dist/ darf er deshalb nichts lesen.
+  const manifest = (hasDist ? JSON.parse(readText("dist/manifest.webmanifest")) : {}) as {
     name: string;
     display: string;
     orientation?: string;
