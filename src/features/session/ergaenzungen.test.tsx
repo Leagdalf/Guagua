@@ -411,7 +411,7 @@ describe("Endstation: Fahrplan und Zahlen", () => {
     const units10 = Object.fromEntries(units.map((unit) => [unit.id, { step: 6 as const, startedAt: "2026-11-01T10:00:00.000Z", completedAt: "2026-11-02T10:00:00.000Z" }]));
     const allCards = { ...cards };
     for (const unit of units) {
-      for (const item of unit.items) allCards[item.id] ??= { box: 5, due: "2027-01-01", right: 1, wrong: 0, lastSeen: "2026-11-02" };
+      for (const item of unit.items) allCards[item.id] ??= { box: 2, due: "2027-01-01", right: 1, wrong: 0, lastSeen: "2026-11-02" };
     }
     return { clock, progress: { ...run.progress, cards: allCards, units: units10, stats: { ...run.progress.stats, lastReviewDay: clock.current() } } };
   }

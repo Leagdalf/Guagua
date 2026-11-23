@@ -27,6 +27,8 @@ import {
 import type { PairItem, PairState, StopState } from "../../ui";
 import { counterOf, mountainBefore, mountainStops, stepNumberOf, summaryFacts, summaryText, wrongCardsOf } from "./machine";
 import type { CardsScreen, DialogueScreen, PlanScreen, SessionEvent, SessionState, TaskScreen } from "./machine";
+import { MissionPhrases } from "../missions/MissionPhrases";
+import { sayTranslations } from "../missions/missionsModel";
 import { FinalLineBody } from "./FinalLine";
 import { WriteField } from "./WriteField";
 import "./session.css";
@@ -593,16 +595,7 @@ function mission(props: SessionScreenProps, fill: (text: string) => string): Vie
         <Label as="h2" className="sx-section">
           Sätze zum Mitnehmen
         </Label>
-        <ul className="sx-say">
-          {say.map((sentence, i) => (
-            <li key={sentence} className="sx-say__row">
-              <Es as="span" id={`sx-say-${i}`}>
-                {fill(sentence)}
-              </Es>
-              <AudioButton onClick={() => props.onSpeak(fill(sentence))} disabled={!props.hasVoice} describedBy={`sx-say-${i}`} />
-            </li>
-          ))}
-        </ul>
+        <MissionPhrases idPrefix="sx-say" phrases={say.map(fill)} translations={sayTranslations(unit.mission).map((de) => (de === null ? null : fill(de)))} />
         <Label as="h2" className="sx-section">
           Kanaren
         </Label>
@@ -648,7 +641,7 @@ function summary(props: SessionScreenProps): View {
     doneStops: after.filter((stop) => stop === "done").length,
   });
   const animate = facts.kind === "unit" && !progress.profile.calm && !prefersReducedMotion();
-  const wrong = wrongCardsOf(state);
+  const wrong = wrongCardsOf(state, progress, day);
 
   return {
     body: (

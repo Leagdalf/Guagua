@@ -24,7 +24,9 @@ import {
   buildReviewRound,
   finalStationTaskCount,
   finishFinalReview,
+  rightAmongAnswered,
   startFinalStation,
+  wrongTodayIds,
 } from "../../core/flow";
 import { answerInRound, currentTask, isRepeat, isRoundDone } from "../../core/round";
 import type { RoundState } from "../../core/round";
@@ -181,6 +183,10 @@ export interface SessionTally {
   wrongIds: readonly string[];
   /** Punkte beim Start, für „Punkte in dieser Einheit“. */
   startPoints: number;
+  /** Aufgaben der Abschlussrunde, die beim Bauen der Runde schon beantwortet waren (Neuladen mitten in der Runde). */
+  priorFinal: readonly string[];
+  /** Die Wiederholrunde begann, obwohl heute schon Karten beantwortet waren: Zahlen aus dieser Sitzung wären nur ein Teil. */
+  reviewResumed: boolean;
 }
 
 export interface SessionState {
@@ -440,7 +446,7 @@ export function createSession(progress: Progress, asked: SessionRequest, ctx: Se
   const day = today(ctx.now);
   // Die Endstation gibt es nur, solange sie offen ist. Sonst bleibt eine Sitzung nur zum Wiederholen.
   const request: SessionRequest = asked.kind === "final" && finalStationState(progress) !== "open" ? { kind: "day", unitId: null } : asked;
-  const tally: SessionTally = { reviewed: 0, right: 0, answered: 0, wrongIds: [], startPoints: progress.stats.points };
+  const tally: SessionTally = { reviewed: 0, right: 0, answered: 0, wrongIds: [], startPoints: progress.stats.points, priorFinal: [], reviewResumed: false };
   // Den Dialog noch einmal spielen kann nur, wer die Haltestelle abgeschlossen hat. Sonst endet die Sitzung sofort mit einem Satz.
   if (request.kind === "dialogue" && !isUnitDone(progress, request.unitId)) {
     const screen: SummaryScreen = { kind: "summary", summary: "replay", blocked: true };
@@ -476,6 +482,9 @@ function begin(s: SessionState, progress: Progress, ctx: SessionContext): Sessio
   const state: SessionState = { ...s, unitId: plan.unitId };
   if (plan.review) {
     const round = buildReviewRound(p, day, ctx.rng, envOf(ctx));
+    // Waren heute schon Karten dran (Neuladen mitten in der Runde), zählt diese Sitzung nur den Rest.
+    const resumed = Object.values(p.cards).some((card) => card.lastSeen === day);
+    if (resumed) state.tally = { ...state.tally, reviewResumed: true };
     if (!isRoundDone(round)) {
       const screen = taskScreenOf("review", round, state);
       return { state: { ...state, screen }, progress: p, speak: speakForTask(screen.task) };
@@ -527,6 +536,8 @@ function enterStep(state: SessionState, progress: Progress, step: Step, ctx: Ses
     }
     case 5: {
       const round = buildFinalRound(progress, unitId, ctx.rng, envOf(ctx));
+      const prior = progress.units[unitId]?.answered ?? [];
+      if (prior.length > 0) state = { ...state, tally: { ...state.tally, priorFinal: prior } };
       if (isRoundDone(round)) return finishFinal(state, progress, ctx, null);
       const screen = taskScreenOf("final", round, state);
       return { state: { ...state, screen }, progress, speak: speakForTask(screen.task) };
@@ -549,8 +560,9 @@ function finishFinal(state: SessionState, progress: Progress, ctx: SessionContex
  * schon beantwortete fehlen in der Runde. Der Zähler zählt sie mit.
  */
 function enterStation(state: SessionState, progress: Progress, ctx: SessionContext): SessionResult {
-  const p = startFinalStation(progress, ctx.rng);
-  const round = buildFinalStationRound(p, ctx.rng, envOf(ctx));
+  const day = today(ctx.now);
+  const p = startFinalStation(progress, ctx.rng, day);
+  const round = buildFinalStationRound(p, ctx.rng, envOf(ctx), day);
   if (isRoundDone(round)) return finishStation(state, p, ctx, null);
   const screen = taskScreenOf("station", round, state, undefined, Math.max(finalStationTaskCount(p) - round.total, 0));
   return { state: { ...state, screen }, progress: p, speak: speakForTask(screen.task) };
@@ -929,6 +941,8 @@ export interface SummaryFacts {
   reviewed: number;
   right: number;
   answered: number;
+  /** Ist `right` sicher? Nach einem Neuladen mitten in der Runde nicht immer: Dann fehlen die Zeilen mit den Zahlen. */
+  rightKnown?: boolean;
   pointsGained: number;
   streak: number;
   /** `replay`: der Dialog wurde gespielt (`played`) oder die Haltestelle ist noch nicht abgeschlossen (`blocked`). */
@@ -939,13 +953,19 @@ export function summaryFacts(state: SessionState, progress: Progress, day: Day):
   const screen = state.screen;
   const kind: SummaryKind = screen.kind === "summary" ? screen.summary : "review";
   const unit = state.unitId === null ? undefined : getUnit(state.unitId);
+  // Nach einem Neuladen mitten in der Abschlussrunde stehen die früheren Antworten nur im Lernstand: Kartenaufgaben lassen sich
+  // aus Fach und Fälligkeit zurückrechnen (2.9, Punkt 6), alles andere nicht.
+  const prior = state.tally.priorFinal;
+  const priorRight = prior.length > 0 ? rightAmongAnswered(progress, prior, day) : 0;
+  const rightKnown = kind === "unit" ? priorRight !== null && !state.tally.reviewResumed : !state.tally.reviewResumed;
   return {
     kind,
     stop: kind === "unit" && unit ? unit.stop : null,
     newCards: kind === "unit" && unit ? unit.items.length : 0,
     reviewed: state.tally.reviewed,
-    right: state.tally.right,
-    answered: state.tally.answered,
+    right: state.tally.right + (kind === "unit" ? (priorRight ?? 0) : 0),
+    answered: state.tally.answered + (kind === "unit" ? prior.length : 0),
+    rightKnown,
     pointsGained: progress.stats.points - state.tally.startPoints,
     streak: currentStreak(progress, day),
     ...(kind === "replay" ? { replay: screen.kind === "summary" && screen.blocked ? ("blocked" as const) : ("played" as const) } : {}),
@@ -956,10 +976,14 @@ export function summaryFacts(state: SessionState, progress: Progress, day: Day):
  * Karten, deren erste Antwort in dieser Sitzung falsch war: „Kommen morgen wieder“ in der Zusammenfassung. Leer in der freien
  * Runde (sie wertet nicht) und beim Wiederspielen des Dialogs.
  */
-export function wrongCardsOf(state: SessionState): Item[] {
+export function wrongCardsOf(state: SessionState, progress?: Progress, day?: Day): Item[] {
   const screen = state.screen;
   if (screen.kind !== "summary" || screen.summary === "extra" || screen.summary === "replay") return [];
-  return state.tally.wrongIds.flatMap((id) => {
+  // Mit Lernstand und Tag kommen die Karten dazu, die heute falsch waren und morgen wiederkommen: So stimmt die Liste auch,
+  // wenn die Seite mitten in der Runde neu geladen wurde.
+  const derived = progress && day ? wrongTodayIds(progress, day) : [];
+  const ids = [...state.tally.wrongIds, ...derived.filter((id) => !state.tally.wrongIds.includes(id))];
+  return ids.flatMap((id) => {
     const item = getItem(id);
     return item ? [item] : [];
   });
@@ -1021,9 +1045,9 @@ export function summaryText(facts: SummaryFacts, opts: { calm: boolean; missionT
     }
   } else {
     headline = facts.answered === 0 ? "Heute ist nichts mehr fällig." : "Die Wiederholrunde ist zu Ende.";
-    if (facts.answered > 0) lines.push({ label: "Wiederholte Karten", value: String(facts.reviewed) });
+    if (facts.answered > 0 && facts.rightKnown !== false) lines.push({ label: "Wiederholte Karten", value: String(facts.reviewed) });
   }
-  if (facts.answered > 0) lines.push({ label: "Richtige Antworten", value: `${facts.right} von ${facts.answered}` });
+  if (facts.answered > 0 && facts.rightKnown !== false) lines.push({ label: "Richtige Antworten", value: `${facts.right} von ${facts.answered}` });
   if (!opts.calm && facts.kind !== "extra" && facts.pointsGained > 0) lines.push({ label: "Punkte", value: `+${facts.pointsGained}` });
   if (!opts.calm && facts.streak >= 1) lines.push({ label: "Serie", value: `${facts.streak} ${facts.streak === 1 ? "Tag" : "Tage"}` });
   return { headline, notes, lines };
