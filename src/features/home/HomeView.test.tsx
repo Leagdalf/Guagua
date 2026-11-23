@@ -1,8 +1,10 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { extraRoundIds } from "../../core/cards";
+import { units } from "../../core/content";
 import { completeMission, completeStep, finishReviewRound, startUnit } from "../../core/units";
 import { HomeView } from "./HomeView";
+import { StopOverview } from "./StopOverview";
 import { afterUnit1, completeUnit, newClock, newProgress } from "./testProgress";
 
 const noop = () => {};
@@ -184,4 +186,83 @@ describe("HomeView (Server-Render)", () => {
       expect(html, name).toMatch(new RegExp(`lang="es"[^>]*>(<span class="marker">)?${name}`));
     }
   });
-});
+
+  describe("Ergänzungen (Spezifikation 2.9)", () => {
+    function twoStops(): { clock: ReturnType<typeof newClock>; progress: ReturnType<typeof newProgress> } {
+      const clock = newClock("2026-11-23");
+      let p = completeUnit(newProgress(clock), "u01", clock.now);
+      clock.set("2026-11-26");
+      p = finishReviewRound(completeUnit(p, "u02", clock.now), clock.current());
+      return { clock, progress: p };
+    }
+
+    it("die angeheftete Mission am iPad hat Anhören, Langsam, Zeigen und aufdeckbare Übersetzung je Satz", () => {
+      const { clock, progress } = afterUnit1();
+      const html = render(progress, clock.current());
+      const mission = html.slice(html.indexOf("home__mission"), html.indexOf("home__line"));
+      expect(mission).toContain("mission__phrases");
+      expect(mission.match(/audio-btn--slow/g)).toHaveLength(3);
+      expect(mission.match(/>Zeigen</g)).toHaveLength(3);
+      expect(mission.match(/Übersetzung aufdecken/g)).toHaveLength(3);
+      expect(mission).not.toContain("Guten Morgen.");
+    });
+
+    it("nur die Mission der zuletzt abgeschlossenen Haltestelle ist angeheftet, die ältere steht nur unter „Missionen“", () => {
+      const { clock, progress } = twoStops();
+      const html = render(progress, clock.current());
+      expect(html).toContain("Mission offen");
+      expect(html).toContain(units[1]!.mission.title_de);
+      expect(html).not.toContain(units[0]!.mission.title_de);
+    });
+
+    it("ab dem dritten Tag nach dem Abschluss ist keine Mission mehr angeheftet, „Nur Mission offen“ wird zu „Alles erledigt“", () => {
+      const { clock, progress } = twoStops();
+      const sameDay = render(progress, clock.current());
+      expect(sameDay).toContain("Draußen wartet deine Mission");
+      const pinnedTwoDaysLater = render(progress, "2026-11-28");
+      expect(pinnedTwoDaysLater).toContain("Mission offen");
+      const later = render(finishReviewRound(progress, "2026-11-29"), "2026-11-29");
+      expect(later).not.toContain("Mission offen");
+      expect(later).not.toContain(units[1]!.mission.title_de);
+      // An diesem Tag steht Haltestelle 3 an; die offenen Missionen erscheinen im Block nicht.
+      expect(later).not.toContain("Draußen wartet deine Mission");
+    });
+
+    it("alles erledigt, ältere Mission offen: der Block nennt die nächste Haltestelle statt „Mission ansehen“", () => {
+      const { clock, progress } = twoStops();
+      const done = completeMission(progress, "u02-m", clock.now);
+      const html = render(done, clock.current());
+      expect(html).not.toContain("Mission ansehen");
+      expect(html).not.toContain("Mission offen");
+      expect(html).toContain("Morgen: Haltestelle 3, ");
+      expect(html).toContain(">10 Karten extra<");
+    });
+
+    it("nach der Endstation: nächste Wiederholung mit Wochentag, „Deine Linie ansehen“ bleibt", () => {
+      const clock = newClock("2026-11-23");
+      let p = newProgress(clock);
+      for (const unit of units) p = completeUnit(p, unit.id, clock.now);
+      const cards = Object.fromEntries(Object.entries(p.cards).map(([id, card]) => [id, { ...card, due: "2026-11-28" }]));
+      p = { ...p, cards, finalReview: { at: "2026-11-23T10:00:00.000Z", right: 26, total: 30 } };
+      const html = render(p, "2026-11-24");
+      expect(html).toContain(`Nächste Wiederholung: Samstag, ${Object.keys(cards).length} Karten.`);
+      expect(html).toContain("Deine Linie ansehen");
+    });
+
+    it("Abgleich mit dem Plan: Satz und Textknopf „Noch eine Haltestelle“, aber nur außerhalb des Plans", () => {
+      const clock = newClock("2026-11-27");
+      const p = finishReviewRound(completeUnit(newProgress(clock), "u01", clock.now), clock.current());
+      const html = render(p, clock.current());
+      expect(html).toContain("Bis zum 2. Dezember sind es noch 9 Haltestellen in 6 Tagen.");
+      expect(html).toContain("Noch eine Haltestelle");
+      const early = afterUnit1();
+      const inPlan = render(early.progress, early.clock.current());
+      expect(inPlan).not.toContain("Noch eine Haltestelle");
+      expect(inPlan).not.toContain("Bis zum");
+    });
+
+    it("die Übersicht einer abgeschlossenen Haltestelle bietet „Dialog noch einmal spielen“", () => {
+      const html = renderToStaticMarkup(<StopOverview unitId="u01" name="Ana" onBack={noop} onPlayDialogue={noop} />);
+      expect(html).toContain("Dialog noch einmal spielen");
+    });
+  });});

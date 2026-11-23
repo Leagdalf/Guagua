@@ -4,13 +4,16 @@ import { extraRoundIds } from "../../core/cards";
 import { units } from "../../core/content";
 import type { Day, Progress } from "../../core/types";
 import { dayCounter, todayPlan } from "../../core/units";
-import { ActionBar, Es, HomeHeader, HomePage, Line, MissionRow, PrimaryButton, SimplePage, TextButton, Today } from "../../ui";
+import { ActionBar, Es, HomeHeader, HomePage, Label, Line, PrimaryButton, SimplePage, TextButton, Today } from "../../ui";
+import { MissionPhrases } from "../missions/MissionPhrases";
+import { sayTranslations } from "../missions/missionsModel";
 import { FinalLineBody } from "../session/FinalLine";
 import type { SessionRequest } from "../session/types";
 import { formatDateDe } from "./dateText";
+import { finalDoneToday, nextReview, pinnedMissionId, planSentence } from "./homeFacts";
 import { lineModel, stopTap } from "./lineModel";
 import { StopOverview } from "./StopOverview";
-import { todayBlock } from "./todayBlock";
+import { EXTRA_BUTTON_TEXT, todayBlock } from "./todayBlock";
 import type { BlockAction, TextPart } from "./todayBlock";
 import "./home.css";
 
@@ -69,6 +72,7 @@ export function HomeView({ progress, day, onStartSession, onOpenMissions }: Home
       <StopOverview
         unitId={overview}
         name={progress.profile.name}
+        onPlayDialogue={(unitId) => onStartSession({ kind: "dialogue", unitId })}
         onBack={() => {
           setOverview(null);
           toTop();
@@ -80,9 +84,17 @@ export function HomeView({ progress, day, onStartSession, onOpenMissions }: Home
   const plan = todayPlan(progress, day);
   // „10 Karten extra“ gibt es nur, wenn Karten aus abgeschlossenen Haltestellen da sind (dieselbe Quelle wie die Runde selbst).
   const hasExtraCards = extraRoundIds(progress, day).length > 0;
-  const block = todayBlock(plan, hasExtraCards);
+  // Angeheftet bleibt nur die Mission der zuletzt abgeschlossenen Haltestelle, bis zum zweiten Tag danach.
+  const pinnedId = pinnedMissionId(progress, day);
+  const block = todayBlock(plan, hasExtraCards, {
+    missionPinned: pinnedId !== null,
+    planSentence: planSentence(progress, day),
+    day,
+    nextReview: nextReview(progress, day),
+    finalDoneToday: finalDoneToday(progress, day),
+  });
   const line = lineModel(progress, plan.unitId);
-  const mission = plan.openMissionId ? units.find((unit) => unit.mission.id === plan.openMissionId)?.mission : undefined;
+  const mission = pinnedId ? units.find((unit) => unit.mission.id === pinnedId)?.mission : undefined;
 
   const run = (action: BlockAction): void => {
     if (action.type === "session") onStartSession(action.request);
@@ -98,20 +110,31 @@ export function HomeView({ progress, day, onStartSession, onOpenMissions }: Home
       header={<HomeHeader date={formatDateDe(day)} progress={`Tag ${dayCounter(progress, day)}`} stops={line.mountain} />}
       today={<Today label={block.label} title={block.title} titleLang={block.titleLang} text={textNode(block.text)} />}
       action={
-        block.action && block.button ? (
+        (block.action && block.button) || block.secondary ? (
           <ActionBar aboveTabs>
-            <PrimaryButton onClick={() => run(block.action as BlockAction)}>{block.button}</PrimaryButton>
+            {block.action && block.button && <PrimaryButton onClick={() => run(block.action as BlockAction)}>{block.button}</PrimaryButton>}
+            {block.secondary && <TextButton onClick={() => run((block.secondary as NonNullable<typeof block.secondary>).action)}>{block.secondary.label}</TextButton>}
           </ActionBar>
         ) : null
       }
       mission={
         mission ? (
-          <MissionRow
-            title={mission.title_de}
-            text={mission.task_de}
-            phrases={mission.say}
-            onAction={() => onOpenMissions(mission.id)}
-          />
+          <section className="home__mission">
+            <div className="mission">
+              <Label as="h2" className="mission__label">
+                Mission offen
+              </Label>
+              <TextButton className="mission__action" onClick={() => onOpenMissions(mission.id)}>
+                Abhaken
+              </TextButton>
+              <p className="mission__title">{mission.title_de}</p>
+              <p className="mission__text">{mission.task_de}</p>
+              {/* Am iPad mit Anhören, Langsam, Zeigen und Übersetzung; am Telefon blendet das Raster die Sätze aus. */}
+              <div className="mission__phrases">
+                <MissionPhrases idPrefix={`home-${mission.id}`} phrases={mission.say} translations={sayTranslations(mission)} />
+              </div>
+            </div>
+          </section>
         ) : undefined
       }
       line={
@@ -137,7 +160,7 @@ export function HomeView({ progress, day, onStartSession, onOpenMissions }: Home
           />
           {hasExtraCards && block.action?.type !== "extra" && (
             <div className="home__extra">
-              <TextButton onClick={() => onStartSession({ kind: "extra" })}>10 Karten extra</TextButton>
+              <TextButton onClick={() => onStartSession({ kind: "extra" })}>{EXTRA_BUTTON_TEXT}</TextButton>
             </div>
           )}
         </>

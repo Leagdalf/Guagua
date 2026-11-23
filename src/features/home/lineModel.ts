@@ -1,6 +1,7 @@
 // Zustände der Linie und des Bergs aus dem Fortschritt. Beide kommen aus derselben Quelle (`stopStates`),
 // damit der Berg immer denselben Stand zeigt wie die Linie. Reine Funktion, kein React.
 
+import { FINAL_REVIEW } from "../../core/config";
 import { getUnit, units } from "../../core/content";
 import type { Progress } from "../../core/types";
 import { finalStationState, stopStates } from "../../core/units";
@@ -65,7 +66,7 @@ export function lineModel(progress: Progress, offeredUnitId: string | null = nul
   stops.push({
     id: FINAL_STOP_ID,
     name: "Repaso final",
-    topic: "Endstation · 30 gemischte Aufgaben",
+    topic: `Endstation · ${FINAL_REVIEW.taskCount} gemischte Aufgaben`,
     state: finalState,
     terminus: true,
     selectable: final !== "locked",

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { REVIEW_ROUND_AFTER_FINAL } from "../../core/config";
 import { completeMission, completeStep, finishReviewRound, startUnit, todayPlan } from "../../core/units";
 import { afterUnit1, completeUnit, newClock, newProgress } from "./testProgress";
 import { plainText, todayBlock } from "./todayBlock";
@@ -116,7 +117,8 @@ describe("Block „Heute“: zweite Tabelle im Design-Dokument", () => {
     expect(b.label).toBe("Heute");
     expect(b.title).toBe("Wiederholen");
     expect(b.titleLang).toBe("de");
-    expect(plainText(b.text)).toBe("154 Karten sind fällig. Heute kommen 40 dran.");
+    // Nach der Endstation hat die Wiederholrunde höchstens REVIEW_ROUND_AFTER_FINAL Karten (Spezifikation 2.9, Punkt 8).
+    expect(plainText(b.text)).toBe(`154 Karten sind fällig. Heute kommen ${REVIEW_ROUND_AFTER_FINAL} dran.`);
     expect(b.button).toBe("Mit Wiederholen beginnen");
     expect(b.action).toEqual({ type: "session", request: { kind: "day", unitId: null } });
   });
@@ -170,7 +172,8 @@ describe("Block „Heute“: die Endstation (drei Zeilen der zweiten Tabelle)", 
     expect(b.label).toBe("Heute");
     expect(b.title).toBe("Linie geschafft");
     expect(b.titleLang).toBe("de");
-    expect(plainText(b.text)).toBe("26 von 30 richtig an der Endstation.");
+    // Die Runde des Tages ist beendet, die übrigen fälligen Karten warten (Spezifikation 2.9, Punkt 8).
+    expect(plainText(b.text)).toBe("26 von 30 richtig an der Endstation. 154 Karten warten, morgen kommen die nächsten.");
     expect(b.button).toBe("Deine Linie ansehen");
     expect(b.action).toEqual({ type: "final-line" });
   });

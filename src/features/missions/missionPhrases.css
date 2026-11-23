@@ -1,0 +1,27 @@
+/* Sätze zum Mitnehmen: Haarlinien statt Karten. Nur Variablen aus src/styles. */
+.mp {
+  margin: var(--s1) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mp__item {
+  padding: var(--s2) 0;
+}
+
+.mp__item + .mp__item {
+  border-top: var(--hair) solid var(--raya);
+}
+
+.mp__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--s5);
+}
+
+.mp__de {
+  margin-top: var(--s1);
+  font-size: var(--fs-note);
+  color: var(--ceniza);
+}

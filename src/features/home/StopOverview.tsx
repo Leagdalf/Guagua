@@ -10,13 +10,15 @@ export interface StopOverviewProps {
   /** Name aus dem Profil, für `{name}` im Dialog. */
   name: string;
   onBack: () => void;
+  /** Dialog noch einmal spielen (Spezifikation 2.9, Punkt 10): startet die Lerneinheit ohne Punkte und ohne Wirkung auf den Lernstand. */
+  onPlayDialogue: (unitId: string) => void;
 }
 
 /**
  * Übersicht einer abgeschlossenen Haltestelle: Karten mit Ton, Grammatik, Dialog zum Wiederanhören.
  * Jeder Ton startet direkt im Tippen auf seinen Knopf.
  */
-export function StopOverview({ unitId, name, onBack }: StopOverviewProps) {
+export function StopOverview({ unitId, name, onBack, onPlayDialogue }: StopOverviewProps) {
   const { hasVoice } = useVoices();
   const unit = getUnit(unitId);
   if (!unit) return null;
@@ -90,6 +92,9 @@ export function StopOverview({ unitId, name, onBack }: StopOverviewProps) {
           Dialog
         </Label>
         <p className="ov__expl">{unit.dialogue.setting_de}</p>
+        <div className="ov__play">
+          <TextButton onClick={() => onPlayDialogue(unit.id)}>Dialog noch einmal spielen</TextButton>
+        </div>
         <ul className="ov__list">
           {unit.dialogue.lines.map((line, index) => (
             <li key={index} className="ov__row">

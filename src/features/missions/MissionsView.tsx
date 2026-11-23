@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { speak, useVoices } from "../../audio";
 import type { MissionFeeling, Progress } from "../../core/types";
-import { AudioButton, Es, Label, PrimaryButton, SimplePage, TextArea, TextButton } from "../../ui";
+import { Label, PrimaryButton, SimplePage, TextArea, TextButton } from "../../ui";
 import { ChoiceGroup } from "../more/ChoiceGroup";
-import { FEELINGS, STATE_LABEL, feelingLabel, missionList, showsTask } from "./missionsModel";
+import { MissionPhrases } from "./MissionPhrases";
+import { FEELINGS, STATE_LABEL, canComplete, feelingLabel, missionList, showsTask } from "./missionsModel";
 import type { MissionEntry } from "./missionsModel";
 import "./missions.css";
 
@@ -18,7 +18,6 @@ export interface MissionsViewProps {
 /** Missionen (Spezifikation 2.5): alle zehn mit Zustand. Gehört in `AppShell`. */
 export function MissionsView({ progress, focusMissionId = null, onComplete, onSkip }: MissionsViewProps) {
   const entries = missionList(progress);
-  const { hasVoice } = useVoices();
   return (
     <SimplePage className="mi">
       <h1 className="mi__title">Missionen</h1>
@@ -31,7 +30,6 @@ export function MissionsView({ progress, focusMissionId = null, onComplete, onSk
           <MissionItem
             key={entry.missionId}
             entry={entry}
-            hasVoice={hasVoice}
             startOpen={entry.missionId === focusMissionId}
             focus={entry.missionId === focusMissionId}
             onComplete={onComplete}
@@ -45,15 +43,14 @@ export function MissionsView({ progress, focusMissionId = null, onComplete, onSk
 
 interface ItemProps {
   entry: MissionEntry;
-  hasVoice: boolean;
   startOpen: boolean;
   focus: boolean;
   onComplete: MissionsViewProps["onComplete"];
   onSkip: MissionsViewProps["onSkip"];
 }
 
-function MissionItem({ entry, hasVoice, startOpen, focus, onComplete, onSkip }: ItemProps) {
-  const [formOpen, setFormOpen] = useState(startOpen && showsTask(entry.state));
+function MissionItem({ entry, startOpen, focus, onComplete, onSkip }: ItemProps) {
+  const [formOpen, setFormOpen] = useState(startOpen && canComplete(entry.state));
   const [feeling, setFeeling] = useState<MissionFeeling | null>(null);
   const [note, setNote] = useState("");
   const ref = useRef<HTMLLIElement>(null);
@@ -63,6 +60,7 @@ function MissionItem({ entry, hasVoice, startOpen, focus, onComplete, onSkip }: 
   }, [focus]);
 
   const task = showsTask(entry.state);
+  const actionable = canComplete(entry.state);
   const stateText = entry.state === "locked" ? `${STATE_LABEL.locked}, wird mit Haltestelle ${entry.stop} offen` : STATE_LABEL[entry.state];
 
   return (
@@ -76,17 +74,7 @@ function MissionItem({ entry, hasVoice, startOpen, focus, onComplete, onSkip }: 
         <>
           <p className="mi__task">{entry.task}</p>
           <p className="mi__take">Sätze zum Mitnehmen</p>
-          <ul className="mi__say">
-            {entry.say.map((phrase, index) => {
-              const id = `${entry.missionId}-say-${index}`;
-              return (
-                <li key={phrase} className="mi__phrase">
-                  <Es id={id}>{phrase}</Es>
-                  <AudioButton disabled={!hasVoice} describedBy={id} onClick={() => speak(phrase)} />
-                </li>
-              );
-            })}
-          </ul>
+          <MissionPhrases idPrefix={`mi-${entry.missionId}`} phrases={entry.say} translations={entry.sayDe} />
         </>
       )}
 
@@ -97,14 +85,14 @@ function MissionItem({ entry, hasVoice, startOpen, focus, onComplete, onSkip }: 
         </p>
       )}
 
-      {task && !formOpen && (
+      {actionable && !formOpen && (
         <div className="mi__actions">
           <TextButton onClick={() => setFormOpen(true)}>{entry.state === "skipped" ? "Nachholen" : "Abhaken"}</TextButton>
           {entry.state === "open" && <TextButton onClick={() => onSkip(entry.missionId)}>Überspringen</TextButton>}
         </div>
       )}
 
-      {task && formOpen && (
+      {actionable && formOpen && (
         <form
           className="mi__form"
           onSubmit={(event) => {

@@ -6,7 +6,8 @@ import { completeMission, missionState, skipMission, startUnit, stopState, stopS
 import { lineModel, stopTap } from "../home/lineModel";
 import { afterUnit1 } from "../home/testProgress";
 import { MissionsView } from "./MissionsView";
-import { missionList } from "./missionsModel";
+import { MissionPhrases } from "./MissionPhrases";
+import { missionList, sayTranslations, toggledIndex } from "./missionsModel";
 
 const noop = () => {};
 
@@ -31,22 +32,72 @@ describe("Missionen: Liste", () => {
     expect(render(completeMission(progress, "u01-m", clock.now))).toContain("Haltestelle 1 · erledigt");
   });
 
-  it("offene und übersprungene zeigen Aufgabe und Sätze mit Ton, gesperrte und erledigte nicht", () => {
+  it("offene, übersprungene und erledigte zeigen Aufgabe und Sätze mit Ton, gesperrte nicht", () => {
     const { clock, progress } = afterUnit1();
     const open = render(progress);
     expect(open).toContain("Grüße heute drei Menschen");
     expect(open).toContain("Sätze zum Mitnehmen");
-    expect(open.match(/class="text-btn audio-btn/g)).toHaveLength(3);
+    // Je Satz „Anhören“ und „Langsam“.
+    expect(open.match(/class="text-btn audio-btn/g)).toHaveLength(6);
     expect(open).toMatch(/lang="es"[^>]*>Buenos días\./);
     const skipped = render(skipMission(progress, "u01-m", clock.now));
     expect(skipped).toContain("Grüße heute drei Menschen");
     expect(skipped).toContain("Nachholen");
-    const done = render(completeMission(progress, "u01-m", clock.now));
-    expect(done).not.toContain("Grüße heute drei Menschen");
-    expect(done).not.toContain("audio-btn");
+    const done = render(completeMission(progress, "u01-m", clock.now, { feeling: "leicht", note: "Dreimal geklappt" }));
+    expect(done).toContain("Grüße heute drei Menschen");
+    expect(done).toContain("Buenos días.");
+    expect(done).toContain("Wie lief es: leicht. Dreimal geklappt");
+    expect(done).not.toContain("Abhaken");
+    // Nur die erste Mission ist freigeschaltet: Die gesperrten zeigen weder Aufgabe noch Sätze.
+    expect(open.match(/Sätze zum Mitnehmen/g)).toHaveLength(1);
   });
 
-  it("offene Mission bietet „Abhaken“ und „Überspringen“, ohne Fokus ist das Formular zu", () => {
+  it("jeder Satz hat Anhören, Langsam, Zeigen und eine aufdeckbare Übersetzung, die erst nach dem Tippen im Text steht", () => {
+    const { progress } = afterUnit1();
+    const html = render(progress);
+    expect(html.match(/>Zeigen</g)).toHaveLength(3);
+    expect(html.match(/Übersetzung aufdecken/g)).toHaveLength(3);
+    expect(html.match(/audio-btn--slow/g)).toHaveLength(3);
+    expect(html).not.toContain("Guten Morgen.");
+    expect(html).toContain('aria-expanded="false"');
+  });
+});
+
+describe("Missionen: Übersetzungen", () => {
+  it("sayTranslations nimmt say_de in derselben Reihenfolge und lässt Fehlendes als null", () => {
+    expect(sayTranslations({ say: ["a", "b", "c"], say_de: ["A", "B", "C"] })).toEqual(["A", "B", "C"]);
+    expect(sayTranslations({ say: ["a", "b"] })).toEqual([null, null]);
+    expect(sayTranslations({ say: ["a", "b", "c"], say_de: ["A", ""] })).toEqual(["A", null, null]);
+  });
+
+  it("Tippen deckt die Übersetzung auf und beim zweiten Tippen wieder zu, je Satz für sich", () => {
+    const once = toggledIndex(new Set(), 1);
+    expect([...once]).toEqual([1]);
+    expect([...toggledIndex(once, 0)].sort()).toEqual([0, 1]);
+    expect([...toggledIndex(once, 1)]).toEqual([]);
+  });
+
+  it("fehlt die Übersetzung, fehlt nur der Knopf zum Aufdecken; Anhören, Langsam und Zeigen bleiben", () => {
+    const html = renderToStaticMarkup(<MissionPhrases idPrefix="t" phrases={["Hola."]} translations={[null]} />);
+    expect(html).not.toContain("Übersetzung");
+    expect(html).toContain("Anhören");
+    expect(html).toContain("Langsam");
+    expect(html).toContain(">Zeigen<");
+  });
+
+  it("alle Sätze aller zehn Missionen tragen lang=es und haben eine Übersetzung im Inhalt", () => {
+    for (const entry of missionList(afterUnit1().progress)) {
+      expect(entry.sayDe.every((de) => typeof de === "string"), entry.missionId).toBe(true);
+      expect(entry.sayDe).toHaveLength(entry.say.length);
+    }
+    const html = render(afterUnit1().progress);
+    for (const phrase of ["Buenos días.", "Buenas tardes.", "Gracias, hasta luego."]) {
+      expect(html).toMatch(new RegExp(`lang="es"[^>]*>${phrase.replace(".", "\\.")}`));
+    }
+  });
+});
+
+describe("Missionen: Abhaken und Ergebnis", () => {  it("offene Mission bietet „Abhaken“ und „Überspringen“, ohne Fokus ist das Formular zu", () => {
     const { progress } = afterUnit1();
     const html = render(progress);
     expect(html).toContain("Abhaken");

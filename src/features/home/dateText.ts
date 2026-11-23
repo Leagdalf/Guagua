@@ -18,6 +18,21 @@ const MONTHS = [
   "Dezember",
 ] as const;
 
+/** `2026-12-02` wird zu „2. Dezember“. Bei ungültigem Tag der Text selbst. */
+export function formatDayMonthDe(day: Day): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day);
+  if (!match) return day;
+  const month = MONTHS[Number(match[2]) - 1];
+  return month ? `${Number(match[3])}. ${month}` : day;
+}
+
+/** `2026-11-24` wird zu „Dienstag“. Bei ungültigem Tag der Text selbst. */
+export function weekdayDe(day: Day): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day);
+  if (!match) return day;
+  return WEEKDAYS[new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]))).getUTCDay()] ?? day;
+}
+
 /** `2026-11-24` wird zu „Dienstag, 24. November“. Bei ungültigem Tag der Text selbst. */
 export function formatDateDe(day: Day): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day);

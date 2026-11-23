@@ -114,3 +114,7 @@
 .ov__table tr:last-child td {
   border-bottom: var(--hair) solid var(--raya);
 }
+
+.ov__play {
+  margin-top: var(--s1);
+}
